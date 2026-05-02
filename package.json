@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "build:static": "astro build --site https://maestrea76.github.io --base /ListaCompra",
+    "build:pages": "astro build",
     "astro": "astro",
     "check": "astro check"
   },

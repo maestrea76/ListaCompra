@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Store } from '$lib/types';
   import { app } from '$lib/stores/app.svelte';
+  import { base } from '$lib/base';
 
   let { store }: { store: Store } = $props();
 
@@ -10,7 +11,7 @@
 </script>
 
 <a
-  href={`/lista/${store.id}`}
+  href={base(`/lista/${store.id}`)}
   class="card-elev p-4 flex flex-col items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.99] transition aspect-square"
 >
   <div class="text-4xl">

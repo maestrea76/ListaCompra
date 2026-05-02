@@ -1,0 +1,62 @@
+import type { Product, Unit } from '../../types';
+
+const p = (id: string, name: string, emoji: string, cat: string, unit: Unit = 'unidad'): Product => ({
+  id, name, categoryId: cat,
+  icon: { kind: 'emoji', value: emoji }, defaultUnit: unit,
+});
+
+export const HOGAR: Product[] = [
+  // Cocina
+  p('sarten',            'Sartén',                  '🍳','hog-cocina'),
+  p('cazuela',           'Cazuela',                 '🍲','hog-cocina'),
+  p('olla',              'Olla',                    '🍲','hog-cocina'),
+  p('olla-presion',      'Olla a presión',          '🍲','hog-cocina'),
+  p('plato-llano',       'Plato llano',             '🍽️','hog-cocina'),
+  p('plato-hondo',       'Plato hondo',             '🍽️','hog-cocina'),
+  p('plato-postre',      'Plato de postre',         '🍽️','hog-cocina'),
+  p('vaso-agua',         'Vaso de agua',            '🥛','hog-cocina'),
+  p('vaso-vino',         'Copa de vino',            '🍷','hog-cocina'),
+  p('taza-cafe',         'Taza de café',            '☕','hog-cocina'),
+  p('cubiertos-set',     'Set de cubiertos',        '🍴','hog-cocina'),
+  p('cuchillo-cocina',   'Cuchillo de cocina',      '🔪','hog-cocina'),
+  p('tabla-cortar',      'Tabla de cortar',         '🪵','hog-cocina'),
+  p('rallador',          'Rallador',                '🧀','hog-cocina'),
+  p('exprimidor',        'Exprimidor',              '🍋','hog-cocina'),
+  p('batidora',          'Batidora',                '🥤','hog-cocina'),
+  p('cafetera',          'Cafetera',                '☕','hog-cocina'),
+  p('tostadora',         'Tostadora',               '🍞','hog-cocina'),
+  p('microondas',        'Microondas',              '📡','hog-cocina'),
+  p('mantel',            'Mantel',                  '🍽️','hog-cocina'),
+  p('servilletas-tela',  'Servilletas de tela',     '🧻','hog-cocina','paquete'),
+  // Baño
+  p('toalla-grande',     'Toalla grande',           '🛀','hog-bano'),
+  p('toalla-mano',       'Toalla de mano',          '🛀','hog-bano'),
+  p('albornoz',          'Albornoz',                '🥋','hog-bano'),
+  p('alfombrilla-baño',  'Alfombrilla de baño',     '🧺','hog-bano'),
+  p('cortina-ducha',     'Cortina de ducha',        '🚿','hog-bano'),
+  p('jabonera',          'Jabonera',                '🧼','hog-bano'),
+  p('vaso-baño',         'Vaso de baño',            '🥛','hog-bano'),
+  p('escobilla-wc',      'Escobilla WC',            '🚽','hog-bano'),
+  p('cubo-pedal',        'Cubo con pedal',          '🗑️','hog-bano'),
+  // Decoración
+  p('cuadro',            'Cuadro',                  '🖼️','hog-decoracion'),
+  p('jarron',            'Jarrón',                  '🏺','hog-decoracion'),
+  p('vela',              'Vela',                    '🕯️','hog-decoracion'),
+  p('cojin',             'Cojín',                   '🛋️','hog-decoracion'),
+  p('manta',             'Manta',                   '🛏️','hog-decoracion'),
+  p('alfombra',          'Alfombra',                '🧺','hog-decoracion'),
+  p('reloj-pared',       'Reloj de pared',          '🕰️','hog-decoracion'),
+  p('lampara-mesa',      'Lámpara de mesa',         '💡','hog-decoracion'),
+  p('lampara-pie',       'Lámpara de pie',          '💡','hog-decoracion'),
+  p('espejo',            'Espejo',                  '🪞','hog-decoracion'),
+  p('planta-decoracion', 'Planta decorativa',       '🪴','hog-decoracion'),
+  // Textil hogar
+  p('sabanas-90',        'Sábanas 90',              '🛏️','hog-textil','paquete'),
+  p('sabanas-135',       'Sábanas 135',             '🛏️','hog-textil','paquete'),
+  p('sabanas-150',       'Sábanas 150',             '🛏️','hog-textil','paquete'),
+  p('funda-nordica',     'Funda nórdica',           '🛏️','hog-textil'),
+  p('almohada',          'Almohada',                '🛏️','hog-textil'),
+  p('funda-almohada',    'Funda de almohada',       '🛏️','hog-textil'),
+  p('edredon',           'Edredón',                 '🛏️','hog-textil'),
+  p('colcha',            'Colcha',                  '🛏️','hog-textil'),
+];

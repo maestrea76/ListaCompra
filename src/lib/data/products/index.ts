@@ -1,13 +1,7 @@
 // Agregador de seeds de productos.
-// Para añadir más categorías: crea un archivo en este directorio que exporte
-// un array de Product[] y agrégalo al spread de PRODUCTS_SEED.
-//
-// TODO seed pendiente (estructura ya creada en categories.ts):
-//   - sup-charcuteria, sup-despensa, sup-congelados, sup-snacks, sup-desayuno,
-//     sup-higiene, sup-bebe, sup-mascotas, farmacia/*, perfumeria/*,
-//     ferreteria/*, ropa/*, hogar/*, delicatessen/*, herboristeria/*, locutorio/*
-// Las categorías que aún no tienen seed simplemente se mostrarán vacías
-// y el usuario puede añadir productos manualmente desde la UI.
+// Todos los seeds se concatenan aquí en un único array que alimenta el
+// catálogo inicial de la app. El usuario puede añadir/editar/borrar desde
+// la UI; los cambios se persisten en LocalStorage.
 
 import type { Product } from '../../types';
 import { FRUTERIA } from './fruteria';
@@ -17,6 +11,14 @@ import { LACTEOS } from './lacteos';
 import { LIMPIEZA } from './limpieza';
 import { PANADERIA } from './panaderia';
 import { BEBIDAS } from './bebidas';
+import { CHARCUTERIA, DESPENSA, CONGELADOS, SNACKS, DESAYUNO } from './despensa';
+import { HIGIENE, BEBE, MASCOTAS } from './higiene';
+import { FARMACIA } from './farmacia';
+import { PERFUMERIA } from './perfumeria';
+import { FERRETERIA } from './ferreteria';
+import { ROPA } from './ropa';
+import { HOGAR } from './hogar';
+import { CENTRO_COMERCIAL, DELICATESSEN, HERBORISTERIA, LOCUTORIO, OTROS } from './varios';
 
 export const PRODUCTS_SEED: Product[] = [
   ...FRUTERIA,
@@ -26,4 +28,22 @@ export const PRODUCTS_SEED: Product[] = [
   ...LIMPIEZA,
   ...PANADERIA,
   ...BEBIDAS,
+  ...CHARCUTERIA,
+  ...DESPENSA,
+  ...CONGELADOS,
+  ...SNACKS,
+  ...DESAYUNO,
+  ...HIGIENE,
+  ...BEBE,
+  ...MASCOTAS,
+  ...FARMACIA,
+  ...PERFUMERIA,
+  ...FERRETERIA,
+  ...ROPA,
+  ...HOGAR,
+  ...CENTRO_COMERCIAL,
+  ...DELICATESSEN,
+  ...HERBORISTERIA,
+  ...LOCUTORIO,
+  ...OTROS,
 ];

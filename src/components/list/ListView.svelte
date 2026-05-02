@@ -4,6 +4,7 @@
 
   import { onMount } from 'svelte';
   import { app } from '$lib/stores/app.svelte';
+  import { base } from '$lib/base';
   import type { Unit } from '$lib/types';
 
   let { storeId }: { storeId: string } = $props();
@@ -72,7 +73,7 @@
 {:else}
   <div class="space-y-6">
     <header class="flex items-center justify-between">
-      <a href="/" class="text-sm text-muted hover:underline">← Tiendas</a>
+      <a href={base('/')} class="text-sm text-muted hover:underline">← Tiendas</a>
       <h2 class="text-xl font-bold flex items-center gap-2">
         <span>{store.icon.kind === 'emoji' ? store.icon.value : '🏪'}</span>
         {store.name}

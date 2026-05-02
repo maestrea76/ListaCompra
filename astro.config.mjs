@@ -2,11 +2,16 @@ import { defineConfig } from 'astro/config';
 import svelte from '@astrojs/svelte';
 import tailwindcss from '@tailwindcss/vite';
 
-// https://astro.build/config
+// El repo se llama "ListaCompra", así que en GH Pages la app vive en
+// https://maestrea76.github.io/ListaCompra/ → necesita `base: '/ListaCompra'`.
+// En dev (npm run dev) eso no afecta porque BASE_URL queda en '/'.
+const isPages = process.env.GITHUB_PAGES === 'true';
+
 export default defineConfig({
-  // Output estático: la app es local-first y puede desplegarse en GitHub Pages.
-  // Para modo SSR (Debian + nginx con endpoints HA reales) cambia a 'server' y añade un adapter Node.
   output: 'static',
+  site: isPages ? 'https://maestrea76.github.io' : undefined,
+  base: isPages ? '/ListaCompra' : undefined,
+  trailingSlash: 'ignore',
   integrations: [svelte()],
   vite: {
     plugins: [tailwindcss()],

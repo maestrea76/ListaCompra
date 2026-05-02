@@ -1,0 +1,13 @@
+{
+  "name": "Tu Compra",
+  "short_name": "TuCompra",
+  "description": "Listas de la compra multi-tienda con integración Home Assistant",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#2aa063",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "lang": "es"
+}

@@ -1,0 +1,82 @@
+# =============================================================================
+# Tu Compra — integración Home Assistant
+# =============================================================================
+# Esta config asume que la app está expuesta en https://tucompra.tu-dominio.com
+# y que has configurado un endpoint de sincronización en la nube
+# (`profile.cloudSync.endpoint`) accesible desde HA.
+#
+# El endpoint devuelve el AppState completo en JSON. Aquí extraemos los items
+# pendientes (no comprados) por tienda como sensores.
+# =============================================================================
+
+rest:
+  - resource: https://tucompra.tu-dominio.com/api/state/MI_USUARIO
+    scan_interval: 60
+    sensor:
+      - name: "Tu Compra Eroski pendientes"
+        unique_id: tucompra_eroski_pendientes
+        value_template: >
+          {{ value_json.lists.eroski.items
+              | selectattr('done','equalto',false)
+              | list | count }}
+        json_attributes_path: "$.lists.eroski"
+        json_attributes:
+          - items
+
+      - name: "Tu Compra Mercadona pendientes"
+        unique_id: tucompra_mercadona_pendientes
+        value_template: >
+          {{ value_json.lists.mercadona.items
+              | selectattr('done','equalto',false)
+              | list | count }}
+
+      - name: "Tu Compra Carnicería pendientes"
+        unique_id: tucompra_carniceria_pendientes
+        value_template: >
+          {{ value_json.lists.carniceria.items
+              | selectattr('done','equalto',false)
+              | list | count }}
+
+# -------- Listas nativas de HA sincronizadas (opcional) --------
+# Si prefieres usar la integración shopping_list nativa, una automatización
+# puede volcar los pendientes de Tu Compra a la lista de HA cada minuto.
+
+shopping_list:
+
+# -------- Comandos de voz para Google Nest / Assist --------
+# Requiere la integración Google Assistant SDK + Assist en HA.
+intent_script:
+  TuCompraAddItem:
+    description: "Añade un producto a una lista de Tu Compra"
+    speech:
+      text: "Añadido {{ producto }} a la lista de {{ tienda }}"
+    action:
+      service: rest_command.tucompra_add
+      data:
+        tienda: "{{ tienda }}"
+        producto: "{{ producto }}"
+        cantidad: "{{ cantidad | default(1) }}"
+
+rest_command:
+  tucompra_add:
+    url: https://tucompra.tu-dominio.com/api/lists/{{ tienda }}/items
+    method: POST
+    headers:
+      Authorization: !secret tucompra_token
+      Content-Type: application/json
+    payload: >
+      {"name": "{{ producto }}", "qty": {{ cantidad }}}
+
+# -------- Frases de ejemplo para Assist (sentences/es.yaml) --------
+# language: es
+# intents:
+#   TuCompraAddItem:
+#     data:
+#       - sentences:
+#           - "añade {producto} a la (lista|compra) de {tienda}"
+#           - "apunta {producto} en {tienda}"
+#           - "necesito {cantidad} {producto} en {tienda}"
+#         slots:
+#           tienda: "{tienda}"
+#           producto: "{producto}"
+#           cantidad: "{cantidad}"

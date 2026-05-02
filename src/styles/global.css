@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/* === Tema "Tu Compra" — inspirado en aguacatec/boardinggate ===
+   Tarjetas grandes, gradientes suaves, alto contraste, animación sutil. */
+
+@theme {
+  --color-brand-50:  #eef9f3;
+  --color-brand-100: #d6f0e1;
+  --color-brand-200: #aee2c4;
+  --color-brand-300: #7fcfa3;
+  --color-brand-400: #4cb87f;
+  --color-brand-500: #2aa063;
+  --color-brand-600: #1f7f4f;
+  --color-brand-700: #1a6440;
+  --color-brand-800: #154f34;
+  --color-brand-900: #103a27;
+
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius-card: 1.25rem;
+}
+
+/* Variables runtime para light/dark — controladas por html[data-theme] */
+:root {
+  --bg: #f6f7fb;
+  --bg-elev: #ffffff;
+  --fg: #0f172a;
+  --fg-muted: #475569;
+  --border: #e2e8f0;
+  --accent: var(--color-brand-500);
+  --done: #94a3b8;
+}
+
+html[data-theme="dark"] {
+  --bg: #0b1220;
+  --bg-elev: #131c2e;
+  --fg: #e2e8f0;
+  --fg-muted: #94a3b8;
+  --border: #1f2a44;
+  --accent: var(--color-brand-400);
+  --done: #475569;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Utilidades semánticas reutilizables */
+@utility card-elev {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px -12px rgba(0,0,0,.08);
+}
+
+@utility text-muted {
+  color: var(--fg-muted);
+}
+
+/* Estado "comprado" — tachado verde aguacatec */
+.product-done .product-name {
+  text-decoration: line-through;
+  color: var(--done);
+}
+.product-done {
+  opacity: 0.6;
+}
+
+/* Animación entrada lista */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(4px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+.pop-in { animation: pop-in .2s ease-out both; }

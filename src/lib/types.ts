@@ -1,0 +1,94 @@
+// Tipos centrales de la aplicación.
+// El modelo es jerárquico: TipoTienda > Categoría > Producto, y
+// cada Tienda concreta apunta a un TipoTienda (Eroski → Supermercado, etc.).
+
+export type Unit = 'unidad' | 'kg' | 'g' | 'l' | 'ml' | 'paquete' | 'docena' | 'caja';
+
+export type IconRef =
+  | { kind: 'emoji'; value: string }            // p.ej. "🥩"
+  | { kind: 'lucide'; value: string }           // p.ej. "ShoppingBag"
+  | { kind: 'image'; value: string };           // dataURL o URL
+
+/** Tipo de tienda (Supermercado, Farmacia, Carnicería, etc.) */
+export interface StoreType {
+  id: string;
+  name: string;
+  icon: IconRef;
+}
+
+/** Tienda concreta del usuario (Eroski, Mercadona, Lidl, ...) */
+export interface Store {
+  id: string;
+  name: string;
+  typeId: StoreType['id'];
+  icon: IconRef;
+  /** Orden manual en la home; menor = arriba */
+  order?: number;
+  /** Si es false, oculta la tienda sin borrarla */
+  enabled?: boolean;
+}
+
+/** Categoría dentro de un tipo de tienda */
+export interface Category {
+  id: string;
+  name: string;
+  typeId: StoreType['id'];
+  icon: IconRef;
+  order?: number;
+}
+
+/** Producto del catálogo (plantilla — no es una entrada de lista todavía) */
+export interface Product {
+  id: string;
+  name: string;
+  categoryId: Category['id'];
+  icon: IconRef;
+  defaultUnit: Unit;
+  /** Imagen personalizada subida por el usuario (dataURL) */
+  photo?: string;
+}
+
+/** Una línea de la lista de la compra de una tienda concreta */
+export interface ListItem {
+  id: string;                  // uuid
+  productId: Product['id'];    // referencia al catálogo
+  qty: number;
+  unit: Unit;
+  done: boolean;
+  note?: string;
+  addedAt: number;             // timestamp
+  doneAt?: number;
+}
+
+/** Lista de la compra asociada a una tienda */
+export interface ShoppingList {
+  storeId: Store['id'];
+  items: ListItem[];
+  updatedAt: number;
+}
+
+/** Perfil de usuario estilo Boardinggate: usuario + PIN, sin servidor obligatorio */
+export interface UserProfile {
+  username: string;            // único, identifica la copia en la nube si se sincroniza
+  pinHash: string;             // SHA-256 del PIN de 4 dígitos
+  companion?: boolean;         // true si username acaba en "@MOVIL" (modo compañero)
+  theme: 'light' | 'dark' | 'system';
+  cloudSync: {
+    enabled: boolean;
+    endpoint?: string;         // p.ej. URL de Gist/Firebase/HA — opcional
+    token?: string;
+    autoSync: boolean;
+  };
+  createdAt: number;
+}
+
+/** Estado completo persistido en LocalStorage */
+export interface AppState {
+  version: 1;
+  profile?: UserProfile;
+  storeTypes: StoreType[];     // catálogo (puede sobreescribir el seed)
+  stores: Store[];
+  categories: Category[];
+  products: Product[];
+  lists: Record<Store['id'], ShoppingList>;
+}

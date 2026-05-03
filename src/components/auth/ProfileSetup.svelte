@@ -1,14 +1,13 @@
 <script lang="ts">
   // Setup inicial al estilo Boardinggate. Dos modos:
   //   - "Crear nuevo": usuario nuevo + PIN.
-  //   - "Restaurar": en un dispositivo nuevo, recupera los datos asociados a
-  //     un usuario ya existente, ya sea desde un endpoint cloud configurado
-  //     o desde un archivo JSON exportado previamente.
+  //   - "Restaurar": pega el código de backup generado en otro dispositivo
+  //     (o sube el .txt). El catálogo seed local se conserva; el bundle
+  //     sólo trae las listas, perfil y productos custom del usuario.
 
   import { app } from '$lib/stores/app.svelte';
-  import { hashPin, pullFromCloud } from '$lib/storage';
-  import { importFromFile } from '$lib/backup';
-  import type { UserProfile } from '$lib/types';
+  import { hashPin } from '$lib/storage';
+  import { applyBackupCode, readCodeFromFile } from '$lib/backup';
 
   let mode = $state<'new' | 'restore'>('new');
 
@@ -17,16 +16,12 @@
   let pin = $state('');
   let pinConfirm = $state('');
   let theme = $state<'light' | 'dark' | 'system'>('system');
-  let cloudEnabled = $state(false);
-  let cloudEndpoint = $state('');
-  let cloudToken = $state('');
   let error = $state('');
 
   // --- Form restaurar ---
-  let rUsername = $state('');
+  let rCode = $state('');
   let rPin = $state('');
-  let rEndpoint = $state('');
-  let rToken = $state('');
+  let rPinConfirm = $state('');
   let restoring = $state(false);
 
   const usernameClean = $derived(username.trim());
@@ -35,78 +30,52 @@
     usernameClean.length >= 3 && /^\d{4}$/.test(pin) && pin === pinConfirm,
   );
 
+  const restoreValid = $derived(
+    rCode.trim().length > 20 && /^\d{4}$/.test(rPin) && rPin === rPinConfirm,
+  );
+
   async function submit() {
     error = '';
     if (!valid) {
       error = 'Revisa el usuario (≥3 chars) y el PIN (4 dígitos coincidentes).';
       return;
     }
-    const pinHash = await hashPin(pin);
     app.setProfile({
       username: usernameClean,
-      pinHash,
+      pinHash: await hashPin(pin),
       companion: isCompanion,
       theme,
-      cloudSync: {
-        enabled: cloudEnabled,
-        endpoint: cloudEndpoint || undefined,
-        token: cloudToken || undefined,
-        autoSync: cloudEnabled,
-      },
       createdAt: Date.now(),
     });
   }
 
-  async function restoreFromCloud() {
+  async function restore() {
     error = '';
-    if (rUsername.trim().length < 3 || !/^\d{4}$/.test(rPin) || !rEndpoint) {
-      error = 'Necesito usuario, PIN y endpoint de la nube.';
+    if (!restoreValid) {
+      error = 'Pega el código y define un PIN de 4 dígitos para este dispositivo.';
       return;
     }
     restoring = true;
     try {
-      const tempProfile: UserProfile = {
-        username: rUsername.trim(),
-        pinHash: '',
-        theme: 'system',
-        cloudSync: {
-          enabled: true, endpoint: rEndpoint, token: rToken || undefined, autoSync: true,
-        },
-        createdAt: Date.now(),
-      };
-      const remote = await pullFromCloud(tempProfile);
-      if (!remote) throw new Error('No encontrado en la nube');
-
-      // Sustituimos el estado y atamos un PIN local nuevo.
-      remote.profile = {
-        ...(remote.profile ?? tempProfile),
-        username: rUsername.trim(),
-        pinHash: await hashPin(rPin),
-        cloudSync: tempProfile.cloudSync,
-      };
-      app.state = remote;
-      app.persist();
+      await applyBackupCode(rCode, await hashPin(rPin));
     } catch (e) {
-      error = `No se pudo restaurar: ${(e as Error).message}`;
+      error = (e as Error).message;
     } finally {
       restoring = false;
     }
   }
 
-  async function restoreFromFile(e: Event) {
-    error = '';
+  async function pickFile(e: Event) {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
+    rCode = await readCodeFromFile(file);
+  }
+
+  async function paste() {
     try {
-      await importFromFile(file);
-      // Pedimos un PIN nuevo si el archivo no traía uno (siempre, porque lo limpiamos al exportar)
-      const np = prompt('Define un PIN local de 4 dígitos para este dispositivo:');
-      if (np && /^\d{4}$/.test(np) && app.state.profile) {
-        app.state.profile.pinHash = await hashPin(np);
-        app.persist();
-      }
-    } catch (err) {
-      error = `Archivo inválido: ${(err as Error).message}`;
+      rCode = (await navigator.clipboard.readText()).trim();
+    } catch {
+      // sin permisos: el usuario tendrá que pegar a mano
     }
   }
 </script>
@@ -117,11 +86,10 @@
       <div class="text-5xl">🛒</div>
       <h1 class="text-2xl font-bold">Tu Compra</h1>
       <p class="text-sm text-muted">
-        {mode === 'new' ? 'Crea tu perfil para empezar' : 'Restaura una cuenta existente'}
+        {mode === 'new' ? 'Crea tu perfil para empezar' : 'Restaura desde un código de backup'}
       </p>
     </header>
 
-    <!-- Selector de modo -->
     <div class="grid grid-cols-2 rounded-xl overflow-hidden border" style="border-color: var(--border);">
       <button onclick={() => (mode = 'new')}
         class="py-2 text-sm font-medium transition"
@@ -172,27 +140,6 @@
         </select>
       </label>
 
-      <details class="rounded-xl border p-4" style="border-color: var(--border);">
-        <summary class="cursor-pointer text-sm font-medium">Sincronización en la nube (opcional)</summary>
-        <div class="mt-3 space-y-3">
-          <p class="text-xs text-muted">
-            Permite restaurar tus listas en otro dispositivo sólo con el usuario.
-            Necesita un endpoint REST que tú configures (Gist, Firebase, HA add-on…).
-          </p>
-          <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" bind:checked={cloudEnabled} /> Habilitar sincronización
-          </label>
-          {#if cloudEnabled}
-            <input type="url" bind:value={cloudEndpoint} placeholder="Endpoint REST"
-              class="w-full rounded-xl border px-4 py-2 text-sm bg-transparent"
-              style="border-color: var(--border);" />
-            <input type="password" bind:value={cloudToken} placeholder="Token (opcional)"
-              class="w-full rounded-xl border px-4 py-2 text-sm bg-transparent"
-              style="border-color: var(--border);" />
-          {/if}
-        </div>
-      </details>
-
       {#if error}<p class="text-sm text-red-500">{error}</p>{/if}
 
       <button type="button" onclick={submit} disabled={!valid}
@@ -202,40 +149,53 @@
       </button>
 
     {:else}
-      <!-- Restaurar desde la nube -->
       <p class="text-xs text-muted">
-        Si ya usabas Tu Compra en otro dispositivo y tenías sincronización
-        activada, recupera tus datos aquí con tu nombre de usuario.
+        En tu otro dispositivo, pulsa <strong>📋</strong> en la cabecera para
+        generar el código. Pégalo aquí y define un PIN local nuevo.
       </p>
-      <input type="text" bind:value={rUsername} placeholder="Usuario"
-        class="w-full rounded-xl border px-4 py-2.5 bg-transparent"
-        style="border-color: var(--border);" />
-      <input type="password" inputmode="numeric" pattern="\d{4}" maxlength="4" bind:value={rPin}
-        placeholder="PIN nuevo (4 dígitos para este dispositivo)"
-        class="w-full rounded-xl border px-4 py-2.5 text-center tracking-[0.5em] bg-transparent"
-        style="border-color: var(--border);" />
-      <input type="url" bind:value={rEndpoint} placeholder="Endpoint REST (igual que en el otro dispositivo)"
-        class="w-full rounded-xl border px-4 py-2 text-sm bg-transparent"
-        style="border-color: var(--border);" />
-      <input type="password" bind:value={rToken} placeholder="Token (si aplica)"
-        class="w-full rounded-xl border px-4 py-2 text-sm bg-transparent"
-        style="border-color: var(--border);" />
+
+      <div class="space-y-2">
+        <textarea
+          bind:value={rCode}
+          placeholder="Pega aquí el código de backup…"
+          rows="5"
+          class="w-full rounded-xl border p-3 text-xs font-mono bg-transparent"
+          style="border-color: var(--border);"
+        ></textarea>
+        <div class="flex gap-2">
+          <button onclick={paste}
+            class="flex-1 rounded-xl border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
+            style="border-color: var(--border);">📋 Pegar del portapapeles</button>
+          <label class="flex-1 cursor-pointer rounded-xl border px-3 py-2 text-sm text-center hover:bg-[var(--bg)] transition"
+            style="border-color: var(--border);">
+            📂 Subir .txt
+            <input type="file" accept=".txt,text/plain" class="hidden" onchange={pickFile} />
+          </label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block">
+          <span class="text-sm font-medium">PIN nuevo</span>
+          <input type="password" inputmode="numeric" pattern="\d{4}" maxlength="4" bind:value={rPin}
+            class="mt-1 w-full rounded-xl border px-4 py-2.5 text-center tracking-[0.5em] bg-transparent"
+            style="border-color: var(--border);" />
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium">Confirmar</span>
+          <input type="password" inputmode="numeric" pattern="\d{4}" maxlength="4" bind:value={rPinConfirm}
+            class="mt-1 w-full rounded-xl border px-4 py-2.5 text-center tracking-[0.5em] bg-transparent"
+            style="border-color: var(--border);" />
+        </label>
+      </div>
 
       {#if error}<p class="text-sm text-red-500">{error}</p>{/if}
 
-      <button type="button" onclick={restoreFromCloud} disabled={restoring}
+      <button type="button" onclick={restore} disabled={!restoreValid || restoring}
         class="w-full rounded-xl py-3 font-semibold text-white disabled:opacity-50 transition"
         style="background: var(--accent);">
-        {restoring ? 'Restaurando…' : 'Restaurar desde la nube'}
+        {restoring ? 'Restaurando…' : 'Restaurar'}
       </button>
-
-      <div class="text-center text-xs text-muted">— o —</div>
-
-      <label class="block w-full text-center cursor-pointer rounded-xl border-2 border-dashed py-4 hover:bg-[var(--bg)] transition"
-        style="border-color: var(--border);">
-        📂 Restaurar desde archivo JSON
-        <input type="file" accept="application/json" class="hidden" onchange={restoreFromFile} />
-      </label>
     {/if}
   </div>
 </div>

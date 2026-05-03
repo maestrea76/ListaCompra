@@ -1,9 +1,7 @@
 <script lang="ts">
   // Wrapper raíz: hidrata el store, decide si mostrar setup, gate de PIN o la app.
   // El estado "unlocked" se persiste en localStorage atado al username actual,
-  // de modo que al volver a la home (o tras recargar) NO vuelve a pedir el PIN.
-  // Sólo se vuelve a pedir si: (a) el usuario pulsa "Cerrar sesión", o
-  // (b) el username del perfil cambia (otro usuario).
+  // así no vuelve a pedir el PIN al navegar entre páginas o al recargar.
 
   import { onMount } from 'svelte';
   import { app } from '$lib/stores/app.svelte';
@@ -11,12 +9,12 @@
   import PinGate from './auth/PinGate.svelte';
   import StoreGrid from './list/StoreGrid.svelte';
   import ThemeToggle from './ui/ThemeToggle.svelte';
-  import { exportToFile } from '$lib/backup';
-  import { pushToCloud } from '$lib/storage';
+  import BackupModal from './ui/BackupModal.svelte';
 
   const UNLOCK_KEY = 'tucompra:unlocked:v1';
 
   let unlocked = $state(false);
+  let showBackup = $state(false);
 
   function readUnlock(username?: string): boolean {
     if (!username || typeof localStorage === 'undefined') return false;
@@ -57,7 +55,7 @@
   }
 
   function changeUser() {
-    if (!confirm('¿Borrar este perfil del dispositivo? Las listas locales se perderán salvo que tengas sync activado.')) return;
+    if (!confirm('¿Borrar este perfil del dispositivo? Genera primero un código de backup si quieres conservar las listas.')) return;
     clearUnlock();
     app.signOut();
     unlocked = false;
@@ -79,15 +77,9 @@
         <p class="text-sm text-muted truncate">Hola, {app.state.profile.username}</p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        <button onclick={exportToFile} title="Descargar backup JSON"
+        <button onclick={() => (showBackup = true)} title="Generar código de backup"
           class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
-          style="border-color: var(--border);">💾</button>
-        {#if app.state.profile?.cloudSync.enabled}
-          <button onclick={() => pushToCloud(app.state).catch(console.warn)}
-            title="Sincronizar ahora con la nube"
-            class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
-            style="border-color: var(--border);">☁️</button>
-        {/if}
+          style="border-color: var(--border);">📋</button>
         <button onclick={signOut} title="Cerrar sesión (volverá a pedir el PIN)"
           class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">🔒</button>
@@ -99,4 +91,8 @@
     </header>
     <StoreGrid />
   </main>
+
+  {#if showBackup}
+    <BackupModal onClose={() => (showBackup = false)} />
+  {/if}
 {/if}

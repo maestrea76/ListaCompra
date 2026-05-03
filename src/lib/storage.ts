@@ -1,9 +1,8 @@
-// Capa de persistencia local-first.
-// Estrategia: todo el AppState vive en LocalStorage bajo una sola clave.
-// Sincronización en la nube (opcional) — adapter mínimo via fetch a un
-// endpoint REST que el usuario configure (Gist, HA, Firebase REST, lo que sea).
+// Capa de persistencia local-first. Sin servidores externos.
+// El estado completo vive en LocalStorage. Para mover datos a otro
+// dispositivo se genera un "código de backup" (ver lib/backup.ts).
 
-import type { AppState, UserProfile } from './types';
+import type { AppState } from './types';
 import { STORE_TYPES } from './data/storeTypes';
 import { STORES_SEED } from './data/stores';
 import { CATEGORIES_SEED } from './data/categories';
@@ -11,7 +10,6 @@ import { PRODUCTS_SEED } from './data/products';
 
 const STORAGE_KEY = 'tucompra:state:v1';
 
-/** Estado inicial cuando no hay nada en LocalStorage. */
 export function createInitialState(): AppState {
   return {
     version: 1,
@@ -46,9 +44,7 @@ export function clearState(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-// ============================================================
-// Hash de PIN — SHA-256 con WebCrypto. No almacenamos el PIN en claro.
-// ============================================================
+// SHA-256 del PIN — no almacenamos el PIN en claro.
 export async function hashPin(pin: string): Promise<string> {
   const data = new TextEncoder().encode(pin);
   const buf = await crypto.subtle.digest('SHA-256', data);
@@ -59,39 +55,4 @@ export async function hashPin(pin: string): Promise<string> {
 
 export async function verifyPin(pin: string, hash: string): Promise<boolean> {
   return (await hashPin(pin)) === hash;
-}
-
-// ============================================================
-// Sincronización en la nube (opcional). Adapter genérico via REST.
-// El usuario configura endpoint + token desde Ajustes; si no, todo
-// queda en LocalStorage. Modo "compañero" (@MOVIL) tira de la misma clave
-// del usuario base — quitando el sufijo — para compartir datos.
-// ============================================================
-export function resolveSyncUsername(profile: UserProfile): string {
-  return profile.username.replace(/@MOVIL$/i, '');
-}
-
-export async function pushToCloud(state: AppState): Promise<void> {
-  const p = state.profile;
-  if (!p?.cloudSync.enabled || !p.cloudSync.endpoint) return;
-  const username = resolveSyncUsername(p);
-  await fetch(`${p.cloudSync.endpoint}/${encodeURIComponent(username)}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(p.cloudSync.token ? { Authorization: `Bearer ${p.cloudSync.token}` } : {}),
-    },
-    // Nunca enviamos el pinHash a la nube — el PIN protege sólo el dispositivo.
-    body: JSON.stringify({ ...state, profile: { ...p, pinHash: '' } }),
-  });
-}
-
-export async function pullFromCloud(profile: UserProfile): Promise<AppState | null> {
-  if (!profile.cloudSync.enabled || !profile.cloudSync.endpoint) return null;
-  const username = resolveSyncUsername(profile);
-  const res = await fetch(`${profile.cloudSync.endpoint}/${encodeURIComponent(username)}`, {
-    headers: profile.cloudSync.token ? { Authorization: `Bearer ${profile.cloudSync.token}` } : {},
-  });
-  if (!res.ok) return null;
-  return (await res.json()) as AppState;
 }

@@ -2,7 +2,7 @@
 // Se hidrata desde LocalStorage al iniciar y se autoguarda al cambiar.
 
 import type { AppState, ListItem, Product, ShoppingList, Store, UserProfile } from '../types';
-import { createInitialState, loadState, saveState, pushToCloud } from '../storage';
+import { createInitialState, loadState, saveState } from '../storage';
 
 class AppStore {
   state = $state<AppState>(createInitialState());
@@ -14,13 +14,11 @@ class AppStore {
     this.hydrated = true;
   }
 
-  /** Persiste a LocalStorage y, si está habilitado, empuja a la nube. */
+  /** Persiste a LocalStorage. La sincronización entre dispositivos se hace
+   *  bajo demanda mediante "código de backup" (ver lib/backup.ts) — no hay
+   *  llamadas automáticas a servidores. */
   persist(): void {
     saveState(this.state);
-    if (this.state.profile?.cloudSync.autoSync) {
-      // fire-and-forget: errores se ignoran a nivel de store.
-      pushToCloud(this.state).catch(console.warn);
-    }
   }
 
   // -------- Perfil --------

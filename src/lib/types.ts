@@ -70,18 +70,14 @@ export interface ShoppingList {
   updatedAt: number;
 }
 
-/** Perfil de usuario estilo Boardinggate: usuario + PIN, sin servidor obligatorio */
+/** Perfil de usuario estilo Boardinggate: usuario + PIN, 100% local.
+ *  El backup entre dispositivos se hace generando un código de texto
+ *  (ver lib/backup.ts) — sin APIs ni servidores externos. */
 export interface UserProfile {
-  username: string;            // único, identifica la copia en la nube si se sincroniza
+  username: string;
   pinHash: string;             // SHA-256 del PIN de 4 dígitos
-  companion?: boolean;         // true si username acaba en "@MOVIL" (modo compañero)
+  companion?: boolean;         // true si username acaba en "@MOVIL"
   theme: 'light' | 'dark' | 'system';
-  cloudSync: {
-    enabled: boolean;
-    endpoint?: string;         // p.ej. URL de Gist/Firebase/HA — opcional
-    token?: string;
-    autoSync: boolean;
-  };
   createdAt: number;
 }
 

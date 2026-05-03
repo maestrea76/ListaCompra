@@ -23,6 +23,8 @@ import { SALSAS, CONSERVAS_VEG, PREPARADOS, ENVASADOS, HELADOS, DULCES, YOGURES_
 import { VINOS } from './vinos';
 import { SUPER_CARNE, SUPER_PESCADO } from './super-carne-pescado';
 import { SUPER_PANADERIA } from './super-panaderia';
+import { BEBIDAS_EXTRA } from './bebidas-extra';
+import { CHINO } from './chino';
 
 export const PRODUCTS_SEED: Product[] = [
   ...FRUTERIA,
@@ -61,4 +63,6 @@ export const PRODUCTS_SEED: Product[] = [
   ...SUPER_CARNE,
   ...SUPER_PESCADO,
   ...SUPER_PANADERIA,
+  ...BEBIDAS_EXTRA,
+  ...CHINO,
 ];

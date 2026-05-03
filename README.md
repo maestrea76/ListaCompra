@@ -62,9 +62,22 @@ Para activarlo en tu fork: Settings → Pages → Source = **GitHub Actions**.
 ### Self-hosted
 
 Como es output estático, sirve desde cualquier sitio (nginx, Caddy, Vercel,
-Cloudflare Pages…). Si quieres **endpoints REST para Home Assistant**,
-cambia a `output: 'server'` en `astro.config.mjs` y añade `@astrojs/node`
-(no incluido por defecto).
+Cloudflare Pages…).
+
+### Integración con Home Assistant
+
+La forma recomendada es **embeber la URL de la app en una tarjeta `iframe`**
+del dashboard de HA. La sync online se encarga de mantener la lista al día
+en cualquier dispositivo, incluyendo el panel de HA.
+
+```yaml
+type: iframe
+url: https://maestrea76.github.io/ListaCompra/
+aspect_ratio: 75%
+```
+
+Así no hace falta REST/MQTT/webhooks — la app es la misma allí donde la
+abras y los cambios se ven en tiempo real.
 
 ## Sincronización online — setup propio
 
@@ -129,8 +142,8 @@ src/
 └── styles/global.css
 
 public/logos/          # PNGs/SVGs de las cadenas
+supabase/schema.sql    # script para montar tu propio backend
 .github/workflows/     # deploy automático a Pages
-homeassistant/         # YAML de ejemplo (sólo en modo SSR)
 ```
 
 ## Catálogo de productos
@@ -166,9 +179,9 @@ turrón de Jijona/Alicante, polvorones, mantecados…
 - [x] Backup en código (sin servidor)
 - [x] GitHub Actions → Pages
 - [x] Sync online (Supabase + AES-GCM + Realtime + sharing)
+- [x] Integración Home Assistant vía iframe (no requiere REST/MQTT)
 - [ ] Editor visual de productos del catálogo
 - [ ] Foto personalizada por producto
-- [ ] Endpoints SSR para escritura desde Home Assistant
 - [ ] PWA con service worker + offline real
 - [ ] Modo "ruta de compra" (orden de items por pasillos)
 

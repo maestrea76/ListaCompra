@@ -44,14 +44,11 @@
       <dt class="text-muted">Sala</dt>
       <dd class="font-mono text-xs break-all">{syncStatus.room || '—'}</dd>
 
-      <dt class="text-muted">Conexiones WebRTC</dt>
+      <dt class="text-muted">Otros dispositivos</dt>
       <dd>
-        {syncStatus.webrtcConns} intento{syncStatus.webrtcConns === 1 ? '' : 's'},
-        {syncStatus.peers} establecida{syncStatus.peers === 1 ? '' : 's'}
-        {#if syncStatus.signalingConnected && syncStatus.webrtcConns === 0}
-          <span class="block text-xs text-muted">→ el otro dispositivo no está activo aún</span>
-        {:else if syncStatus.webrtcConns > 0 && syncStatus.peers === 0}
-          <span class="block text-xs" style="color:#f59e0b">→ peers detectados pero handshake WebRTC fallando (NAT/firewall)</span>
+        {syncStatus.peers} conectado{syncStatus.peers === 1 ? '' : 's'}
+        {#if syncStatus.signalingConnected && syncStatus.peers === 0}
+          <span class="block text-xs text-muted">→ esperando a que otro abra la app con el mismo username</span>
         {/if}
       </dd>
 
@@ -72,14 +69,13 @@
 
     <div class="rounded-xl bg-[var(--bg)] p-3 text-xs space-y-1.5"
       style="border: 1px solid var(--border);">
-      <p class="font-semibold">⚠️ Importante: ambos dispositivos abiertos a la vez</p>
+      <p class="font-semibold">📡 Cómo funciona</p>
       <ul class="list-disc pl-4 space-y-0.5 text-muted">
-        <li>WebRTC es <strong>peer-to-peer</strong>: si uno está cerrado, el otro no encuentra a nadie.</li>
-        <li>Verifica que en los <strong>dos</strong> dispositivos el username sea idéntico (mira el campo "Usuario" arriba).</li>
-        <li>Verifica que la sala sea idéntica (mismo hash en ambos).</li>
-        <li>En ambos: estado debe ser 🟡 antes de que se vean. Cuando se ven, salta a 🟢.</li>
-        <li>Si en uno va 🔴 (sin signaling), tu red o navegador bloquea WebRTC.</li>
-        <li>Tip: dos pestañas del mismo navegador a veces NO se ven. Prueba con dos navegadores distintos (Chrome + Firefox) o dos dispositivos.</li>
+        <li>Los datos se sincronizan vía <code>wss://demos.yjs.dev/ws</code> (relay público de Y.js).</li>
+        <li>El snapshot va <strong>cifrado AES-GCM</strong> con clave derivada de tu username (PBKDF2). El servidor sólo ve bytes opacos.</li>
+        <li>Funciona en cualquier red (móvil, WiFi, oficina con firewall…) — no depende de WebRTC ni de NAT.</li>
+        <li>Ambos dispositivos deben usar <strong>el mismo username</strong> y estar abiertos a la vez para verse en tiempo real. Cambios mientras el otro estaba cerrado se aplican al reabrir.</li>
+        <li>Si va 🔴 (sin signaling), comprueba tu conexión a internet o si tu red bloquea WebSockets a demos.yjs.dev.</li>
       </ul>
     </div>
 

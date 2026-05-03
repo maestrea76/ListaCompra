@@ -1,9 +1,13 @@
-// Sincronización entre dispositivos (lazy / opt-in).
+// Sincronización entre dispositivos vía WebSocket público + AES-GCM.
 //
-// IMPORTANTE: yjs y y-webrtc se importan DINÁMICAMENTE dentro de
-// startSync() para que un fallo de carga (polyfill faltante, paquete no
-// instalado, navegador sin soporte) NO rompa el resto de la app.
-// El usuario activa la sync desde el panel cuando le interesa.
+// Antes usábamos y-webrtc P2P, pero las redes móviles (4G/5G con CGNAT)
+// y firewalls domésticos restrictivos hacían que el handshake WebRTC
+// fallara con frecuencia.
+//
+// Ahora: y-websocket contra `wss://demos.yjs.dev` (relay público
+// mantenido por el equipo de Y.js). Funciona en cualquier red.
+// Para que el servidor relay no pueda leer tus listas, el snapshot se
+// cifra con AES-GCM usando una clave derivada del username con PBKDF2.
 
 import { app } from './stores/app.svelte';
 import type { ShoppingList, Product, Store, UserProfile } from './types';
@@ -17,8 +21,9 @@ interface SyncSnapshot {
   updatedAt: number;
 }
 
-// Tipos genéricos para no tener que importar yjs/y-webrtc estáticamente.
-type AnyDoc = { getMap: (name: string) => AnyMap; destroy: () => void };
+// y-websocket Provider type — mantenemos genéricos para no importar
+// estáticamente y poder hacer lazy load.
+type AnyDoc = { getMap: (n: string) => AnyMap; destroy: () => void };
 type AnyMap = {
   observe: (cb: () => void) => void;
   set: (key: string, value: unknown) => void;
@@ -26,19 +31,22 @@ type AnyMap = {
 };
 type AnyProvider = {
   awareness: { getStates: () => Map<unknown, unknown>; on: (e: string, cb: () => void) => void };
-  on: (e: string, cb: (data: { connected?: boolean; added?: string[]; removed?: string[] }) => void) => void;
+  on: (e: string, cb: (data: unknown) => void) => void;
   destroy: () => void;
+  disconnect: () => void;
 };
 
 let provider: AnyProvider | null = null;
 let ydoc: AnyDoc | null = null;
 let map: AnyMap | null = null;
+let cryptoKey: CryptoKey | null = null;
 let suppress = false;
+let lastAppliedAt = 0;
 
 export const syncStatus = $state({
   enabled: false,
   peers: 0,
-  webrtcConns: 0,        // intentos de conexión WebRTC (incluye no establecidas)
+  webrtcConns: 0,        // mantenido por compatibilidad con SyncDiag
   room: '',
   username: '',
   signalingConnected: false,
@@ -52,6 +60,58 @@ function log(msg: string): void {
   syncStatus.log = [...syncStatus.log.slice(-19), `[${t}] ${msg}`];
   console.log('[sync]', msg);
 }
+
+// ─── Crypto helpers (AES-GCM 256, clave PBKDF2 desde username) ──────────
+
+async function deriveKey(username: string): Promise<CryptoKey> {
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(username.toLowerCase().trim()),
+    'PBKDF2',
+    false,
+    ['deriveKey'],
+  );
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: enc.encode('tucompra-v1-aes-gcm'),
+      iterations: 150_000,
+      hash: 'SHA-256',
+    },
+    baseKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+}
+
+async function encryptToBase64(plaintext: string, key: CryptoKey): Promise<string> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(plaintext),
+  );
+  const merged = new Uint8Array(iv.length + ct.byteLength);
+  merged.set(iv, 0);
+  merged.set(new Uint8Array(ct), iv.length);
+  let bin = '';
+  for (let i = 0; i < merged.length; i++) bin += String.fromCharCode(merged[i]);
+  return btoa(bin);
+}
+
+async function decryptFromBase64(b64: string, key: CryptoKey): Promise<string> {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const iv = bytes.slice(0, 12);
+  const ct = bytes.slice(12);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return new TextDecoder().decode(pt);
+}
+
+// ─── Snapshot helpers ──────────────────────────────────────────────────
 
 async function roomKey(username: string): Promise<string> {
   const data = new TextEncoder().encode(`tucompra:${username.toLowerCase().trim()}`);
@@ -88,23 +148,25 @@ function applySnapshot(snap: SyncSnapshot): void {
   app.state.stores = [...seedStores, ...(snap.customStores ?? [])];
   app.persist();
   syncStatus.lastSyncAt = Date.now();
+  lastAppliedAt = snap.updatedAt;
   log(`⬇️ Aplicado snapshot remoto (${Object.keys(snap.lists).length} listas)`);
 }
 
-/** Activa la sincronización. Carga yjs + y-webrtc dinámicamente. */
+// ─── API pública ────────────────────────────────────────────────────────
+
 export async function startSync(): Promise<void> {
   if (provider) { log('Ya estaba activa.'); return; }
   const profile = app.state.profile;
   if (!profile) { log('No hay perfil — no arranco.'); return; }
 
   syncStatus.lastError = '';
-  log(`Cargando módulos de sync…`);
+  log('Cargando módulos de sync…');
 
   let Y: typeof import('yjs');
-  let WebrtcProvider: typeof import('y-webrtc').WebrtcProvider;
+  let WebsocketProvider: typeof import('y-websocket').WebsocketProvider;
   try {
     Y = await import('yjs');
-    ({ WebrtcProvider } = await import('y-webrtc'));
+    ({ WebsocketProvider } = await import('y-websocket'));
   } catch (e) {
     syncStatus.lastError = `Carga de módulos falló: ${(e as Error).message}`;
     log(`❌ ${syncStatus.lastError}`);
@@ -117,117 +179,73 @@ export async function startSync(): Promise<void> {
     syncStatus.username = profile.username;
     log(`Username: "${profile.username}" → Sala: ${room}`);
 
+    cryptoKey = await deriveKey(profile.username);
+    log('🔐 Clave AES-GCM derivada (PBKDF2-150k)');
+
     ydoc = new Y.Doc() as unknown as AnyDoc;
     map = (ydoc as unknown as { getMap: (n: string) => AnyMap }).getMap('tucompra');
 
-    // Un único signaling server (el más estable) para asegurar que
-    // ambos peers acaban en el MISMO servidor y se descubren mutuamente.
-    // El `password` cifra el contenido del room — sólo otros dispositivos
-    // con el mismo username pueden leer los datos.
-    // STUN + TURN para que el handshake WebRTC funcione también detrás de
-    // NATs simétricos / firewalls restrictivos (caso típico en oficinas
-    // o redes domésticas con CGNAT). Open Relay Project ofrece TURN
-    // público y gratuito.
-    const iceServers = [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:global.stun.twilio.com:3478' },
-      {
-        urls: [
-          'turn:openrelay.metered.ca:80',
-          'turn:openrelay.metered.ca:443',
-          'turn:openrelay.metered.ca:443?transport=tcp',
-        ],
-        username: 'openrelayproject',
-        credential: 'openrelayproject',
-      },
-    ];
+    provider = new WebsocketProvider(
+      'wss://demos.yjs.dev/ws',
+      room,
+      ydoc as never,
+    ) as unknown as AnyProvider;
+    log('Conectando a wss://demos.yjs.dev/ws …');
 
-    // Múltiples signaling servers para redundancia.
-    const signaling = [
-      'wss://y-webrtc-eu.fly.dev',
-      'wss://signaling.yjs.dev',
-    ];
-
-    // OJO: NO pasamos `password` deliberadamente. y-webrtc 10.x deriva la
-    // sala "real" en el signaling server a partir de roomName+password,
-    // y diferencias sutiles en codificación (TextEncoder vs UTF-16,
-    // versiones diferentes, etc.) provocan que dos devices acaben en
-    // salas distintas en el server aunque ambos calculen el mismo hash
-    // localmente. Sin password, ambos van a la misma sala fija.
-    // Trade-off: cualquiera con tu username puede entrar a tu sala.
-    // El username ya es razonablemente único, y es lo que usa Boardinggate.
-    provider = new WebrtcProvider(room, ydoc as never, {
-      signaling,
-      peerOpts: { config: { iceServers } },
-    } as never) as unknown as AnyProvider;
-    log(`Conectando a ${signaling.length} signaling server(s) + STUN/TURN…`);
-
-    // Sondeo periódico del número de conexiones WebRTC intentadas.
-    // Si tras unos segundos signaling=conectado pero webrtcConns=0,
-    // significa que el otro peer no está activo en ese mismo momento.
-    // Si webrtcConns>0 pero peers=0, la negociación WebRTC está fallando.
-    setInterval(() => {
-      if (!provider) return;
-      const room = (provider as unknown as { room?: { webrtcConns?: Map<unknown, unknown> } }).room;
-      syncStatus.webrtcConns = room?.webrtcConns?.size ?? 0;
-    }, 1500);
-
-    provider.on('status', (e) => {
-      syncStatus.signalingConnected = !!e.connected;
-      log(e.connected ? '🟢 Signaling conectado' : '🔴 Signaling desconectado');
+    provider.on('status', (data) => {
+      const status = (data as { status?: string }).status;
+      syncStatus.signalingConnected = status === 'connected';
+      log(`📡 Estado: ${status}`);
     });
 
-    provider.on('peers', (e) => {
-      if (e.added?.length) {
-        log(`👥 +${e.added.length} peer(s) → forzando push del snapshot`);
-        // Cuando llega un peer nuevo, forzamos un push inmediato para que
-        // reciba nuestro estado aunque acabe de entrar tarde.
-        pushNow();
-      }
-      if (e.removed?.length) log(`👋 -${e.removed.length} peer(s)`);
+    provider.on('sync', (data) => {
+      const synced = !!data;
+      log(synced ? '✅ Sync inicial completo' : '🔄 Re-sincronizando');
+    });
+
+    provider.on('connection-error', (data) => {
+      const err = (data as Event).type ?? 'connection-error';
+      log(`⚠️ ${err}`);
     });
 
     provider.awareness.on('change', () => {
       const n = provider!.awareness.getStates().size - 1;
       const previousPeers = syncStatus.peers;
       syncStatus.peers = Math.max(0, n);
-      // Si pasamos de 0 peers a >0, forzamos push también (a veces el
-      // evento 'peers' llega tarde o no llega).
+      syncStatus.webrtcConns = syncStatus.peers; // alias para la UI
       if (previousPeers === 0 && syncStatus.peers > 0) {
-        log(`🔗 Awareness detecta peer → push`);
+        log(`🔗 Peer detectado → push`);
         pushNow();
       }
     });
-
-    // Heartbeat: cada 5s re-empujamos el snapshot. Muy poca carga (Y.js
-    // sólo propaga deltas), pero garantiza que peers tardíos o con
-    // conexiones inestables acaben recibiendo nuestros datos.
-    const heartbeat = setInterval(() => {
-      if (provider && map) {
-        pushNow();
-      } else {
-        clearInterval(heartbeat);
-      }
-    }, 5000);
 
     syncStatus.enabled = true;
 
+    // Cuando llega un cambio en el Y.Map, descifra e intenta aplicar.
     map.observe(() => {
       if (suppress) { suppress = false; return; }
-      const remote = map?.get('snapshot') as SyncSnapshot | undefined;
-      if (!remote) return;
-      const localUpdatedAt = Math.max(
-        ...Object.values(app.state.lists).map((l) => l.updatedAt), 0,
-      );
-      if (remote.updatedAt > localUpdatedAt) applySnapshot(remote);
+      const enc = map?.get('snapshot') as string | undefined;
+      if (!enc || !cryptoKey) return;
+      decryptFromBase64(enc, cryptoKey)
+        .then((json) => {
+          const snap = JSON.parse(json) as SyncSnapshot;
+          // Sólo aplicamos si es más reciente que lo último que aplicamos
+          // y que cualquier mutación local. Evita bucles.
+          const localUpdatedAt = Math.max(
+            ...Object.values(app.state.lists).map((l) => l.updatedAt), 0,
+          );
+          if (snap.updatedAt > Math.max(localUpdatedAt, lastAppliedAt)) {
+            applySnapshot(snap);
+          }
+        })
+        .catch((e) => {
+          log(`⚠️ No se pudo descifrar snapshot: ${(e as Error).message}`);
+        });
     });
 
     pushNow();
-    log('✅ Sync arrancado.');
-
-    // Recordamos la decisión para arrancar automáticamente la próxima vez.
     try { localStorage.setItem('tucompra:sync:enabled', '1'); } catch {}
+    log('✅ Sync arrancado.');
   } catch (e) {
     syncStatus.lastError = (e as Error).message ?? String(e);
     log(`❌ Error: ${syncStatus.lastError}`);
@@ -236,23 +254,32 @@ export async function startSync(): Promise<void> {
 }
 
 export function stopSync(): void {
+  provider?.disconnect();
   provider?.destroy();
   ydoc?.destroy();
   provider = null;
   ydoc = null;
   map = null;
+  cryptoKey = null;
   syncStatus.enabled = false;
   syncStatus.peers = 0;
+  syncStatus.webrtcConns = 0;
   syncStatus.signalingConnected = false;
   try { localStorage.removeItem('tucompra:sync:enabled'); } catch {}
   log('Sync parado.');
 }
 
 export function pushNow(): void {
-  if (!map) return;
-  suppress = true;
-  map.set('snapshot', buildSnapshot());
-  syncStatus.lastSyncAt = Date.now();
+  if (!map || !cryptoKey) return;
+  const snap = buildSnapshot();
+  const json = JSON.stringify(snap);
+  encryptToBase64(json, cryptoKey)
+    .then((enc) => {
+      suppress = true;
+      map!.set('snapshot', enc);
+      syncStatus.lastSyncAt = Date.now();
+    })
+    .catch((e) => log(`⚠️ Cifrado falló: ${(e as Error).message}`));
 }
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -267,7 +294,6 @@ export function reconnect(): void {
   setTimeout(() => startSync().catch(console.warn), 200);
 }
 
-/** Verifica si el usuario activó sync previamente (la próxima vez auto-arranca). */
 export function syncWasEnabled(): boolean {
   try { return localStorage.getItem('tucompra:sync:enabled') === '1'; } catch { return false; }
 }

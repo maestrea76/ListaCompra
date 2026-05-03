@@ -10,12 +10,14 @@
   import StoreGrid from './list/StoreGrid.svelte';
   import ThemeToggle from './ui/ThemeToggle.svelte';
   import BackupModal from './ui/BackupModal.svelte';
+  import SyncDiag from './ui/SyncDiag.svelte';
   import { startSync, stopSync, syncStatus } from '$lib/sync.svelte';
 
   const UNLOCK_KEY = 'tucompra:unlocked:v1';
 
   let unlocked = $state(false);
   let showBackup = $state(false);
+  let showDiag = $state(false);
 
   function readUnlock(username?: string): boolean {
     if (!username || typeof localStorage === 'undefined') return false;
@@ -88,18 +90,20 @@
         <h1 class="text-2xl font-bold">🛒 Tu Compra</h1>
         <p class="text-sm text-muted truncate flex items-center gap-1.5">
           Hola, {app.state.profile.username}
-          {#if syncStatus.enabled}
-            <span title={syncStatus.peers > 0
-              ? `Sincronizando con ${syncStatus.peers} dispositivo${syncStatus.peers === 1 ? '' : 's'}`
-              : 'Sync activo, esperando otro dispositivo con el mismo usuario'}
-              class="inline-flex items-center gap-1 text-xs">
-              <span class="size-2 rounded-full"
-                style={syncStatus.peers > 0
-                  ? 'background:#22c55e; box-shadow: 0 0 6px #22c55e;'
-                  : 'background:#94a3b8;'}></span>
-              {syncStatus.peers > 0 ? `${syncStatus.peers}` : ''}
-            </span>
-          {/if}
+          <button onclick={() => (showDiag = true)}
+            title="Ver estado de sincronización"
+            class="inline-flex items-center gap-1 text-xs rounded-full border px-1.5 py-0.5 hover:bg-[var(--bg)] transition"
+            style="border-color: var(--border);">
+            <span class="size-2 rounded-full"
+              style={syncStatus.peers > 0
+                ? 'background:#22c55e; box-shadow: 0 0 6px #22c55e;'
+                : syncStatus.signalingConnected
+                  ? 'background:#0ea5e9;'
+                  : syncStatus.lastError
+                    ? 'background:#ef4444;'
+                    : 'background:#94a3b8;'}></span>
+            {syncStatus.peers > 0 ? `${syncStatus.peers}` : 'sync'}
+          </button>
         </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
@@ -120,5 +124,9 @@
 
   {#if showBackup}
     <BackupModal onClose={() => (showBackup = false)} />
+  {/if}
+
+  {#if showDiag}
+    <SyncDiag onClose={() => (showDiag = false)} />
   {/if}
 {/if}

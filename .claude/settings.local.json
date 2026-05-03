@@ -20,7 +20,8 @@
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix\\(sync\\): re-push agresivo al detectar peer + heartbeat 5s *)",
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'feat\\(sync\\): WebSocket relay + AES-GCM cifrado del snapshot *)",
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'feat\\(sync\\): Supabase + AES-GCM E2E + Realtime + sharing *)",
-      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'docs: actualizar README + añadir supabase/schema.sql *)"
+      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'docs: actualizar README + añadir supabase/schema.sql *)",
+      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'refactor: eliminar backup en código \\(redundante con sync online\\) *)"
     ]
   }
 }

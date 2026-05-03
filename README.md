@@ -27,8 +27,6 @@ turrón de Jijona, vinos de Rioja/Ribera, etc.).
   **cifrado E2E AES-GCM**. El servidor sólo ve bytes opacos.
   - Multi-dispositivo: tus listas siempre al día en móvil + portátil.
   - Multi-usuario: comparte una lista con tu pareja/familia vía `share_id`.
-- 💾 **Backup en código** (offline): genera un string compacto (gzip+base64url)
-  con tu estado para moverlo a otro dispositivo sin internet.
 - 🌙 **Tema claro/oscuro** persistido por usuario.
 - 📱 **Mobile-first**, PWA-ready (manifest + favicon).
 - 🚀 **GitHub Pages** vía Actions (deploy automático en cada push a `main`).
@@ -120,7 +118,7 @@ src/
 ├── components/
 │   ├── auth/           # ProfileSetup, PinGate
 │   ├── list/           # StoreGrid, StoreCard, StoreEditor, ListView
-│   ├── ui/             # ThemeToggle, BackupModal, SyncDiag
+│   ├── ui/             # ThemeToggle, SyncDiag
 │   └── AppShell.svelte
 ├── layouts/Layout.astro
 ├── lib/
@@ -131,7 +129,6 @@ src/
 │   │   └── products/            # ~900 productos en archivos por área
 │   ├── stores/app.svelte.ts     # estado global (Svelte 5 runes)
 │   ├── storage.ts               # LocalStorage + PIN hash
-│   ├── backup.ts                # código de backup (gzip+base64url)
 │   ├── supabase.ts              # cliente Supabase
 │   ├── sync.svelte.ts           # sync + AES-GCM + Realtime + sharing
 │   ├── base.ts                  # helper para BASE_URL en GH Pages

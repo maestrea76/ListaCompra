@@ -13,14 +13,12 @@
   import PinGate from './auth/PinGate.svelte';
   import StoreGrid from './list/StoreGrid.svelte';
   import ThemeToggle from './ui/ThemeToggle.svelte';
-  import BackupModal from './ui/BackupModal.svelte';
   import SyncDiag from './ui/SyncDiag.svelte';
   import { startSync, stopSync, syncStatus, syncWasEnabled, hydrateAuth } from '$lib/sync.svelte';
 
   const UNLOCK_KEY = 'tucompra:unlocked:v1';
 
   let unlocked = $state(false);
-  let showBackup = $state(false);
   let showDiag = $state(false);
 
   function readUnlock(username?: string): boolean {
@@ -66,12 +64,14 @@
   }
 
   /** Cierra sesión = borra TODO del navegador.
-   *  El backup queda en quien lo haya guardado (código copiado / sync activa). */
+   *  Si tenías sync online activa, los datos siguen en Supabase y puedes
+   *  recuperarlos al volver a iniciar sesión con el mismo email + passphrase. */
   function signOut() {
     if (!confirm(
       '¿Cerrar sesión y borrar tus datos de este navegador?\n\n' +
       'Se eliminan listas, productos personalizados y tiendas custom.\n' +
-      'Si tenías sync activa o un código de backup, podrás restaurar.\n\n' +
+      'Si tenías sync online activa, los datos siguen en la nube — vuelves\n' +
+      'a entrar con tu email + passphrase y los recuperas.\n\n' +
       'Esta acción no se puede deshacer en este dispositivo.'
     )) return;
     try { stopSync(); } catch {}
@@ -115,9 +115,6 @@
         </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        <button onclick={() => (showBackup = true)} title="Generar código de backup"
-          class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
-          style="border-color: var(--border);">📋</button>
         <button onclick={signOut} title="Cerrar sesión y borrar datos del navegador"
           class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">🚪</button>
@@ -126,10 +123,6 @@
     </header>
     <StoreGrid />
   </main>
-
-  {#if showBackup}
-    <BackupModal onClose={() => (showBackup = false)} />
-  {/if}
 
   {#if showDiag}
     <SyncDiag onClose={() => (showDiag = false)} />

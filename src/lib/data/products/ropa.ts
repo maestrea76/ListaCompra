@@ -19,6 +19,8 @@ export const ROPA: Product[] = [
   p('chaqueta-mujer',    'Chaqueta',                '🧥','rop-mujer'),
   p('abrigo-mujer',      'Abrigo',                  '🧥','rop-mujer'),
   p('pijama-mujer',      'Pijama',                  '🌙','rop-mujer'),
+  p('pijama-verano-mujer','Pijama de verano',       '☀️','rop-mujer'),
+  p('pijama-invierno-mujer','Pijama de invierno',   '❄️','rop-mujer'),
   p('camison',           'Camisón',                 '👗','rop-mujer'),
   p('ropa-interior-m',   'Ropa interior',           '🩲','rop-mujer','paquete'),
   p('sujetador',         'Sujetador',               '🩱','rop-mujer'),
@@ -41,6 +43,8 @@ export const ROPA: Product[] = [
   p('traje',             'Traje',                   '🤵','rop-hombre'),
   p('corbata',           'Corbata',                 '👔','rop-hombre'),
   p('pijama-hombre',     'Pijama',                  '🌙','rop-hombre'),
+  p('pijama-verano-hombre','Pijama de verano',      '☀️','rop-hombre'),
+  p('pijama-invierno-hombre','Pijama de invierno',  '❄️','rop-hombre'),
   p('calzoncillo',       'Calzoncillos',            '🩲','rop-hombre','paquete'),
   p('bañador-hombre',    'Bañador',                 '🩳','rop-hombre'),
   // Niño/a
@@ -52,6 +56,8 @@ export const ROPA: Product[] = [
   p('chandal-niño',      'Chándal niño',            '👕','rop-nino'),
   p('chaqueta-niño',     'Chaqueta niño',           '🧥','rop-nino'),
   p('pijama-niño',       'Pijama niño',             '🌙','rop-nino'),
+  p('pijama-verano-niño','Pijama de verano niño',   '☀️','rop-nino'),
+  p('pijama-invierno-niño','Pijama de invierno niño','❄️','rop-nino'),
   p('uniforme-colegio',  'Uniforme colegio',        '🎒','rop-nino'),
   p('chubasquero',       'Chubasquero',             '🧥','rop-nino'),
   // Calzado

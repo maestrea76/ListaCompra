@@ -39,6 +39,7 @@ export const syncStatus = $state({
   enabled: false,
   peers: 0,
   room: '',
+  username: '',
   signalingConnected: false,
   lastError: '' as string,
   lastSyncAt: 0,
@@ -112,17 +113,21 @@ export async function startSync(): Promise<void> {
   try {
     const room = await roomKey(profile.username);
     syncStatus.room = room;
-    log(`Sala: ${room}`);
+    syncStatus.username = profile.username;
+    log(`Username: "${profile.username}" → Sala: ${room}`);
 
     ydoc = new Y.Doc() as unknown as AnyDoc;
     map = (ydoc as unknown as { getMap: (n: string) => AnyMap }).getMap('tucompra');
 
+    // Un único signaling server (el más estable) para asegurar que
+    // ambos peers acaban en el MISMO servidor y se descubren mutuamente.
+    // El `password` cifra el contenido del room — sólo otros dispositivos
+    // con el mismo username pueden leer los datos.
     provider = new WebrtcProvider(room, ydoc as never, {
-      signaling: [
-        'wss://signaling.yjs.dev',
-        'wss://y-webrtc-eu.fly.dev',
-      ],
-    }) as unknown as AnyProvider;
+      signaling: ['wss://signaling.yjs.dev'],
+      password: `tc-${profile.username.toLowerCase().trim()}`,
+    } as never) as unknown as AnyProvider;
+    log('Conectando a signaling.yjs.dev…');
 
     provider.on('status', (e) => {
       syncStatus.signalingConnected = !!e.connected;

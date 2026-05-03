@@ -38,6 +38,9 @@
         {/if}
       </dd>
 
+      <dt class="text-muted">Usuario</dt>
+      <dd class="font-mono text-xs break-all">{syncStatus.username || '—'}</dd>
+
       <dt class="text-muted">Sala</dt>
       <dd class="font-mono text-xs break-all">{syncStatus.room || '—'}</dd>
 
@@ -58,12 +61,14 @@
 
     <div class="rounded-xl bg-[var(--bg)] p-3 text-xs space-y-1.5"
       style="border: 1px solid var(--border);">
-      <p class="font-semibold">Para que funcione:</p>
+      <p class="font-semibold">⚠️ Importante: ambos dispositivos abiertos a la vez</p>
       <ul class="list-disc pl-4 space-y-0.5 text-muted">
-        <li>Abre la app en otro equipo o pestaña.</li>
-        <li>Crea perfil con <strong>el mismo username</strong> (el PIN puede ser distinto).</li>
-        <li>Espera 2-5 s a que se descubran. El indicador debe pasar a verde con un número.</li>
-        <li>Si va a 🔴 (sin signaling), tu red bloquea WebRTC (firewall, VPN restrictiva).</li>
+        <li>WebRTC es <strong>peer-to-peer</strong>: si uno está cerrado, el otro no encuentra a nadie.</li>
+        <li>Verifica que en los <strong>dos</strong> dispositivos el username sea idéntico (mira el campo "Usuario" arriba).</li>
+        <li>Verifica que la sala sea idéntica (mismo hash en ambos).</li>
+        <li>En ambos: estado debe ser 🟡 antes de que se vean. Cuando se ven, salta a 🟢.</li>
+        <li>Si en uno va 🔴 (sin signaling), tu red o navegador bloquea WebRTC.</li>
+        <li>Tip: dos pestañas del mismo navegador a veces NO se ven. Prueba con dos navegadores distintos (Chrome + Firefox) o dos dispositivos.</li>
       </ul>
     </div>
 

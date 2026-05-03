@@ -8,6 +8,7 @@
   import { app } from '$lib/stores/app.svelte';
   import { hashPin } from '$lib/storage';
   import { applyBackupCode, readCodeFromFile } from '$lib/backup';
+  import { startSync } from '$lib/sync.svelte';
 
   let mode = $state<'new' | 'restore'>('new');
 
@@ -58,6 +59,9 @@
     restoring = true;
     try {
       await applyBackupCode(rCode, await hashPin(rPin));
+      // Tras restaurar, arrancamos sync automáticamente para que este
+      // dispositivo se enganche con los demás que tengan el mismo username.
+      startSync().catch((e) => console.warn('Auto-start sync tras restore falló:', e));
     } catch (e) {
       error = (e as Error).message;
     } finally {

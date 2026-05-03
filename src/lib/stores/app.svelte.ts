@@ -3,15 +3,53 @@
 
 import type { AppState, ListItem, Product, ShoppingList, Store, UserProfile } from '../types';
 import { createInitialState, loadState, saveState } from '../storage';
+import { STORES_SEED } from '../data/stores';
+import { STORE_TYPES } from '../data/storeTypes';
+import { CATEGORIES_SEED } from '../data/categories';
+import { PRODUCTS_SEED } from '../data/products';
 
 class AppStore {
   state = $state<AppState>(createInitialState());
   hydrated = $state(false);
 
+  /** Re-sincroniza las entidades del seed (tipos, tiendas, categorías, productos)
+   *  con los valores actuales del código. Las customizaciones del usuario
+   *  (tiendas/productos creados por él, estado enabled/order de tiendas seed,
+   *  listas de la compra) se preservan. */
+  private refreshSeed(): void {
+    const seedStoreIds = new Set(STORES_SEED.map((s) => s.id));
+    const seedProductIds = new Set(PRODUCTS_SEED.map((p) => p.id));
+    const seedCategoryIds = new Set(CATEGORIES_SEED.map((c) => c.id));
+
+    // Tiendas: para los ids del seed, usamos los datos del código pero
+    // preservamos `order` y `enabled` del usuario. Las custom se mantienen.
+    const userOverrides = new Map(
+      this.state.stores
+        .filter((s) => seedStoreIds.has(s.id))
+        .map((s) => [s.id, { order: s.order, enabled: s.enabled }]),
+    );
+    const customStores = this.state.stores.filter((s) => !seedStoreIds.has(s.id));
+    this.state.stores = [
+      ...STORES_SEED.map((s) => ({ ...s, ...(userOverrides.get(s.id) ?? {}) })),
+      ...customStores,
+    ];
+
+    // Categorías y productos: refresco completo del seed; preservamos customs.
+    const customCategories = this.state.categories.filter((c) => !seedCategoryIds.has(c.id));
+    this.state.categories = [...CATEGORIES_SEED, ...customCategories];
+
+    const customProducts = this.state.products.filter((p) => !seedProductIds.has(p.id));
+    this.state.products = [...PRODUCTS_SEED, ...customProducts];
+
+    this.state.storeTypes = STORE_TYPES;
+  }
+
   hydrate(): void {
     if (this.hydrated) return;
     this.state = loadState();
+    this.refreshSeed();
     this.hydrated = true;
+    saveState(this.state);
   }
 
   /** Persiste a LocalStorage y empuja al doc Y.js si la sync está activa. */

@@ -93,4 +93,8 @@ export interface AppState {
   categories: Category[];
   products: Product[];
   lists: Record<Store['id'], ShoppingList>;
+  /** Frecuencia de uso por tienda y producto. Se incrementa cada vez que el
+   *  usuario añade un producto a una lista. Sirve para mostrar "habituales"
+   *  en la UI sin tener que listar todo el catálogo. */
+  usage?: Record<Store['id'], Record<Product['id'], number>>;
 }

@@ -99,16 +99,18 @@
             class="inline-flex items-center gap-1 text-xs rounded-full border px-1.5 py-0.5 hover:bg-[var(--bg)] transition"
             style="border-color: var(--border);">
             <span class="size-2 rounded-full"
-              style={syncStatus.peers > 0
+              style={syncStatus.enabled && syncStatus.signalingConnected
                 ? 'background:#22c55e; box-shadow: 0 0 6px #22c55e;'
-                : syncStatus.signalingConnected
+                : syncStatus.enabled
                   ? 'background:#0ea5e9;'
                   : syncStatus.lastError
                     ? 'background:#ef4444;'
-                    : syncStatus.enabled
-                      ? 'background:#0ea5e9;'
-                      : 'background:#94a3b8;'}></span>
-            {syncStatus.peers > 0 ? `${syncStatus.peers}` : 'sync'}
+                    : 'background:#94a3b8;'}></span>
+            {syncStatus.enabled && syncStatus.signalingConnected
+              ? 'sync'
+              : syncStatus.enabled
+                ? 'sync…'
+                : 'sync off'}
           </button>
         </p>
       </div>

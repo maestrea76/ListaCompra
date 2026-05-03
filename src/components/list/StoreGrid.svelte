@@ -7,10 +7,16 @@
   let editing = $state<Store | undefined>(undefined);
   let creating = $state(false);
 
+  // Orden alfabético, pero la tienda "Otros" siempre al final.
   const visibleStores = $derived(
     app.state.stores
       .filter((s) => s.enabled !== false)
-      .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })),
+      .sort((a, b) => {
+        const aOtros = /^otros$/i.test(a.name.trim());
+        const bOtros = /^otros$/i.test(b.name.trim());
+        if (aOtros !== bOtros) return aOtros ? 1 : -1;
+        return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+      }),
   );
 
   function openCreate() {

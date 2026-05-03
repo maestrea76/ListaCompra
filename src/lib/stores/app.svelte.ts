@@ -152,7 +152,17 @@ class AppStore {
     });
     list.updatedAt = Date.now();
     this.state.lists[storeId] = list;
+    // Incrementa contador de uso del producto en esta tienda.
+    if (!this.state.usage) this.state.usage = {};
+    if (!this.state.usage[storeId]) this.state.usage[storeId] = {};
+    this.state.usage[storeId][item.productId] =
+      (this.state.usage[storeId][item.productId] ?? 0) + 1;
     this.persist();
+  }
+
+  /** Devuelve el contador de uso de un producto en una tienda concreta. */
+  usageCount(storeId: string, productId: string): number {
+    return this.state.usage?.[storeId]?.[productId] ?? 0;
   }
 
   /** Ajusta la cantidad. Si delta hace que baje a <=0, no hace nada (usa

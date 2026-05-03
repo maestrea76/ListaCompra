@@ -16,8 +16,17 @@
   let activeCat = $state<string | 'all'>('all');
 
   const UNITS: Unit[] = ['unidad', 'kg', 'g', 'l', 'ml', 'paquete', 'docena', 'caja'];
-  const byName = (a: { name: string }, b: { name: string }) =>
-    a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+
+  // Comparador alfabético en español que deja "Otros" siempre al final.
+  const byName = (a: { name: string }, b: { name: string }) => {
+    const aOtros = /^otros$/i.test(a.name.trim());
+    const bOtros = /^otros$/i.test(b.name.trim());
+    if (aOtros !== bOtros) return aOtros ? 1 : -1;
+    return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+  };
+
+  // Cuántos productos "habituales" mostramos cuando no hay búsqueda.
+  const HABITUALES_LIMIT = 12;
 
   onMount(() => app.hydrate());
 
@@ -40,14 +49,42 @@
     return app.state.products.filter((p) => catIds.has(p.categoryId));
   });
 
-  // Filtro: por categoría activa (si hay) y por texto (si hay), ordenado A-Z.
+  // Sugerencias bajo el buscador. Tres modos:
+  //  - Con texto: busca en todo el catálogo del tipo de tienda (incluso si
+  //    hay categoría activa, busca dentro de ella).
+  //  - Sin texto + categoría: muestra los habituales de esa categoría, y si
+  //    no hay habituales, los primeros 12 alfabéticos como fallback.
+  //  - Sin texto + 'Todas': sólo los habituales del usuario en esta tienda.
+  //    Si nunca ha comprado nada, sale vacío y el usuario usa la búsqueda.
   const filtered = $derived.by(() => {
     let pool = productsForType;
     if (activeCat !== 'all') pool = pool.filter((p) => p.categoryId === activeCat);
+
     const q = query.trim().toLowerCase();
-    if (q) pool = pool.filter((p) => p.name.toLowerCase().includes(q));
-    return pool.slice().sort(byName).slice(0, 60);
+    if (q) {
+      return pool.filter((p) => p.name.toLowerCase().includes(q))
+        .slice().sort(byName).slice(0, 60);
+    }
+
+    // Sin texto: ordenamos por uso descendente y cogemos los top.
+    const habituales = pool
+      .map((p) => ({ p, count: app.usageCount(storeId, p.id) }))
+      .filter((x) => x.count > 0)
+      .sort((a, b) => b.count - a.count || byName(a.p, b.p))
+      .slice(0, HABITUALES_LIMIT)
+      .map((x) => x.p);
+
+    if (habituales.length > 0) return habituales;
+
+    // Fallback: si hay categoría activa pero el usuario no ha comprado nada
+    // ahí todavía, mostramos los primeros 12 alfabéticos para arrancar.
+    if (activeCat !== 'all') {
+      return pool.slice().sort(byName).slice(0, HABITUALES_LIMIT);
+    }
+    return [];
   });
+
+  const showingHabituales = $derived(query.trim() === '' && filtered.length > 0);
 
   // Lista actual agrupada por categoría, categorías y productos en orden A-Z.
   const grouped = $derived.by(() => {
@@ -201,6 +238,11 @@
 
       <!-- Sugerencias de productos según filtro -->
       {#if filtered.length > 0}
+        {#if showingHabituales}
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted">
+            ⭐ Tus habituales {activeCat !== 'all' ? 'de esta sección' : 'aquí'}
+          </p>
+        {/if}
         <div class="flex flex-wrap gap-2">
           {#each filtered as p (p.id)}
             <button onclick={() => addProduct(p.id)}
@@ -210,10 +252,19 @@
             </button>
           {/each}
         </div>
+        {#if showingHabituales}
+          <p class="text-xs text-muted">
+            Para encontrar otros productos del catálogo, escribe en la búsqueda.
+          </p>
+        {/if}
       {:else if query.trim()}
         <p class="text-sm text-muted">
           Sin resultados. Pulsa <kbd class="rounded border px-1.5 py-0.5 text-xs"
             style="border-color: var(--border);">Enter</kbd> para crear "<strong>{query}</strong>".
+        </p>
+      {:else}
+        <p class="text-sm text-muted">
+          Aún no has añadido productos aquí. Escribe en la búsqueda o elige una sección.
         </p>
       {/if}
     </div>

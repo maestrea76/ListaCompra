@@ -179,14 +179,37 @@ export async function startSync(): Promise<void> {
     });
 
     provider.on('peers', (e) => {
-      if (e.added?.length) log(`👥 +${e.added.length} peer(s)`);
+      if (e.added?.length) {
+        log(`👥 +${e.added.length} peer(s) → forzando push del snapshot`);
+        // Cuando llega un peer nuevo, forzamos un push inmediato para que
+        // reciba nuestro estado aunque acabe de entrar tarde.
+        pushNow();
+      }
       if (e.removed?.length) log(`👋 -${e.removed.length} peer(s)`);
     });
 
     provider.awareness.on('change', () => {
       const n = provider!.awareness.getStates().size - 1;
+      const previousPeers = syncStatus.peers;
       syncStatus.peers = Math.max(0, n);
+      // Si pasamos de 0 peers a >0, forzamos push también (a veces el
+      // evento 'peers' llega tarde o no llega).
+      if (previousPeers === 0 && syncStatus.peers > 0) {
+        log(`🔗 Awareness detecta peer → push`);
+        pushNow();
+      }
     });
+
+    // Heartbeat: cada 5s re-empujamos el snapshot. Muy poca carga (Y.js
+    // sólo propaga deltas), pero garantiza que peers tardíos o con
+    // conexiones inestables acaben recibiendo nuestros datos.
+    const heartbeat = setInterval(() => {
+      if (provider && map) {
+        pushNow();
+      } else {
+        clearInterval(heartbeat);
+      }
+    }, 5000);
 
     syncStatus.enabled = true;
 

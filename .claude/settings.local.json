@@ -16,7 +16,8 @@
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix\\(sync+seed\\): refresh seed en hydrate, signaling único, auto-sync tras restore *)",
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix\\(sync\\): TURN público + diag de conexiones WebRTC *)",
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix\\(sync\\): múltiples signaling servers para redundancia *)",
-      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix\\(sync\\): quitar password — causaba mismatch de sala en signaling server *)"
+      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix\\(sync\\): quitar password — causaba mismatch de sala en signaling server *)",
+      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix\\(sync\\): re-push agresivo al detectar peer + heartbeat 5s *)"
     ]
   }
 }

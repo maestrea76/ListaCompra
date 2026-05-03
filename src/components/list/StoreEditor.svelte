@@ -63,6 +63,7 @@
       brand: { bg, fg, initials: initials.trim() || undefined },
       order: store?.order ?? app.state.stores.length,
       enabled: true,
+      edited: true,    // marca para que refreshSeed no la sobreescriba
     };
     app.upsertStore(finalStore);
     onClose();

@@ -29,6 +29,9 @@ export interface Store {
   order?: number;
   /** Si es false, oculta la tienda sin borrarla */
   enabled?: boolean;
+  /** True si el usuario la ha editado vía StoreEditor. refreshSeed
+   *  no la sobreescribe con los valores del código si está marcada. */
+  edited?: boolean;
 }
 
 /** Categoría dentro de un tipo de tienda */

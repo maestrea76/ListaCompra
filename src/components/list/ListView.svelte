@@ -13,23 +13,24 @@
   let { storeId }: { storeId: string } = $props();
 
   let query = $state('');
-  let qty = $state(1);
-  let unit = $state<Unit>('unidad');
   let activeCat = $state<string | 'all'>('all');
 
   const UNITS: Unit[] = ['unidad', 'kg', 'g', 'l', 'ml', 'paquete', 'docena', 'caja'];
+  const byName = (a: { name: string }, b: { name: string }) =>
+    a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
 
   onMount(() => app.hydrate());
 
   const store = $derived(app.state.stores.find((s) => s.id === storeId));
   const list = $derived(app.state.lists[storeId] ?? { storeId, items: [], updatedAt: 0 });
 
-  // Categorías disponibles para el tipo de tienda actual
+  // Categorías disponibles para el tipo de tienda actual, ordenadas A-Z.
   const categories = $derived(
     store
       ? app.state.categories
           .filter((c) => c.typeId === store.typeId)
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+          .slice()
+          .sort(byName)
       : [],
   );
 
@@ -39,16 +40,16 @@
     return app.state.products.filter((p) => catIds.has(p.categoryId));
   });
 
-  // Filtro: por categoría activa (si hay) y por texto (si hay)
+  // Filtro: por categoría activa (si hay) y por texto (si hay), ordenado A-Z.
   const filtered = $derived.by(() => {
     let pool = productsForType;
     if (activeCat !== 'all') pool = pool.filter((p) => p.categoryId === activeCat);
     const q = query.trim().toLowerCase();
     if (q) pool = pool.filter((p) => p.name.toLowerCase().includes(q));
-    return pool.slice(0, 60);
+    return pool.slice().sort(byName).slice(0, 60);
   });
 
-  // Lista actual agrupada por categoría
+  // Lista actual agrupada por categoría, categorías y productos en orden A-Z.
   const grouped = $derived.by(() => {
     const byCat = new Map<string, typeof list.items>();
     for (const it of list.items) {
@@ -57,18 +58,26 @@
       if (!byCat.has(catId)) byCat.set(catId, []);
       byCat.get(catId)!.push(it);
     }
-    return [...byCat.entries()].map(([catId, items]) => ({
-      category: app.state.categories.find((c) => c.id === catId),
-      items,
-    }));
+    return [...byCat.entries()]
+      .map(([catId, items]) => ({
+        category: app.state.categories.find((c) => c.id === catId),
+        items: items.slice().sort((a, b) => {
+          const pa = app.state.products.find((p) => p.id === a.productId)?.name ?? '';
+          const pb = app.state.products.find((p) => p.id === b.productId)?.name ?? '';
+          return pa.localeCompare(pb, 'es', { sensitivity: 'base' });
+        }),
+      }))
+      .sort((a, b) =>
+        (a.category?.name ?? '~').localeCompare(b.category?.name ?? '~', 'es', { sensitivity: 'base' }),
+      );
   });
 
   function addProduct(productId: string) {
     const p = app.state.products.find((x) => x.id === productId);
     app.addItem(storeId, {
       productId,
-      qty: qty || 1,
-      unit: unit ?? p?.defaultUnit ?? 'unidad',
+      qty: 1,
+      unit: p?.defaultUnit ?? 'unidad',
     });
     query = '';
   }
@@ -95,49 +104,73 @@
     if (!it) return;
     app.setItemQty(storeId, itemId, it.qty + delta);
   }
+
+  const doneCount = $derived(list.items.filter((i) => i.done).length);
+
+  function clearDone() {
+    if (doneCount === 0) {
+      alert('No hay productos marcados como comprados.');
+      return;
+    }
+    if (!confirm(`¿Eliminar los ${doneCount} producto(s) marcados como comprados?`)) return;
+    app.clearDone(storeId);
+  }
+
+  function clearAll() {
+    if (list.items.length === 0) return;
+    if (!confirm(`¿Vaciar la lista entera (${list.items.length} producto(s))? Esta acción no se puede deshacer.`)) return;
+    for (const it of [...list.items]) app.removeItem(storeId, it.id);
+  }
 </script>
 
 {#if !store}
   <p>Tienda no encontrada.</p>
 {:else}
   <div class="space-y-5">
-    <header class="flex items-center justify-between">
-      <a href={base('/')} class="text-sm text-muted hover:underline">← Tiendas</a>
-      <h2 class="text-xl font-bold flex items-center gap-2">
+    <!-- Header en 2 filas en móvil para que el nombre largo y los botones no
+         provoquen scroll horizontal. -->
+    <header class="space-y-2">
+      <div class="flex items-center justify-between gap-2">
+        <a href={base('/')} class="text-sm text-muted hover:underline shrink-0">← Tiendas</a>
+        <div class="flex gap-1 shrink-0">
+          <button onclick={clearDone}
+            disabled={doneCount === 0}
+            class="text-xs rounded-full border px-3 py-1.5 hover:bg-[var(--bg)] transition disabled:opacity-40"
+            style="border-color: var(--border);"
+            title="Borrar productos marcados como comprados">
+            🧹 Limpiar comprados {doneCount > 0 ? `(${doneCount})` : ''}
+          </button>
+          <button onclick={clearAll}
+            disabled={list.items.length === 0}
+            class="text-xs rounded-full border px-3 py-1.5 hover:bg-[var(--bg)] transition disabled:opacity-40"
+            style="border-color: var(--border); color: #dc2626;"
+            title="Vaciar la lista entera">
+            🗑️
+          </button>
+        </div>
+      </div>
+      <h2 class="text-xl font-bold flex items-center gap-2 min-w-0">
         {#if store.icon.kind === 'image'}
-          <img src={base(store.icon.value)} alt="" class="size-7 object-contain" />
+          <img src={store.icon.value.startsWith('data:') ? store.icon.value : base(store.icon.value)}
+            alt="" class="size-7 object-contain shrink-0" />
         {:else if store.icon.kind === 'emoji'}
-          <span>{store.icon.value}</span>
+          <span class="shrink-0">{store.icon.value}</span>
         {/if}
-        {store.name}
+        <span class="truncate">{store.name}</span>
       </h2>
-      <button onclick={() => app.clearDone(storeId)} class="text-xs text-muted hover:underline">
-        Limpiar comprados
-      </button>
     </header>
 
-    <!-- Buscador + crear -->
+    <!-- Buscador (sólo el input — la cantidad y unidad se editan después,
+         por item, abajo). Así en móvil no se descuadra. -->
     <div class="card-elev p-4 space-y-3">
-      <div class="flex gap-2">
-        <input
-          type="text" bind:value={query} placeholder="Buscar o crear (Enter)…"
-          onkeydown={handleQueryKeydown}
-          class="flex-1 rounded-xl border px-4 py-2 bg-transparent"
-          style="border-color: var(--border);"
-        />
-        <input type="number" min="0.1" step="0.1" bind:value={qty}
-          class="w-20 rounded-xl border px-3 py-2 bg-transparent"
-          style="border-color: var(--border);" />
-        <select bind:value={unit}
-          class="rounded-xl border px-3 py-2 bg-transparent"
-          style="border-color: var(--border);">
-          {#each UNITS as u}<option value={u}>{u}</option>{/each}
-        </select>
-      </div>
+      <input
+        type="text" bind:value={query} placeholder="Buscar o crear producto (Enter)…"
+        onkeydown={handleQueryKeydown}
+        class="w-full rounded-xl border px-4 py-2.5 bg-transparent"
+        style="border-color: var(--border);"
+      />
 
-      <!-- Filtro por categoría/sección de esta tienda.
-           Estilo "tabs verticales": estructura distinta a las píldoras de
-           producto para que el usuario distinga sección vs producto. -->
+      <!-- Filtro por categoría/sección -->
       <div>
         <div class="flex items-center justify-between mb-1.5">
           <span class="text-xs font-semibold uppercase tracking-wider text-muted">Sección</span>
@@ -213,7 +246,7 @@
                   </span>
                   <div class="flex-1 min-w-0">
                     <div class="product-name font-medium truncate">{p?.name ?? '?'}</div>
-                    <div class="flex items-center gap-1.5 mt-1">
+                    <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                       <button onclick={() => step(item.id, -1)}
                         class="size-7 rounded-full border grid place-items-center hover:bg-[var(--bg)]"
                         style="border-color: var(--border);">−</button>

@@ -21,16 +21,30 @@ class AppStore {
     const seedProductIds = new Set(PRODUCTS_SEED.map((p) => p.id));
     const seedCategoryIds = new Set(CATEGORIES_SEED.map((c) => c.id));
 
-    // Tiendas: para los ids del seed, usamos los datos del código pero
-    // preservamos `order` y `enabled` del usuario. Las custom se mantienen.
-    const userOverrides = new Map(
-      this.state.stores
-        .filter((s) => seedStoreIds.has(s.id))
-        .map((s) => [s.id, { order: s.order, enabled: s.enabled }]),
-    );
+    // Tiendas:
+    //  - Si el usuario editó la tienda (edited: true), la dejamos tal cual.
+    //  - Si no, usamos los datos del seed pero preservamos order/enabled.
+    //  - Las tiendas custom (id no-seed) siempre se mantienen.
+    //  - Si el seed ya no incluye un id (p.ej. quitamos Menta), también
+    //    se elimina del local salvo que el usuario la hubiera editado.
+    const localById = new Map(this.state.stores.map((s) => [s.id, s]));
     const customStores = this.state.stores.filter((s) => !seedStoreIds.has(s.id));
+    const editedSeedStores = this.state.stores.filter(
+      (s) => seedStoreIds.has(s.id) && s.edited,
+    );
+    const editedSeedIds = new Set(editedSeedStores.map((s) => s.id));
+
     this.state.stores = [
-      ...STORES_SEED.map((s) => ({ ...s, ...(userOverrides.get(s.id) ?? {}) })),
+      // Seed normales (no editados): refresh desde código
+      ...STORES_SEED
+        .filter((s) => !editedSeedIds.has(s.id))
+        .map((s) => {
+          const local = localById.get(s.id);
+          return { ...s, order: local?.order ?? s.order, enabled: local?.enabled ?? s.enabled };
+        }),
+      // Seed editados por el usuario: respetar tal cual
+      ...editedSeedStores,
+      // Tiendas custom del usuario
       ...customStores,
     ];
 

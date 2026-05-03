@@ -27,7 +27,6 @@ export const STORES_SEED: Store[] = [
   { id: 'ikea',          name: 'Ikea',             typeId: 'hogar',            icon: { kind: 'image', value: '/logos/ikea.png' },        brand: { bg: '#0058A3', fg: '#FFDA1A', initials: 'IK' } },
   { id: 'zara',          name: 'Zara',             typeId: 'ropa',             icon: { kind: 'image', value: '/logos/zara.jpg' },        brand: { bg: '#000000', fg: '#FFFFFF', initials: 'Z' } },
   { id: 'garbera',       name: 'Garbera',          typeId: 'centro-comercial', icon: { kind: 'emoji', value: '🏬' }, brand: { bg: '#5B2A86', fg: '#FFFFFF' } },
-  { id: 'menta',         name: 'Menta',            typeId: 'centro-comercial', icon: { kind: 'emoji', value: '🌱' }, brand: { bg: '#2DA44E', fg: '#FFFFFF' } },
   { id: 'primor',        name: 'Primor',           typeId: 'perfumeria',       icon: { kind: 'emoji', value: '💄' }, brand: { bg: '#E91E63', fg: '#FFFFFF' } },
   { id: 'locutorio',     name: 'Locutorio',        typeId: 'locutorio',        icon: { kind: 'emoji', value: '📞' }, brand: { bg: '#455A64', fg: '#FFFFFF' } },
   { id: 'druni',         name: 'Druni',            typeId: 'perfumeria',       icon: { kind: 'image', value: '/logos/druni.png' },       brand: { bg: '#C9156D', fg: '#FFFFFF' } },

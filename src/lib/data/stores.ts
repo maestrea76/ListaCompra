@@ -11,11 +11,11 @@ import type { Store } from '../types';
  */
 export const STORES_SEED: Store[] = [
   // --- Supermercados ---
-  { id: 'eroski',        name: 'Eroski',           typeId: 'supermercado',     icon: { kind: 'emoji', value: '🛒' }, brand: { bg: '#E2231A', fg: '#FFFFFF', initials: 'E' } },
+  { id: 'eroski',        name: 'Eroski',           typeId: 'supermercado',     icon: { kind: 'image', value: '/logos/eroski.svg' },    brand: { bg: '#FFFFFF', fg: '#E2231A', initials: 'E' } },
   { id: 'mercadona',     name: 'Mercadona',        typeId: 'supermercado',     icon: { kind: 'image', value: '/logos/mercadona.jpg' }, brand: { bg: '#0E9C49', fg: '#FFFFFF', initials: 'M' } },
   { id: 'dia',           name: 'Día',              typeId: 'supermercado',     icon: { kind: 'image', value: '/logos/dia.png' },       brand: { bg: '#E20613', fg: '#FFE600', initials: 'D' } },
   { id: 'alcampo',       name: 'Alcampo',          typeId: 'supermercado',     icon: { kind: 'emoji', value: '🦜' }, brand: { bg: '#E94E1B', fg: '#FFFFFF', initials: 'A' } },
-  { id: 'carrefour',     name: 'Carrefour',        typeId: 'supermercado',     icon: { kind: 'image', value: '/logos/carrefour.png' }, brand: { bg: '#004E9F', fg: '#FFFFFF', initials: 'C' } },
+  { id: 'carrefour',     name: 'Carrefour',        typeId: 'supermercado',     icon: { kind: 'image', value: '/logos/carrefour.svg' }, brand: { bg: '#FFFFFF', fg: '#004E9F', initials: 'C' } },
   { id: 'lidl',          name: 'Lidl',             typeId: 'supermercado',     icon: { kind: 'image', value: '/logos/lidl.jpeg' },     brand: { bg: '#FFE600', fg: '#0050AA', initials: 'L' } },
   { id: 'bm',            name: 'BM',               typeId: 'supermercado',     icon: { kind: 'image', value: '/logos/bm.png' },        brand: { bg: '#005CA9', fg: '#FFE600', initials: 'BM' } },
   { id: 'lukas',         name: 'Lukas',            typeId: 'supermercado',     icon: { kind: 'emoji', value: '🛍️' }, brand: { bg: '#003366', fg: '#FFD200', initials: 'LK' } },

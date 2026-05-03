@@ -8,7 +8,9 @@
       "Bash(cp Dia.png /c/Users/maest/TuCompra/public/logos/dia.png)",
       "Bash(git add *)",
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'feat: logos, +/- por item, filtro categoría, restore boardinggate *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "WebFetch(domain:maestrea76.github.io)",
+      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'feat: editor de tiendas, FAB, filtro de sección, vinos, logos SVG *)"
     ]
   }
 }

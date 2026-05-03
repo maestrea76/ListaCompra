@@ -135,22 +135,35 @@
         </select>
       </div>
 
-      <!-- Filtro por categoría/sección de esta tienda -->
-      <div class="flex flex-wrap gap-1.5">
-        <button onclick={() => (activeCat = 'all')}
-          class="rounded-full border px-3 py-1 text-xs transition"
-          class:active-cat={activeCat === 'all'}
-          style="border-color: var(--border);">
-          Todas
-        </button>
-        {#each categories as c (c.id)}
-          <button onclick={() => (activeCat = c.id)}
-            class="rounded-full border px-3 py-1 text-xs transition"
-            class:active-cat={activeCat === c.id}
+      <!-- Filtro por categoría/sección de esta tienda.
+           Estilo "tabs verticales": estructura distinta a las píldoras de
+           producto para que el usuario distinga sección vs producto. -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-semibold uppercase tracking-wider text-muted">Sección</span>
+          {#if activeCat !== 'all'}
+            <button onclick={() => (activeCat = 'all')}
+              class="text-xs text-muted hover:underline">limpiar</button>
+          {/if}
+        </div>
+        <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scroll-smooth">
+          <button onclick={() => (activeCat = 'all')}
+            class="shrink-0 w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 transition"
+            class:cat-active={activeCat === 'all'}
             style="border-color: var(--border);">
-            {c.icon.kind === 'emoji' ? c.icon.value : '📁'} {c.name}
+            <span class="text-2xl">🗂️</span>
+            <span class="text-[11px] font-medium leading-tight text-center">Todas</span>
           </button>
-        {/each}
+          {#each categories as c (c.id)}
+            <button onclick={() => (activeCat = c.id)}
+              class="shrink-0 w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 px-1 transition"
+              class:cat-active={activeCat === c.id}
+              style="border-color: var(--border);">
+              <span class="text-2xl">{c.icon.kind === 'emoji' ? c.icon.value : '📁'}</span>
+              <span class="text-[11px] font-medium leading-tight text-center line-clamp-2">{c.name}</span>
+            </button>
+          {/each}
+        </div>
       </div>
 
       <!-- Sugerencias de productos según filtro -->
@@ -232,9 +245,10 @@
 {/if}
 
 <style>
-  .active-cat {
+  .cat-active {
     background: var(--accent);
     color: white;
     border-color: var(--accent) !important;
+    box-shadow: 0 4px 12px -4px var(--accent);
   }
 </style>

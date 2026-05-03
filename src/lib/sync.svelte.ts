@@ -143,12 +143,20 @@ export async function startSync(): Promise<void> {
       },
     ];
 
+    // Múltiples signaling servers para redundancia. Si uno está caído o
+    // filtrando, los otros pueden propagar el descubrimiento de peers.
+    // (signaling.yjs.dev ha tenido problemas intermitentes.)
+    const signaling = [
+      'wss://y-webrtc-eu.fly.dev',
+      'wss://signaling.yjs.dev',
+    ];
+
     provider = new WebrtcProvider(room, ydoc as never, {
-      signaling: ['wss://signaling.yjs.dev'],
+      signaling,
       password: `tc-${profile.username.toLowerCase().trim()}`,
       peerOpts: { config: { iceServers } },
     } as never) as unknown as AnyProvider;
-    log('Conectando a signaling.yjs.dev (STUN + TURN openrelay)…');
+    log(`Conectando a ${signaling.length} signaling server(s) + STUN/TURN…`);
 
     // Sondeo periódico del número de conexiones WebRTC intentadas.
     // Si tras unos segundos signaling=conectado pero webrtcConns=0,

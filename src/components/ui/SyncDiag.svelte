@@ -44,6 +44,17 @@
       <dt class="text-muted">Sala</dt>
       <dd class="font-mono text-xs break-all">{syncStatus.room || '—'}</dd>
 
+      <dt class="text-muted">Conexiones WebRTC</dt>
+      <dd>
+        {syncStatus.webrtcConns} intento{syncStatus.webrtcConns === 1 ? '' : 's'},
+        {syncStatus.peers} establecida{syncStatus.peers === 1 ? '' : 's'}
+        {#if syncStatus.signalingConnected && syncStatus.webrtcConns === 0}
+          <span class="block text-xs text-muted">→ el otro dispositivo no está activo aún</span>
+        {:else if syncStatus.webrtcConns > 0 && syncStatus.peers === 0}
+          <span class="block text-xs" style="color:#f59e0b">→ peers detectados pero handshake WebRTC fallando (NAT/firewall)</span>
+        {/if}
+      </dd>
+
       <dt class="text-muted">Última sync</dt>
       <dd>{ago === '—' ? '—' : `hace ${ago}`}</dd>
 

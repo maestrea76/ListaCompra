@@ -38,6 +38,7 @@ let suppress = false;
 export const syncStatus = $state({
   enabled: false,
   peers: 0,
+  webrtcConns: 0,        // intentos de conexión WebRTC (incluye no establecidas)
   room: '',
   username: '',
   signalingConnected: false,
@@ -123,11 +124,41 @@ export async function startSync(): Promise<void> {
     // ambos peers acaban en el MISMO servidor y se descubren mutuamente.
     // El `password` cifra el contenido del room — sólo otros dispositivos
     // con el mismo username pueden leer los datos.
+    // STUN + TURN para que el handshake WebRTC funcione también detrás de
+    // NATs simétricos / firewalls restrictivos (caso típico en oficinas
+    // o redes domésticas con CGNAT). Open Relay Project ofrece TURN
+    // público y gratuito.
+    const iceServers = [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' },
+      {
+        urls: [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp',
+        ],
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+    ];
+
     provider = new WebrtcProvider(room, ydoc as never, {
       signaling: ['wss://signaling.yjs.dev'],
       password: `tc-${profile.username.toLowerCase().trim()}`,
+      peerOpts: { config: { iceServers } },
     } as never) as unknown as AnyProvider;
-    log('Conectando a signaling.yjs.dev…');
+    log('Conectando a signaling.yjs.dev (STUN + TURN openrelay)…');
+
+    // Sondeo periódico del número de conexiones WebRTC intentadas.
+    // Si tras unos segundos signaling=conectado pero webrtcConns=0,
+    // significa que el otro peer no está activo en ese mismo momento.
+    // Si webrtcConns>0 pero peers=0, la negociación WebRTC está fallando.
+    setInterval(() => {
+      if (!provider) return;
+      const room = (provider as unknown as { room?: { webrtcConns?: Map<unknown, unknown> } }).room;
+      syncStatus.webrtcConns = room?.webrtcConns?.size ?? 0;
+    }, 1500);
 
     provider.on('status', (e) => {
       syncStatus.signalingConnected = !!e.connected;

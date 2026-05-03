@@ -13,7 +13,8 @@
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'feat: editor de tiendas, FAB, filtro de sección, vinos, logos SVG *)",
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'feat\\(sync\\): real-time entre dispositivos vía WebRTC P2P \\(Y.js\\) *)",
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix\\(sync\\): polyfills nodos, panel diag clickable, log + errores visibles *)",
-      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix\\(sync+seed\\): refresh seed en hydrate, signaling único, auto-sync tras restore *)"
+      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix\\(sync+seed\\): refresh seed en hydrate, signaling único, auto-sync tras restore *)",
+      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix\\(sync\\): TURN público + diag de conexiones WebRTC *)"
     ]
   }
 }

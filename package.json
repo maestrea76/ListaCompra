@@ -15,7 +15,9 @@
     "@astrojs/svelte": "^7.0.10",
     "astro": "^5.1.0",
     "lucide-svelte": "^0.469.0",
-    "svelte": "^5.16.0"
+    "svelte": "^5.16.0",
+    "y-webrtc": "^10.3.0",
+    "yjs": "^13.6.20"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",

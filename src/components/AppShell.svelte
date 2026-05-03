@@ -10,6 +10,7 @@
   import StoreGrid from './list/StoreGrid.svelte';
   import ThemeToggle from './ui/ThemeToggle.svelte';
   import BackupModal from './ui/BackupModal.svelte';
+  import { startSync, stopSync, syncStatus } from '$lib/sync.svelte';
 
   const UNLOCK_KEY = 'tucompra:unlocked:v1';
 
@@ -33,6 +34,14 @@
     app.hydrate();
     unlocked = readUnlock(app.state.profile?.username);
     applyTheme(app.state.profile?.theme ?? 'system');
+    if (app.state.profile) startSync().catch(console.warn);
+  });
+
+  // Si el usuario crea/restaura un perfil más tarde, arranca sync entonces.
+  $effect(() => {
+    if (app.state.profile && !syncStatus.enabled) {
+      startSync().catch(console.warn);
+    }
   });
 
   function applyTheme(t: 'light' | 'dark' | 'system') {
@@ -50,12 +59,15 @@
   }
 
   function signOut() {
+    // Sólo bloquea con PIN, NO desconecta sync (cuando vuelva a desbloquear
+    // sigue al día). Si quieres romper la sesión por completo, usa "cambiar usuario".
     clearUnlock();
     unlocked = false;
   }
 
   function changeUser() {
     if (!confirm('¿Borrar este perfil del dispositivo? Genera primero un código de backup si quieres conservar las listas.')) return;
+    stopSync();
     clearUnlock();
     app.signOut();
     unlocked = false;
@@ -74,7 +86,21 @@
     <header class="flex items-center justify-between mb-6 gap-3">
       <div class="min-w-0">
         <h1 class="text-2xl font-bold">🛒 Tu Compra</h1>
-        <p class="text-sm text-muted truncate">Hola, {app.state.profile.username}</p>
+        <p class="text-sm text-muted truncate flex items-center gap-1.5">
+          Hola, {app.state.profile.username}
+          {#if syncStatus.enabled}
+            <span title={syncStatus.peers > 0
+              ? `Sincronizando con ${syncStatus.peers} dispositivo${syncStatus.peers === 1 ? '' : 's'}`
+              : 'Sync activo, esperando otro dispositivo con el mismo usuario'}
+              class="inline-flex items-center gap-1 text-xs">
+              <span class="size-2 rounded-full"
+                style={syncStatus.peers > 0
+                  ? 'background:#22c55e; box-shadow: 0 0 6px #22c55e;'
+                  : 'background:#94a3b8;'}></span>
+              {syncStatus.peers > 0 ? `${syncStatus.peers}` : ''}
+            </span>
+          {/if}
+        </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
         <button onclick={() => (showBackup = true)} title="Generar código de backup"

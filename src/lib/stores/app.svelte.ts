@@ -14,11 +14,12 @@ class AppStore {
     this.hydrated = true;
   }
 
-  /** Persiste a LocalStorage. La sincronización entre dispositivos se hace
-   *  bajo demanda mediante "código de backup" (ver lib/backup.ts) — no hay
-   *  llamadas automáticas a servidores. */
+  /** Persiste a LocalStorage y empuja al doc Y.js si la sync está activa. */
   persist(): void {
     saveState(this.state);
+    // Importación dinámica para no romper SSR ni cargar el bundle de sync
+    // si el usuario aún no ha entrado en la app.
+    import('../sync.svelte').then((m) => m.schedulePush()).catch(() => {});
   }
 
   // -------- Perfil --------

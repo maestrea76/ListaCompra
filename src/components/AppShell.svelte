@@ -1,49 +1,28 @@
 <script lang="ts">
-  // Wrapper raíz: hidrata el store, decide si mostrar setup, gate de PIN o la app.
-  // El estado "unlocked" se persiste en localStorage atado al username actual,
-  // así no vuelve a pedir el PIN al navegar entre páginas o al recargar.
-  //
-  // La sync es OPT-IN: el usuario la activa desde el panel 📡. Al cargar
-  // la app, sólo se arranca automáticamente si el usuario la activó antes.
+  // Wrapper raíz: hidrata el store y decide si mostrar el setup inicial o
+  // la app. Sin PIN — la autenticación real (cuando el usuario activa la
+  // sync online) la gestiona Supabase con email+password.
 
   import { onMount } from 'svelte';
   import { app } from '$lib/stores/app.svelte';
   import { clearState } from '$lib/storage';
   import ProfileSetup from './auth/ProfileSetup.svelte';
-  import PinGate from './auth/PinGate.svelte';
   import StoreGrid from './list/StoreGrid.svelte';
   import ThemeToggle from './ui/ThemeToggle.svelte';
   import SyncDiag from './ui/SyncDiag.svelte';
   import { startSync, stopSync, syncStatus, syncWasEnabled, hydrateAuth } from '$lib/sync.svelte';
 
-  const UNLOCK_KEY = 'tucompra:unlocked:v1';
-
-  let unlocked = $state(false);
   let showDiag = $state(false);
-
-  function readUnlock(username?: string): boolean {
-    if (!username || typeof localStorage === 'undefined') return false;
-    return localStorage.getItem(UNLOCK_KEY) === username;
-  }
-
-  function writeUnlock(username: string) {
-    localStorage.setItem(UNLOCK_KEY, username);
-  }
-
-  function clearUnlock() {
-    localStorage.removeItem(UNLOCK_KEY);
-  }
 
   onMount(async () => {
     app.hydrate();
-    unlocked = readUnlock(app.state.profile?.username);
     applyTheme(app.state.profile?.theme ?? 'system');
 
     // Hidrata sesión Supabase si la había de antes.
     await hydrateAuth();
 
-    // Si la sync estaba activa antes y tenemos auth + passphrase en
-    // sessionStorage, la re-arrancamos.
+    // Si la sync estaba activa antes y tenemos auth + passphrase
+    // persistida, la re-arrancamos transparentemente.
     if (syncWasEnabled() && syncStatus.user && syncStatus.passphraseSet) {
       startSync().catch((e) => console.warn('Sync auto-start falló:', e));
     }
@@ -58,11 +37,6 @@
     if (app.state.profile?.theme) applyTheme(app.state.profile.theme);
   });
 
-  function handleUnlock() {
-    if (app.state.profile) writeUnlock(app.state.profile.username);
-    unlocked = true;
-  }
-
   /** Cierra sesión = borra TODO del navegador.
    *  Si tenías sync online activa, los datos siguen en Supabase y puedes
    *  recuperarlos al volver a iniciar sesión con el mismo email + passphrase. */
@@ -75,7 +49,6 @@
       'Esta acción no se puede deshacer en este dispositivo.'
     )) return;
     try { stopSync(); } catch {}
-    clearUnlock();
     clearState();
     location.reload();
   }
@@ -85,8 +58,6 @@
   <div class="min-h-screen grid place-items-center text-muted">Cargando…</div>
 {:else if !app.state.profile}
   <ProfileSetup />
-{:else if !unlocked}
-  <PinGate onUnlock={handleUnlock} />
 {:else}
   <main class="mx-auto max-w-5xl px-4 py-6">
     <header class="flex items-center justify-between mb-6 gap-3">

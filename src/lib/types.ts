@@ -73,12 +73,10 @@ export interface ShoppingList {
   updatedAt: number;
 }
 
-/** Perfil de usuario estilo Boardinggate: usuario + PIN, 100% local.
- *  El backup entre dispositivos se hace generando un código de texto
- *  (ver lib/backup.ts) — sin APIs ni servidores externos. */
+/** Perfil de usuario local. La autenticación real (cuando el usuario
+ *  activa la sync online) la gestiona Supabase con email+password. */
 export interface UserProfile {
   username: string;
-  pinHash: string;             // SHA-256 del PIN de 4 dígitos
   companion?: boolean;         // true si username acaba en "@MOVIL"
   theme: 'light' | 'dark' | 'system';
   createdAt: number;

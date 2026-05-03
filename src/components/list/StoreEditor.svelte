@@ -1,10 +1,8 @@
 <script lang="ts">
-  // Modal de creación/edición de tienda. Si recibe `store` está en modo
-  // edición y muestra el botón Borrar (que pide PIN antes de actuar).
-  // En modo creación genera un id basado en slug del nombre.
+  // Modal de creación/edición de tienda. En modo creación genera un id
+  // basado en slug del nombre.
 
   import { app } from '$lib/stores/app.svelte';
-  import { verifyPin } from '$lib/storage';
   import type { Store, IconRef } from '$lib/types';
 
   let { store, onClose }: { store?: Store; onClose: () => void } = $props();
@@ -20,10 +18,6 @@
   let fg = $state(store?.brand?.fg ?? '#FFFFFF');
   let initials = $state(store?.brand?.initials ?? '');
   let error = $state('');
-
-  // Pantalla de borrado por PIN
-  let askPin = $state(false);
-  let pinInput = $state('');
 
   function slug(s: string) {
     return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -69,12 +63,13 @@
     onClose();
   }
 
-  async function confirmDelete() {
-    error = '';
-    if (!app.state.profile) return;
-    const ok = await verifyPin(pinInput, app.state.profile.pinHash);
-    if (!ok) { error = 'PIN incorrecto.'; return; }
-    if (store) app.removeStore(store.id);
+  function confirmDelete() {
+    if (!store) return;
+    if (!confirm(
+      `¿Borrar la tienda "${store.name}" y su lista de la compra?\n\n` +
+      'Esta acción no se puede deshacer.'
+    )) return;
+    app.removeStore(store.id);
     onClose();
   }
 </script>
@@ -84,32 +79,7 @@
   <div class="card-elev w-full max-w-md p-6 space-y-4 pop-in max-h-[90vh] overflow-y-auto"
     onclick={(e) => e.stopPropagation()} role="presentation">
 
-    {#if askPin}
-      <header class="space-y-1">
-        <h2 class="text-lg font-bold">⚠️ Borrar "{store?.name}"</h2>
-        <p class="text-xs text-muted">Esta acción no se puede deshacer. Introduce tu PIN para confirmar.</p>
-      </header>
-
-      <input type="password" inputmode="numeric" pattern="\d{4}" maxlength="4"
-        bind:value={pinInput}
-        onkeydown={(e) => e.key === 'Enter' && confirmDelete()}
-        autofocus
-        class="w-full rounded-xl border px-4 py-3 text-center text-xl tracking-[0.5em] bg-transparent"
-        style="border-color: var(--border);" />
-
-      {#if error}<p class="text-sm text-red-500">{error}</p>{/if}
-
-      <div class="flex gap-2">
-        <button onclick={() => { askPin = false; pinInput = ''; error = ''; }}
-          class="flex-1 rounded-xl border py-2.5"
-          style="border-color: var(--border);">Cancelar</button>
-        <button onclick={confirmDelete}
-          class="flex-1 rounded-xl py-2.5 font-semibold text-white"
-          style="background: #dc2626;">Borrar definitivamente</button>
-      </div>
-
-    {:else}
-      <header class="flex items-start justify-between">
+    <header class="flex items-start justify-between">
         <h2 class="text-lg font-bold">{isEdit ? '✏️ Editar tienda' : '➕ Nueva tienda'}</h2>
         <button onclick={onClose} class="text-2xl leading-none text-muted hover:text-current">×</button>
       </header>
@@ -201,7 +171,7 @@
 
       <div class="flex gap-2 pt-2">
         {#if isEdit}
-          <button onclick={() => (askPin = true)}
+          <button onclick={confirmDelete}
             class="rounded-xl border px-4 py-2.5 text-sm font-medium"
             style="border-color: #dc2626; color: #dc2626;">🗑️ Borrar</button>
         {/if}
@@ -211,6 +181,5 @@
           {isEdit ? 'Guardar cambios' : 'Crear tienda'}
         </button>
       </div>
-    {/if}
   </div>
 </div>

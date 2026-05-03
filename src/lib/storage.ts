@@ -1,6 +1,5 @@
-// Capa de persistencia local-first. Sin servidores externos.
-// El estado completo vive en LocalStorage. Para mover datos a otro
-// dispositivo se genera un "código de backup" (ver lib/backup.ts).
+// Capa de persistencia local. El estado completo vive en LocalStorage;
+// la sync entre dispositivos se hace vía Supabase (lib/sync.svelte.ts).
 
 import type { AppState } from './types';
 import { STORE_TYPES } from './data/storeTypes';
@@ -42,17 +41,4 @@ export function saveState(state: AppState): void {
 export function clearState(): void {
   if (typeof localStorage === 'undefined') return;
   localStorage.removeItem(STORAGE_KEY);
-}
-
-// SHA-256 del PIN — no almacenamos el PIN en claro.
-export async function hashPin(pin: string): Promise<string> {
-  const data = new TextEncoder().encode(pin);
-  const buf = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-export async function verifyPin(pin: string, hash: string): Promise<boolean> {
-  return (await hashPin(pin)) === hash;
 }

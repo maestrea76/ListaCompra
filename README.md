@@ -21,8 +21,8 @@ turrón de Jijona, vinos de Rioja/Ribera, etc.).
   (categoría) + texto. Si no hay match, **Enter crea producto libre**.
 - ✏️ **Edición inline por producto**: +/- de cantidad y selector de unidad
   sin abandonar la lista.
-- 🔐 **Auth local estilo Boardinggate**: usuario + PIN 4 dígitos.
-  Datos en LocalStorage. Sin servidor obligatorio para uso single-device.
+- 👤 **Perfil local sin fricción**: sólo nombre. Los datos viven en
+  LocalStorage. Sin servidor obligatorio para uso single-device.
 - ☁️ **Sincronización online opcional** (Supabase + Realtime) con
   **cifrado E2E AES-GCM**. El servidor sólo ve bytes opacos.
   - Multi-dispositivo: tus listas siempre al día en móvil + portátil.
@@ -116,7 +116,7 @@ Ver [`src/lib/sync.svelte.ts`](src/lib/sync.svelte.ts) para los detalles.
 ```
 src/
 ├── components/
-│   ├── auth/           # ProfileSetup, PinGate
+│   ├── auth/           # ProfileSetup
 │   ├── list/           # StoreGrid, StoreCard, StoreEditor, ListView
 │   ├── ui/             # ThemeToggle, SyncDiag
 │   └── AppShell.svelte
@@ -128,7 +128,7 @@ src/
 │   │   ├── categories.ts        # ~70 categorías
 │   │   └── products/            # ~900 productos en archivos por área
 │   ├── stores/app.svelte.ts     # estado global (Svelte 5 runes)
-│   ├── storage.ts               # LocalStorage + PIN hash
+│   ├── storage.ts               # LocalStorage
 │   ├── supabase.ts              # cliente Supabase
 │   ├── sync.svelte.ts           # sync + AES-GCM + Realtime + sharing
 │   ├── base.ts                  # helper para BASE_URL en GH Pages
@@ -171,7 +171,7 @@ turrón de Jijona/Alicante, polvorones, mantecados…
 ## Roadmap
 
 - [x] Catálogo extenso con productos típicos
-- [x] Editor visual de tiendas (crear/editar/borrar con PIN)
+- [x] Editor visual de tiendas (crear/editar/borrar)
 - [x] Subida de foto personalizada para tiendas
 - [x] Backup en código (sin servidor)
 - [x] GitHub Actions → Pages

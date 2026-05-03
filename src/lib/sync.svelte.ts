@@ -16,7 +16,7 @@ import { STORES_SEED } from './data/stores';
 import type { RealtimeChannel, User } from '@supabase/supabase-js';
 
 interface SyncSnapshot {
-  profile?: Omit<UserProfile, 'pinHash'>;
+  profile?: UserProfile;
   lists: Record<string, ShoppingList>;
   customProducts: Product[];
   customStores: Store[];
@@ -77,7 +77,7 @@ export async function signOutFromCloud(): Promise<void> {
   syncStatus.passphraseSet = false;
   cryptoKey = null;
   try {
-    sessionStorage.removeItem(PASSPHRASE_KEY);
+    localStorage.removeItem(PASSPHRASE_KEY);
     localStorage.removeItem(SHARE_ID_KEY);
   } catch {}
 }
@@ -88,13 +88,13 @@ export async function hydrateAuth(): Promise<void> {
   syncStatus.user = data.session?.user ?? null;
   if (syncStatus.user) {
     log(`👤 Sesión activa: ${syncStatus.user.email}`);
-    // Restaura passphrase si está en sessionStorage (sólo durante esta sesión).
+    // Restaura passphrase persistida (vive entre cierres del navegador).
     try {
-      const pp = sessionStorage.getItem(PASSPHRASE_KEY);
+      const pp = localStorage.getItem(PASSPHRASE_KEY);
       if (pp) {
         cryptoKey = await deriveKey(pp);
         syncStatus.passphraseSet = true;
-        log('🔐 Passphrase restaurada de sessionStorage');
+        log('🔐 Passphrase restaurada');
       }
     } catch {}
   }
@@ -152,21 +152,20 @@ async function decryptFromBase64(b64: string, key: CryptoKey): Promise<string> {
 export async function setPassphrase(pp: string): Promise<void> {
   cryptoKey = await deriveKey(pp);
   syncStatus.passphraseSet = true;
-  try { sessionStorage.setItem(PASSPHRASE_KEY, pp); } catch {}
+  try { localStorage.setItem(PASSPHRASE_KEY, pp); } catch {}
   log('🔐 Passphrase establecida (AES-GCM 256, PBKDF2-200k)');
+  // Arranca la sync automáticamente. La sesión persiste entre cierres
+  // del navegador, así que la próxima vez todo va solo.
+  await startSync();
 }
 
 // ─── Snapshot ───────────────────────────────────────────────────────────
 
 function buildSnapshot(): SyncSnapshot {
   const { profile, lists, products, stores } = app.state;
-  const profileSafe = profile ? (() => {
-    const { pinHash: _ignore, ...rest } = profile;
-    return rest;
-  })() : undefined;
   const seedStoreIds = new Set(STORES_SEED.map((s) => s.id));
   return {
-    profile: profileSafe,
+    profile,
     lists,
     customProducts: products.filter((p) => p.id.startsWith('custom-')),
     customStores: stores.filter((s) => !seedStoreIds.has(s.id) || s.edited),
@@ -176,7 +175,7 @@ function buildSnapshot(): SyncSnapshot {
 
 function applySnapshot(snap: SyncSnapshot): void {
   if (app.state.profile && snap.profile) {
-    app.state.profile = { ...snap.profile, pinHash: app.state.profile.pinHash };
+    app.state.profile = snap.profile;
   }
   app.state.lists = snap.lists ?? {};
   const seedProducts = app.state.products.filter((p) => !p.id.startsWith('custom-'));

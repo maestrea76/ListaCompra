@@ -143,17 +143,22 @@ export async function startSync(): Promise<void> {
       },
     ];
 
-    // Múltiples signaling servers para redundancia. Si uno está caído o
-    // filtrando, los otros pueden propagar el descubrimiento de peers.
-    // (signaling.yjs.dev ha tenido problemas intermitentes.)
+    // Múltiples signaling servers para redundancia.
     const signaling = [
       'wss://y-webrtc-eu.fly.dev',
       'wss://signaling.yjs.dev',
     ];
 
+    // OJO: NO pasamos `password` deliberadamente. y-webrtc 10.x deriva la
+    // sala "real" en el signaling server a partir de roomName+password,
+    // y diferencias sutiles en codificación (TextEncoder vs UTF-16,
+    // versiones diferentes, etc.) provocan que dos devices acaben en
+    // salas distintas en el server aunque ambos calculen el mismo hash
+    // localmente. Sin password, ambos van a la misma sala fija.
+    // Trade-off: cualquiera con tu username puede entrar a tu sala.
+    // El username ya es razonablemente único, y es lo que usa Boardinggate.
     provider = new WebrtcProvider(room, ydoc as never, {
       signaling,
-      password: `tc-${profile.username.toLowerCase().trim()}`,
       peerOpts: { config: { iceServers } },
     } as never) as unknown as AnyProvider;
     log(`Conectando a ${signaling.length} signaling server(s) + STUN/TURN…`);

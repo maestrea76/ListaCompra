@@ -1,17 +1,19 @@
-// Sincronización entre dispositivos vía WebSocket público + AES-GCM.
+// Sincronización vía Supabase (Postgres + Realtime) + cifrado AES-GCM E2E.
 //
-// Antes usábamos y-webrtc P2P, pero las redes móviles (4G/5G con CGNAT)
-// y firewalls domésticos restrictivos hacían que el handshake WebRTC
-// fallara con frecuencia.
+// Flujo:
+//  1. Usuario hace login (email+password) → tenemos auth.user
+//  2. Usuario introduce una passphrase → derivamos clave AES-GCM (PBKDF2)
+//  3. Usuario elige share_id (por defecto "personal:<userId>")
+//  4. startSync: pull inicial + suscribimos a realtime + persist hace push
 //
-// Ahora: y-websocket contra `wss://demos.yjs.dev` (relay público
-// mantenido por el equipo de Y.js). Funciona en cualquier red.
-// Para que el servidor relay no pueda leer tus listas, el snapshot se
-// cifra con AES-GCM usando una clave derivada del username con PBKDF2.
+// El servidor sólo ve la columna `snapshot` con bytes opacos en base64.
+// Sin la passphrase, los datos no se pueden leer.
 
+import { supabase, type SnapshotRow } from './supabase';
 import { app } from './stores/app.svelte';
 import type { ShoppingList, Product, Store, UserProfile } from './types';
 import { STORES_SEED } from './data/stores';
+import type { RealtimeChannel, User } from '@supabase/supabase-js';
 
 interface SyncSnapshot {
   profile?: Omit<UserProfile, 'pinHash'>;
@@ -21,36 +23,27 @@ interface SyncSnapshot {
   updatedAt: number;
 }
 
-// y-websocket Provider type — mantenemos genéricos para no importar
-// estáticamente y poder hacer lazy load.
-type AnyDoc = { getMap: (n: string) => AnyMap; destroy: () => void };
-type AnyMap = {
-  observe: (cb: () => void) => void;
-  set: (key: string, value: unknown) => void;
-  get: (key: string) => unknown;
-};
-type AnyProvider = {
-  awareness: { getStates: () => Map<unknown, unknown>; on: (e: string, cb: () => void) => void };
-  on: (e: string, cb: (data: unknown) => void) => void;
-  destroy: () => void;
-  disconnect: () => void;
-};
+const PASSPHRASE_KEY = 'tucompra:passphrase';
+const SHARE_ID_KEY = 'tucompra:shareId';
 
-let provider: AnyProvider | null = null;
-let ydoc: AnyDoc | null = null;
-let map: AnyMap | null = null;
 let cryptoKey: CryptoKey | null = null;
+let channel: RealtimeChannel | null = null;
 let suppress = false;
 let lastAppliedAt = 0;
+let pushTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const syncStatus = $state({
   enabled: false,
-  peers: 0,
-  webrtcConns: 0,        // mantenido por compatibilidad con SyncDiag
+  user: null as User | null,
+  shareId: '',
+  shares: [] as { share_id: string; added_at: string }[],
+  passphraseSet: false,
+  signalingConnected: false,    // para compat con UI antigua
+  peers: 0,                     // alias usado por la UI antigua
+  webrtcConns: 0,
   room: '',
   username: '',
-  signalingConnected: false,
-  lastError: '' as string,
+  lastError: '',
   lastSyncAt: 0,
   log: [] as string[],
 });
@@ -61,22 +54,69 @@ function log(msg: string): void {
   console.log('[sync]', msg);
 }
 
-// ─── Crypto helpers (AES-GCM 256, clave PBKDF2 desde username) ──────────
+// ─── Auth ───────────────────────────────────────────────────────────────
 
-async function deriveKey(username: string): Promise<CryptoKey> {
+export async function signUp(email: string, password: string): Promise<string | null> {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) return error.message;
+  syncStatus.user = data.user ?? null;
+  return null;
+}
+
+export async function signIn(email: string, password: string): Promise<string | null> {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return error.message;
+  syncStatus.user = data.user ?? null;
+  return null;
+}
+
+export async function signOutFromCloud(): Promise<void> {
+  await stopSync();
+  await supabase.auth.signOut();
+  syncStatus.user = null;
+  syncStatus.passphraseSet = false;
+  cryptoKey = null;
+  try {
+    sessionStorage.removeItem(PASSPHRASE_KEY);
+    localStorage.removeItem(SHARE_ID_KEY);
+  } catch {}
+}
+
+/** Hidratar sesión existente al cargar la app. */
+export async function hydrateAuth(): Promise<void> {
+  const { data } = await supabase.auth.getSession();
+  syncStatus.user = data.session?.user ?? null;
+  if (syncStatus.user) {
+    log(`👤 Sesión activa: ${syncStatus.user.email}`);
+    // Restaura passphrase si está en sessionStorage (sólo durante esta sesión).
+    try {
+      const pp = sessionStorage.getItem(PASSPHRASE_KEY);
+      if (pp) {
+        cryptoKey = await deriveKey(pp);
+        syncStatus.passphraseSet = true;
+        log('🔐 Passphrase restaurada de sessionStorage');
+      }
+    } catch {}
+  }
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    syncStatus.user = session?.user ?? null;
+    log(`🔄 Auth event: ${event}`);
+  });
+}
+
+// ─── Crypto ─────────────────────────────────────────────────────────────
+
+async function deriveKey(passphrase: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
   const baseKey = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(username.toLowerCase().trim()),
-    'PBKDF2',
-    false,
-    ['deriveKey'],
+    'raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey'],
   );
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: enc.encode('tucompra-v1-aes-gcm'),
-      iterations: 150_000,
+      salt: enc.encode('tucompra-supabase-v1'),
+      iterations: 200_000,
       hash: 'SHA-256',
     },
     baseKey,
@@ -89,9 +129,7 @@ async function deriveKey(username: string): Promise<CryptoKey> {
 async function encryptToBase64(plaintext: string, key: CryptoKey): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ct = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    new TextEncoder().encode(plaintext),
+    { name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext),
   );
   const merged = new Uint8Array(iv.length + ct.byteLength);
   merged.set(iv, 0);
@@ -111,14 +149,14 @@ async function decryptFromBase64(b64: string, key: CryptoKey): Promise<string> {
   return new TextDecoder().decode(pt);
 }
 
-// ─── Snapshot helpers ──────────────────────────────────────────────────
-
-async function roomKey(username: string): Promise<string> {
-  const data = new TextEncoder().encode(`tucompra:${username.toLowerCase().trim()}`);
-  const buf = await crypto.subtle.digest('SHA-256', data);
-  return 'tucompra-' + Array.from(new Uint8Array(buf)).slice(0, 8)
-    .map((b) => b.toString(16).padStart(2, '0')).join('');
+export async function setPassphrase(pp: string): Promise<void> {
+  cryptoKey = await deriveKey(pp);
+  syncStatus.passphraseSet = true;
+  try { sessionStorage.setItem(PASSPHRASE_KEY, pp); } catch {}
+  log('🔐 Passphrase establecida (AES-GCM 256, PBKDF2-200k)');
 }
+
+// ─── Snapshot ───────────────────────────────────────────────────────────
 
 function buildSnapshot(): SyncSnapshot {
   const { profile, lists, products, stores } = app.state;
@@ -131,7 +169,7 @@ function buildSnapshot(): SyncSnapshot {
     profile: profileSafe,
     lists,
     customProducts: products.filter((p) => p.id.startsWith('custom-')),
-    customStores: stores.filter((s) => !seedStoreIds.has(s.id)),
+    customStores: stores.filter((s) => !seedStoreIds.has(s.id) || s.edited),
     updatedAt: Date.now(),
   };
 }
@@ -144,93 +182,108 @@ function applySnapshot(snap: SyncSnapshot): void {
   const seedProducts = app.state.products.filter((p) => !p.id.startsWith('custom-'));
   app.state.products = [...seedProducts, ...(snap.customProducts ?? [])];
   const seedStoreIds = new Set(STORES_SEED.map((s) => s.id));
-  const seedStores = app.state.stores.filter((s) => seedStoreIds.has(s.id));
-  app.state.stores = [...seedStores, ...(snap.customStores ?? [])];
+  // Mezcla tiendas: las del seed no editadas las dejamos como están,
+  // sustituimos las editadas y custom por las del snapshot.
+  const localUntouched = app.state.stores.filter(
+    (s) => seedStoreIds.has(s.id) && !s.edited,
+  );
+  app.state.stores = [...localUntouched, ...(snap.customStores ?? [])];
   app.persist();
   syncStatus.lastSyncAt = Date.now();
   lastAppliedAt = snap.updatedAt;
   log(`⬇️ Aplicado snapshot remoto (${Object.keys(snap.lists).length} listas)`);
 }
 
-// ─── API pública ────────────────────────────────────────────────────────
+// ─── Shares (membresía) ─────────────────────────────────────────────────
 
-export async function startSync(): Promise<void> {
-  if (provider) { log('Ya estaba activa.'); return; }
-  const profile = app.state.profile;
-  if (!profile) { log('No hay perfil — no arranco.'); return; }
-
-  syncStatus.lastError = '';
-  log('Cargando módulos de sync…');
-
-  let Y: typeof import('yjs');
-  let WebsocketProvider: typeof import('y-websocket').WebsocketProvider;
-  try {
-    Y = await import('yjs');
-    ({ WebsocketProvider } = await import('y-websocket'));
-  } catch (e) {
-    syncStatus.lastError = `Carga de módulos falló: ${(e as Error).message}`;
-    log(`❌ ${syncStatus.lastError}`);
+/** Devuelve todas las listas a las que el usuario está suscrito. */
+export async function refreshShares(): Promise<void> {
+  if (!syncStatus.user) return;
+  const { data, error } = await supabase
+    .from('tucompra_members')
+    .select('share_id, added_at')
+    .order('added_at', { ascending: true });
+  if (error) {
+    syncStatus.lastError = error.message;
+    log(`❌ refreshShares: ${error.message}`);
     return;
   }
+  syncStatus.shares = data ?? [];
+}
 
-  try {
-    const room = await roomKey(profile.username);
-    syncStatus.room = room;
-    syncStatus.username = profile.username;
-    log(`Username: "${profile.username}" → Sala: ${room}`);
+/** Asegura que el usuario tiene su lista personal por defecto. */
+async function ensurePersonalShare(): Promise<string> {
+  const u = syncStatus.user!;
+  const personal = `personal:${u.id}`;
+  await supabase.from('tucompra_members').upsert({
+    share_id: personal,
+    user_id: u.id,
+  }, { onConflict: 'share_id,user_id' });
+  return personal;
+}
 
-    cryptoKey = await deriveKey(profile.username);
-    log('🔐 Clave AES-GCM derivada (PBKDF2-150k)');
+/** Une al usuario actual a una lista compartida. */
+export async function joinShare(shareId: string): Promise<string | null> {
+  if (!syncStatus.user) return 'No has iniciado sesión.';
+  const clean = shareId.trim();
+  if (!clean) return 'Código vacío.';
+  const { error } = await supabase.from('tucompra_members').insert({
+    share_id: clean,
+    user_id: syncStatus.user.id,
+  });
+  if (error && !error.message.includes('duplicate')) {
+    return error.message;
+  }
+  await refreshShares();
+  return null;
+}
 
-    ydoc = new Y.Doc() as unknown as AnyDoc;
-    map = (ydoc as unknown as { getMap: (n: string) => AnyMap }).getMap('tucompra');
+export async function leaveShare(shareId: string): Promise<void> {
+  if (!syncStatus.user) return;
+  await supabase.from('tucompra_members').delete()
+    .eq('share_id', shareId)
+    .eq('user_id', syncStatus.user.id);
+  await refreshShares();
+}
 
-    provider = new WebsocketProvider(
-      'wss://demos.yjs.dev/ws',
-      room,
-      ydoc as never,
-    ) as unknown as AnyProvider;
-    log('Conectando a wss://demos.yjs.dev/ws …');
+// ─── Sync ───────────────────────────────────────────────────────────────
 
-    provider.on('status', (data) => {
-      const status = (data as { status?: string }).status;
-      syncStatus.signalingConnected = status === 'connected';
-      log(`📡 Estado: ${status}`);
-    });
+export async function startSync(): Promise<void> {
+  if (channel) { log('Ya estaba activa.'); return; }
+  if (!syncStatus.user) { log('❌ Sin sesión Supabase.'); return; }
+  if (!cryptoKey) { log('❌ Sin passphrase definida.'); return; }
 
-    provider.on('sync', (data) => {
-      const synced = !!data;
-      log(synced ? '✅ Sync inicial completo' : '🔄 Re-sincronizando');
-    });
+  syncStatus.lastError = '';
 
-    provider.on('connection-error', (data) => {
-      const err = (data as Event).type ?? 'connection-error';
-      log(`⚠️ ${err}`);
-    });
+  // Carga shares y elige el activo (último usado, o personal por defecto).
+  await refreshShares();
+  let shareId = '';
+  try { shareId = localStorage.getItem(SHARE_ID_KEY) ?? ''; } catch {}
+  if (!shareId || !syncStatus.shares.find((s) => s.share_id === shareId)) {
+    shareId = await ensurePersonalShare();
+    await refreshShares();
+  }
+  syncStatus.shareId = shareId;
+  try { localStorage.setItem(SHARE_ID_KEY, shareId); } catch {}
+  log(`🗂️ Lista activa: ${shareId}`);
 
-    provider.awareness.on('change', () => {
-      const n = provider!.awareness.getStates().size - 1;
-      const previousPeers = syncStatus.peers;
-      syncStatus.peers = Math.max(0, n);
-      syncStatus.webrtcConns = syncStatus.peers; // alias para la UI
-      if (previousPeers === 0 && syncStatus.peers > 0) {
-        log(`🔗 Peer detectado → push`);
-        pushNow();
-      }
-    });
+  // Pull inicial
+  await pullOnce();
 
-    syncStatus.enabled = true;
-
-    // Cuando llega un cambio en el Y.Map, descifra e intenta aplicar.
-    map.observe(() => {
+  // Realtime
+  channel = supabase.channel(`tucompra:${shareId}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'tucompra_snapshots',
+      filter: `share_id=eq.${shareId}`,
+    }, (payload) => {
       if (suppress) { suppress = false; return; }
-      const enc = map?.get('snapshot') as string | undefined;
-      if (!enc || !cryptoKey) return;
-      decryptFromBase64(enc, cryptoKey)
+      const row = payload.new as SnapshotRow | null;
+      if (!row?.snapshot || !cryptoKey) return;
+      decryptFromBase64(row.snapshot, cryptoKey)
         .then((json) => {
           const snap = JSON.parse(json) as SyncSnapshot;
-          // Sólo aplicamos si es más reciente que lo último que aplicamos
-          // y que cualquier mutación local. Evita bucles.
           const localUpdatedAt = Math.max(
             ...Object.values(app.state.lists).map((l) => l.updatedAt), 0,
           );
@@ -238,60 +291,100 @@ export async function startSync(): Promise<void> {
             applySnapshot(snap);
           }
         })
-        .catch((e) => {
-          log(`⚠️ No se pudo descifrar snapshot: ${(e as Error).message}`);
-        });
+        .catch((e) => log(`⚠️ Descifrado falló: ${(e as Error).message}`));
+    })
+    .subscribe((status) => {
+      syncStatus.signalingConnected = status === 'SUBSCRIBED';
+      log(`📡 Realtime: ${status}`);
     });
 
-    pushNow();
-    try { localStorage.setItem('tucompra:sync:enabled', '1'); } catch {}
-    log('✅ Sync arrancado.');
+  syncStatus.enabled = true;
+  try { localStorage.setItem('tucompra:sync:enabled', '1'); } catch {}
+  log('✅ Sync arrancada.');
+
+  // Push nuestro estado inicial (puede que el remoto sea más antiguo).
+  pushNow();
+}
+
+async function pullOnce(): Promise<void> {
+  if (!cryptoKey) return;
+  const { data, error } = await supabase
+    .from('tucompra_snapshots')
+    .select('*')
+    .eq('share_id', syncStatus.shareId)
+    .maybeSingle();
+  if (error) {
+    log(`⚠️ Pull: ${error.message}`);
+    return;
+  }
+  if (!data) {
+    log('Sin snapshot remoto aún (lista nueva).');
+    return;
+  }
+  try {
+    const json = await decryptFromBase64(data.snapshot, cryptoKey);
+    const snap = JSON.parse(json) as SyncSnapshot;
+    const localUpdatedAt = Math.max(
+      ...Object.values(app.state.lists).map((l) => l.updatedAt), 0,
+    );
+    if (snap.updatedAt > localUpdatedAt) {
+      applySnapshot(snap);
+    } else {
+      log(`ℹ️ Local más reciente (${localUpdatedAt} > ${snap.updatedAt}); no aplicamos remoto.`);
+    }
   } catch (e) {
-    syncStatus.lastError = (e as Error).message ?? String(e);
-    log(`❌ Error: ${syncStatus.lastError}`);
-    syncStatus.enabled = false;
+    log(`⚠️ Descifrado inicial falló: ${(e as Error).message} (¿passphrase incorrecta?)`);
   }
 }
 
-export function stopSync(): void {
-  provider?.disconnect();
-  provider?.destroy();
-  ydoc?.destroy();
-  provider = null;
-  ydoc = null;
-  map = null;
-  cryptoKey = null;
+export async function pushNow(): Promise<void> {
+  if (!syncStatus.enabled || !cryptoKey || !syncStatus.shareId || !syncStatus.user) return;
+  try {
+    const snap = buildSnapshot();
+    const enc = await encryptToBase64(JSON.stringify(snap), cryptoKey);
+    suppress = true;
+    const { error } = await supabase.from('tucompra_snapshots').upsert({
+      share_id: syncStatus.shareId,
+      snapshot: enc,
+      updated_at: new Date().toISOString(),
+      updated_by: syncStatus.user.id,
+    });
+    if (error) {
+      log(`⚠️ Push: ${error.message}`);
+    } else {
+      syncStatus.lastSyncAt = Date.now();
+    }
+  } catch (e) {
+    log(`⚠️ Cifrado falló: ${(e as Error).message}`);
+  }
+}
+
+export function schedulePush(): void {
+  if (!syncStatus.enabled) return;
+  if (pushTimer) clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushNow, 2000);
+}
+
+export async function switchShare(shareId: string): Promise<void> {
+  await stopSync();
+  syncStatus.shareId = shareId;
+  try { localStorage.setItem(SHARE_ID_KEY, shareId); } catch {}
+  await startSync();
+}
+
+export async function stopSync(): Promise<void> {
+  if (channel) {
+    await supabase.removeChannel(channel);
+    channel = null;
+  }
   syncStatus.enabled = false;
-  syncStatus.peers = 0;
-  syncStatus.webrtcConns = 0;
   syncStatus.signalingConnected = false;
   try { localStorage.removeItem('tucompra:sync:enabled'); } catch {}
-  log('Sync parado.');
-}
-
-export function pushNow(): void {
-  if (!map || !cryptoKey) return;
-  const snap = buildSnapshot();
-  const json = JSON.stringify(snap);
-  encryptToBase64(json, cryptoKey)
-    .then((enc) => {
-      suppress = true;
-      map!.set('snapshot', enc);
-      syncStatus.lastSyncAt = Date.now();
-    })
-    .catch((e) => log(`⚠️ Cifrado falló: ${(e as Error).message}`));
-}
-
-let pushTimer: ReturnType<typeof setTimeout> | null = null;
-export function schedulePush(): void {
-  if (!map) return;
-  if (pushTimer) clearTimeout(pushTimer);
-  pushTimer = setTimeout(pushNow, 400);
+  log('Sync parada.');
 }
 
 export function reconnect(): void {
-  stopSync();
-  setTimeout(() => startSync().catch(console.warn), 200);
+  stopSync().then(() => setTimeout(() => startSync().catch(console.warn), 200));
 }
 
 export function syncWasEnabled(): boolean {

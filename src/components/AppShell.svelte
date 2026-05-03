@@ -15,7 +15,7 @@
   import ThemeToggle from './ui/ThemeToggle.svelte';
   import BackupModal from './ui/BackupModal.svelte';
   import SyncDiag from './ui/SyncDiag.svelte';
-  import { startSync, stopSync, syncStatus, syncWasEnabled } from '$lib/sync.svelte';
+  import { startSync, stopSync, syncStatus, syncWasEnabled, hydrateAuth } from '$lib/sync.svelte';
 
   const UNLOCK_KEY = 'tucompra:unlocked:v1';
 
@@ -36,12 +36,17 @@
     localStorage.removeItem(UNLOCK_KEY);
   }
 
-  onMount(() => {
+  onMount(async () => {
     app.hydrate();
     unlocked = readUnlock(app.state.profile?.username);
     applyTheme(app.state.profile?.theme ?? 'system');
-    // Sólo auto-arranca sync si el usuario la activó previamente.
-    if (app.state.profile && syncWasEnabled()) {
+
+    // Hidrata sesión Supabase si la había de antes.
+    await hydrateAuth();
+
+    // Si la sync estaba activa antes y tenemos auth + passphrase en
+    // sessionStorage, la re-arrancamos.
+    if (syncWasEnabled() && syncStatus.user && syncStatus.passphraseSet) {
       startSync().catch((e) => console.warn('Sync auto-start falló:', e));
     }
   });

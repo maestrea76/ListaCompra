@@ -25,7 +25,8 @@
       "Bash(git -c user.email=\"maestrea76@users.noreply.github.com\" -c user.name=\"maestrea76\" commit -m \"rename: footer 'Tu Compra' \\(en lugar de 'Lista Compra'\\)\")",
       "Bash(git rm *)",
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'feat: sync auto + eliminar funcionalidad PIN *)",
-      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix: favicon vectorial para que se vea al guardar marcador *)"
+      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix: favicon vectorial para que se vea al guardar marcador *)",
+      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix: indicador de sync en su propia línea bajo el nombre *)"
     ]
   }
 }

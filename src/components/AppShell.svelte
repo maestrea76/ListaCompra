@@ -63,27 +63,25 @@
     <header class="flex items-center justify-between mb-6 gap-3">
       <div class="min-w-0">
         <h1 class="text-2xl font-bold">🛒 Tu Compra</h1>
-        <p class="text-sm text-muted truncate flex items-center gap-1.5">
-          Hola, {app.state.profile.username}
-          <button onclick={() => (showDiag = true)}
-            title="Ver estado de sincronización"
-            class="inline-flex items-center gap-1 text-xs rounded-full border px-1.5 py-0.5 hover:bg-[var(--bg)] transition"
-            style="border-color: var(--border);">
-            <span class="size-2 rounded-full"
-              style={syncStatus.enabled && syncStatus.signalingConnected
-                ? 'background:#22c55e; box-shadow: 0 0 6px #22c55e;'
-                : syncStatus.enabled
-                  ? 'background:#0ea5e9;'
-                  : syncStatus.lastError
-                    ? 'background:#ef4444;'
-                    : 'background:#94a3b8;'}></span>
-            {syncStatus.enabled && syncStatus.signalingConnected
-              ? 'sync'
+        <p class="text-sm text-muted truncate">Hola, {app.state.profile.username}</p>
+        <button onclick={() => (showDiag = true)}
+          title="Ver estado de sincronización"
+          class="mt-1 inline-flex items-center gap-1 text-xs rounded-full border px-2 py-1 hover:bg-[var(--bg)] transition"
+          style="border-color: var(--border);">
+          <span class="size-2 rounded-full"
+            style={syncStatus.enabled && syncStatus.signalingConnected
+              ? 'background:#22c55e; box-shadow: 0 0 6px #22c55e;'
               : syncStatus.enabled
-                ? 'sync…'
-                : 'sync off'}
-          </button>
-        </p>
+                ? 'background:#0ea5e9;'
+                : syncStatus.lastError
+                  ? 'background:#ef4444;'
+                  : 'background:#94a3b8;'}></span>
+          {syncStatus.enabled && syncStatus.signalingConnected
+            ? 'sync'
+            : syncStatus.enabled
+              ? 'sync…'
+              : 'sync off'}
+        </button>
       </div>
       <div class="flex items-center gap-2 shrink-0">
         <button onclick={signOut} title="Cerrar sesión y borrar datos del navegador"

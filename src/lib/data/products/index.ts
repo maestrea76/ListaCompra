@@ -19,6 +19,7 @@ import { FERRETERIA } from './ferreteria';
 import { ROPA } from './ropa';
 import { HOGAR } from './hogar';
 import { CENTRO_COMERCIAL, DELICATESSEN, HERBORISTERIA, LOCUTORIO, OTROS } from './varios';
+import { SALSAS, CONSERVAS_VEG, PREPARADOS, ENVASADOS, HELADOS, DULCES, YOGURES_EXTRA } from './super-extras';
 
 export const PRODUCTS_SEED: Product[] = [
   ...FRUTERIA,
@@ -46,4 +47,11 @@ export const PRODUCTS_SEED: Product[] = [
   ...HERBORISTERIA,
   ...LOCUTORIO,
   ...OTROS,
+  ...SALSAS,
+  ...CONSERVAS_VEG,
+  ...PREPARADOS,
+  ...ENVASADOS,
+  ...HELADOS,
+  ...DULCES,
+  ...YOGURES_EXTRA,
 ];

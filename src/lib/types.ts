@@ -22,6 +22,9 @@ export interface Store {
   name: string;
   typeId: StoreType['id'];
   icon: IconRef;
+  /** Color de fondo de la tarjeta (hex). Usado para evocar la identidad
+   *  visual de cada cadena sin reproducir el logotipo (que es marca registrada). */
+  brand?: { bg: string; fg: string; initials?: string };
   /** Orden manual en la home; menor = arriba */
   order?: number;
   /** Si es false, oculta la tienda sin borrarla */

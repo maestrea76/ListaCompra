@@ -2,16 +2,20 @@
   // Wrapper raíz: hidrata el store, decide si mostrar setup, gate de PIN o la app.
   // El estado "unlocked" se persiste en localStorage atado al username actual,
   // así no vuelve a pedir el PIN al navegar entre páginas o al recargar.
+  //
+  // La sync es OPT-IN: el usuario la activa desde el panel 📡. Al cargar
+  // la app, sólo se arranca automáticamente si el usuario la activó antes.
 
   import { onMount } from 'svelte';
   import { app } from '$lib/stores/app.svelte';
+  import { clearState } from '$lib/storage';
   import ProfileSetup from './auth/ProfileSetup.svelte';
   import PinGate from './auth/PinGate.svelte';
   import StoreGrid from './list/StoreGrid.svelte';
   import ThemeToggle from './ui/ThemeToggle.svelte';
   import BackupModal from './ui/BackupModal.svelte';
   import SyncDiag from './ui/SyncDiag.svelte';
-  import { startSync, stopSync, syncStatus } from '$lib/sync.svelte';
+  import { startSync, stopSync, syncStatus, syncWasEnabled } from '$lib/sync.svelte';
 
   const UNLOCK_KEY = 'tucompra:unlocked:v1';
 
@@ -36,13 +40,9 @@
     app.hydrate();
     unlocked = readUnlock(app.state.profile?.username);
     applyTheme(app.state.profile?.theme ?? 'system');
-    if (app.state.profile) startSync().catch(console.warn);
-  });
-
-  // Si el usuario crea/restaura un perfil más tarde, arranca sync entonces.
-  $effect(() => {
-    if (app.state.profile && !syncStatus.enabled) {
-      startSync().catch(console.warn);
+    // Sólo auto-arranca sync si el usuario la activó previamente.
+    if (app.state.profile && syncWasEnabled()) {
+      startSync().catch((e) => console.warn('Sync auto-start falló:', e));
     }
   });
 
@@ -60,19 +60,18 @@
     unlocked = true;
   }
 
+  /** Cierra sesión = borra TODO del navegador.
+   *  El backup queda en quien lo haya guardado (código copiado / sync activa). */
   function signOut() {
-    // Sólo bloquea con PIN, NO desconecta sync (cuando vuelva a desbloquear
-    // sigue al día). Si quieres romper la sesión por completo, usa "cambiar usuario".
+    if (!confirm(
+      '¿Cerrar sesión y borrar tus datos de este navegador?\n\n' +
+      'Se eliminan listas, productos personalizados y tiendas custom.\n' +
+      'Si tenías sync activa o un código de backup, podrás restaurar.\n\n' +
+      'Esta acción no se puede deshacer en este dispositivo.'
+    )) return;
+    try { stopSync(); } catch {}
     clearUnlock();
-    unlocked = false;
-  }
-
-  function changeUser() {
-    if (!confirm('¿Borrar este perfil del dispositivo? Genera primero un código de backup si quieres conservar las listas.')) return;
-    stopSync();
-    clearUnlock();
-    app.signOut();
-    unlocked = false;
+    clearState();
     location.reload();
   }
 </script>
@@ -101,7 +100,9 @@
                   ? 'background:#0ea5e9;'
                   : syncStatus.lastError
                     ? 'background:#ef4444;'
-                    : 'background:#94a3b8;'}></span>
+                    : syncStatus.enabled
+                      ? 'background:#0ea5e9;'
+                      : 'background:#94a3b8;'}></span>
             {syncStatus.peers > 0 ? `${syncStatus.peers}` : 'sync'}
           </button>
         </p>
@@ -110,12 +111,9 @@
         <button onclick={() => (showBackup = true)} title="Generar código de backup"
           class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">📋</button>
-        <button onclick={signOut} title="Cerrar sesión (volverá a pedir el PIN)"
+        <button onclick={signOut} title="Cerrar sesión y borrar datos del navegador"
           class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
-          style="border-color: var(--border);">🔒</button>
-        <button onclick={changeUser} title="Cambiar de usuario"
-          class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
-          style="border-color: var(--border);">👤</button>
+          style="border-color: var(--border);">🚪</button>
         <ThemeToggle />
       </div>
     </header>

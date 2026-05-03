@@ -3,7 +3,7 @@
   // log en vivo y botón de reconectar. Sirve para depurar cuándo no parece
   // que la sync funcione.
 
-  import { syncStatus, reconnect } from '$lib/sync.svelte';
+  import { syncStatus, reconnect, startSync, stopSync } from '$lib/sync.svelte';
 
   let { onClose }: { onClose: () => void } = $props();
 
@@ -67,10 +67,25 @@
       </ul>
     </div>
 
-    <button onclick={reconnect}
-      class="w-full rounded-xl py-2.5 font-semibold text-white transition"
-      style="background: var(--accent);">
-      🔄 Reconectar
-    </button>
+    <div class="flex gap-2">
+      {#if !syncStatus.enabled}
+        <button onclick={() => startSync().catch(console.warn)}
+          class="flex-1 rounded-xl py-2.5 font-semibold text-white transition"
+          style="background: var(--accent);">
+          ▶️ Activar sync
+        </button>
+      {:else}
+        <button onclick={reconnect}
+          class="flex-1 rounded-xl py-2.5 font-semibold text-white transition"
+          style="background: var(--accent);">
+          🔄 Reconectar
+        </button>
+        <button onclick={stopSync}
+          class="rounded-xl border px-4 py-2.5 font-medium hover:bg-[var(--bg)] transition"
+          style="border-color: var(--border);">
+          ⏸️ Parar
+        </button>
+      {/if}
+    </div>
   </div>
 </div>

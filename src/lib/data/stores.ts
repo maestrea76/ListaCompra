@@ -22,6 +22,7 @@ export const STORES_SEED: Store[] = [
   // --- Otros ---
   { id: 'farmacia',      name: 'Farmacia',         typeId: 'farmacia',         icon: { kind: 'emoji', value: '💊' }, brand: { bg: '#0A7E3A', fg: '#FFFFFF', initials: '+' } },
   { id: 'carniceria',    name: 'Carnicería',       typeId: 'carniceria',       icon: { kind: 'emoji', value: '🥩' }, brand: { bg: '#8B1E1E', fg: '#FFFFFF' } },
+  { id: 'pescaderia',    name: 'Pescadería',       typeId: 'pescaderia',       icon: { kind: 'emoji', value: '🐟' }, brand: { bg: '#0E6BA8', fg: '#FFFFFF' } },
   { id: 'chino',         name: 'Chino',            typeId: 'otros',            icon: { kind: 'emoji', value: '🏮' }, brand: { bg: '#C8102E', fg: '#FFD200' } },
   { id: 'ikea',          name: 'Ikea',             typeId: 'hogar',            icon: { kind: 'image', value: '/logos/ikea.png' },        brand: { bg: '#0058A3', fg: '#FFDA1A', initials: 'IK' } },
   { id: 'zara',          name: 'Zara',             typeId: 'ropa',             icon: { kind: 'image', value: '/logos/zara.jpg' },        brand: { bg: '#000000', fg: '#FFFFFF', initials: 'Z' } },

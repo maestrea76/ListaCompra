@@ -1,11 +1,10 @@
-// Sincronización entre dispositivos al estilo Boardinggate.
+// Sincronización entre dispositivos (lazy / opt-in).
 //
-// El usuario teclea el mismo username en sus dos equipos → ambos se unen
-// a la misma "sala" WebRTC (calculada desde un hash del username) →
-// intercambian el snapshot del estado peer-to-peer cifrado.
+// IMPORTANTE: yjs y y-webrtc se importan DINÁMICAMENTE dentro de
+// startSync() para que un fallo de carga (polyfill faltante, paquete no
+// instalado, navegador sin soporte) NO rompa el resto de la app.
+// El usuario activa la sync desde el panel cuando le interesa.
 
-import * as Y from 'yjs';
-import { WebrtcProvider } from 'y-webrtc';
 import { app } from './stores/app.svelte';
 import type { ShoppingList, Product, Store, UserProfile } from './types';
 import { STORES_SEED } from './data/stores';
@@ -18,12 +17,24 @@ interface SyncSnapshot {
   updatedAt: number;
 }
 
-let provider: WebrtcProvider | null = null;
-let ydoc: Y.Doc | null = null;
-let map: Y.Map<unknown> | null = null;
+// Tipos genéricos para no tener que importar yjs/y-webrtc estáticamente.
+type AnyDoc = { getMap: (name: string) => AnyMap; destroy: () => void };
+type AnyMap = {
+  observe: (cb: () => void) => void;
+  set: (key: string, value: unknown) => void;
+  get: (key: string) => unknown;
+};
+type AnyProvider = {
+  awareness: { getStates: () => Map<unknown, unknown>; on: (e: string, cb: () => void) => void };
+  on: (e: string, cb: (data: { connected?: boolean; added?: string[]; removed?: string[] }) => void) => void;
+  destroy: () => void;
+};
+
+let provider: AnyProvider | null = null;
+let ydoc: AnyDoc | null = null;
+let map: AnyMap | null = null;
 let suppress = false;
 
-// Estado reactivo expuesto a la UI.
 export const syncStatus = $state({
   enabled: false,
   peers: 0,
@@ -53,7 +64,6 @@ function buildSnapshot(): SyncSnapshot {
     const { pinHash: _ignore, ...rest } = profile;
     return rest;
   })() : undefined;
-
   const seedStoreIds = new Set(STORES_SEED.map((s) => s.id));
   return {
     profile: profileSafe,
@@ -79,40 +89,49 @@ function applySnapshot(snap: SyncSnapshot): void {
   log(`⬇️ Aplicado snapshot remoto (${Object.keys(snap.lists).length} listas)`);
 }
 
+/** Activa la sincronización. Carga yjs + y-webrtc dinámicamente. */
 export async function startSync(): Promise<void> {
   if (provider) { log('Ya estaba activa.'); return; }
   const profile = app.state.profile;
   if (!profile) { log('No hay perfil — no arranco.'); return; }
 
   syncStatus.lastError = '';
-  log(`Arrancando para "${profile.username}"…`);
+  log(`Cargando módulos de sync…`);
+
+  let Y: typeof import('yjs');
+  let WebrtcProvider: typeof import('y-webrtc').WebrtcProvider;
+  try {
+    Y = await import('yjs');
+    ({ WebrtcProvider } = await import('y-webrtc'));
+  } catch (e) {
+    syncStatus.lastError = `Carga de módulos falló: ${(e as Error).message}`;
+    log(`❌ ${syncStatus.lastError}`);
+    return;
+  }
 
   try {
     const room = await roomKey(profile.username);
     syncStatus.room = room;
     log(`Sala: ${room}`);
 
-    ydoc = new Y.Doc();
-    map = ydoc.getMap('tucompra');
+    ydoc = new Y.Doc() as unknown as AnyDoc;
+    map = (ydoc as unknown as { getMap: (n: string) => AnyMap }).getMap('tucompra');
 
-    provider = new WebrtcProvider(room, ydoc, {
-      // Servidores de signaling públicos de la comunidad Y.js.
-      // Sólo se usan para que dos peers se descubran — no almacenan datos.
+    provider = new WebrtcProvider(room, ydoc as never, {
       signaling: [
         'wss://signaling.yjs.dev',
         'wss://y-webrtc-eu.fly.dev',
-        'wss://y-webrtc-signaling-eu.herokuapp.com',
       ],
-    });
+    }) as unknown as AnyProvider;
 
-    provider.on('status', (e: { connected: boolean }) => {
-      syncStatus.signalingConnected = e.connected;
+    provider.on('status', (e) => {
+      syncStatus.signalingConnected = !!e.connected;
       log(e.connected ? '🟢 Signaling conectado' : '🔴 Signaling desconectado');
     });
 
-    provider.on('peers', (e: { added: string[]; removed: string[] }) => {
-      if (e.added.length) log(`👥 +${e.added.length} peer(s)`);
-      if (e.removed.length) log(`👋 -${e.removed.length} peer(s)`);
+    provider.on('peers', (e) => {
+      if (e.added?.length) log(`👥 +${e.added.length} peer(s)`);
+      if (e.removed?.length) log(`👋 -${e.removed.length} peer(s)`);
     });
 
     provider.awareness.on('change', () => {
@@ -134,6 +153,9 @@ export async function startSync(): Promise<void> {
 
     pushNow();
     log('✅ Sync arrancado.');
+
+    // Recordamos la decisión para arrancar automáticamente la próxima vez.
+    try { localStorage.setItem('tucompra:sync:enabled', '1'); } catch {}
   } catch (e) {
     syncStatus.lastError = (e as Error).message ?? String(e);
     log(`❌ Error: ${syncStatus.lastError}`);
@@ -150,6 +172,7 @@ export function stopSync(): void {
   syncStatus.enabled = false;
   syncStatus.peers = 0;
   syncStatus.signalingConnected = false;
+  try { localStorage.removeItem('tucompra:sync:enabled'); } catch {}
   log('Sync parado.');
 }
 
@@ -158,7 +181,6 @@ export function pushNow(): void {
   suppress = true;
   map.set('snapshot', buildSnapshot());
   syncStatus.lastSyncAt = Date.now();
-  log('⬆️ Push snapshot');
 }
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -171,4 +193,9 @@ export function schedulePush(): void {
 export function reconnect(): void {
   stopSync();
   setTimeout(() => startSync().catch(console.warn), 200);
+}
+
+/** Verifica si el usuario activó sync previamente (la próxima vez auto-arranca). */
+export function syncWasEnabled(): boolean {
+  try { return localStorage.getItem('tucompra:sync:enabled') === '1'; } catch { return false; }
 }

@@ -21,6 +21,7 @@ import { HOGAR } from './hogar';
 import { CENTRO_COMERCIAL, DELICATESSEN, HERBORISTERIA, LOCUTORIO, OTROS } from './varios';
 import { SALSAS, CONSERVAS_VEG, PREPARADOS, ENVASADOS, HELADOS, DULCES, YOGURES_EXTRA } from './super-extras';
 import { VINOS } from './vinos';
+import { SUPER_CARNE, SUPER_PESCADO } from './super-carne-pescado';
 
 export const PRODUCTS_SEED: Product[] = [
   ...FRUTERIA,
@@ -56,4 +57,6 @@ export const PRODUCTS_SEED: Product[] = [
   ...DULCES,
   ...YOGURES_EXTRA,
   ...VINOS,
+  ...SUPER_CARNE,
+  ...SUPER_PESCADO,
 ];

@@ -22,6 +22,7 @@ import { CENTRO_COMERCIAL, DELICATESSEN, HERBORISTERIA, LOCUTORIO, OTROS } from 
 import { SALSAS, CONSERVAS_VEG, PREPARADOS, ENVASADOS, HELADOS, DULCES, YOGURES_EXTRA } from './super-extras';
 import { VINOS } from './vinos';
 import { SUPER_CARNE, SUPER_PESCADO } from './super-carne-pescado';
+import { SUPER_PANADERIA } from './super-panaderia';
 
 export const PRODUCTS_SEED: Product[] = [
   ...FRUTERIA,
@@ -59,4 +60,5 @@ export const PRODUCTS_SEED: Product[] = [
   ...VINOS,
   ...SUPER_CARNE,
   ...SUPER_PESCADO,
+  ...SUPER_PANADERIA,
 ];

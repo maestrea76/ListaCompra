@@ -89,6 +89,8 @@ export const ENVASADOS: Product[] = [
   p('pavo-loncha',       'Pavo lonchas',            '🦃','sup-charcuteria','paquete'),
   p('pollo-loncha',      'Pollo lonchas',           '🐔','sup-charcuteria','paquete'),
   p('mortadela-loncha',  'Mortadela lonchas',       '🥪','sup-charcuteria','paquete'),
+  p('mortadela-bolonesa','Mortadela boloñesa',      '🥪','sup-charcuteria','paquete'),
+  p('mortadela-pistachos','Mortadela con pistachos','🥪','sup-charcuteria','paquete'),
   p('queso-loncha-tierno','Queso tierno lonchas',   '🧀','sup-charcuteria','paquete'),
   p('queso-havarti',     'Queso havarti',           '🧀','sup-charcuteria','paquete'),
   p('queso-edam',        'Queso Edam',              '🧀','sup-charcuteria','paquete'),

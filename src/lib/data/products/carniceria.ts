@@ -9,6 +9,7 @@ const p = (id: string, name: string, emoji: string, cat: string, unit: Unit = 'k
 export const CARNICERIA: Product[] = [
   // Vacuno
   p('txuleta-buey',     'Txuleta de buey',       '🥩', 'car-vacuno'),
+  p('chuleta-vaca',     'Chuleta de vaca',       '🥩', 'car-vacuno'),
   p('txuleta-vaca',     'Txuleta de vaca vieja', '🥩', 'car-vacuno'),
   p('solomillo-ternera','Solomillo de ternera',  '🥩', 'car-vacuno'),
   p('entrecot',         'Entrecot',              '🥩', 'car-vacuno'),

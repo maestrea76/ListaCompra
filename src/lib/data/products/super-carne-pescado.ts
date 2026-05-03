@@ -11,6 +11,9 @@ const p = (id: string, name: string, emoji: string, cat: string, unit: Unit = 'k
 
 export const SUPER_CARNE: Product[] = [
   // Vacuno
+  p('sup-chuleta-vaca',    'Chuleta de vaca',       '🥩', 'sup-carniceria'),
+  p('sup-txuleta-vaca',    'Txuleta de vaca vieja', '🥩', 'sup-carniceria'),
+  p('sup-txuleta-buey',    'Txuleta de buey',       '🥩', 'sup-carniceria'),
   p('sup-filete-ternera',  'Filete de ternera',     '🥩', 'sup-carniceria'),
   p('sup-entrecot-super',  'Entrecot',              '🥩', 'sup-carniceria'),
   p('sup-solomillo-tern',  'Solomillo de ternera',  '🥩', 'sup-carniceria'),

@@ -15,7 +15,7 @@ export const LIMPIEZA: Product[] = [
   p('limpiador-multiusos','Limpiador multiusos',   '🧴'),
   p('desengrasante',    'Desengrasante',           '🧴'),
   p('limpiador-baño',   'Limpiador baño',          '🧴'),
-  p('limpiador-wc',     'Limpiador WC',            '🚽'),
+  p('limpiador-wc',     'Limpiador wc',            '🚽'),
   p('limpia-suelos',    'Limpia-suelos',           '🧴'),
   p('antical',          'Antical',                 '🧴'),
   p('lavavajillas-mano','Lavavajillas a mano',     '🧴'),

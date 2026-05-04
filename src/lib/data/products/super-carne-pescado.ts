@@ -48,7 +48,7 @@ export const SUPER_CARNE: Product[] = [
   p('sup-codorniz-super',  'Codornices',            '🐦', 'sup-carniceria', 'unidad'),
   // Embutido fresco / preparados
   p('sup-chorizo-fresco',  'Chorizo fresco',        '🌭', 'sup-carniceria'),
-  p('sup-morcilla-burgos', 'Morcilla de Burgos',    '🌭', 'sup-carniceria'),
+  p('sup-morcilla-burgos', 'Morcilla de burgos',    '🌭', 'sup-carniceria'),
   p('sup-morcilla-arroz',  'Morcilla de arroz',     '🌭', 'sup-carniceria'),
   p('sup-salchicha-fresca','Salchicha fresca',      '🌭', 'sup-carniceria'),
   p('sup-butifarra',       'Butifarra',             '🌭', 'sup-carniceria'),
@@ -56,7 +56,7 @@ export const SUPER_CARNE: Product[] = [
   p('sup-albondigas-fr',   'Albóndigas frescas',    '🍡', 'sup-carniceria'),
   p('sup-pinchos-moruno',  'Pinchos morunos',       '🍢', 'sup-carniceria'),
   p('sup-flamenquin',      'Flamenquín',            '🥩', 'sup-carniceria', 'unidad'),
-  p('sup-san-jacobo',      'San Jacobo',            '🥪', 'sup-carniceria', 'unidad'),
+  p('sup-san-jacobo',      'San jacobo',            '🥪', 'sup-carniceria', 'unidad'),
   p('sup-libritos',        'Libritos de lomo',      '🥪', 'sup-carniceria', 'unidad'),
 ];
 
@@ -106,4 +106,5 @@ export const SUPER_PESCADO: Product[] = [
   p('sup-palitos-cangrejo','Palitos de cangrejo',   '🦀', 'sup-pescaderia', 'paquete'),
   p('sup-salmon-ahumado-s','Salmón ahumado',        '🐟', 'sup-pescaderia', 'paquete'),
   p('sup-anchoas-aceite',  'Anchoas en aceite',     '🥫', 'sup-pescaderia', 'unidad'),
+  p('sup-bonito-bote-aoeva','Bonito en bote con aceite de oliva','🥫','sup-pescaderia','unidad'),
 ];

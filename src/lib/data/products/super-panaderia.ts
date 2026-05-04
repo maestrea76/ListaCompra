@@ -54,7 +54,7 @@ export const SUPER_PANADERIA: Product[] = [
   p('sup-suizo',            'Suizo',                   '🥖'),
   p('sup-rosquilla-pack',   'Rosquillas',              '🥯', 'paquete'),
   p('sup-galleta-mantec-s', 'Galletas mantequilla',    '🍪', 'paquete'),
-  p('sup-roscon-reyes-s',   'Roscón de Reyes',         '🎂'),
+  p('sup-roscon-reyes-s',   'Roscón de reyes',         '🎂'),
   // Tartas y postres del super
   p('sup-tarta-queso-s',    'Tarta de queso',          '🍰'),
   p('sup-tarta-manzana-s',  'Tarta de manzana',        '🥧'),

@@ -7,11 +7,11 @@ const p = (id: string, name: string, emoji: string, unit: Unit = 'unidad'): Prod
 
 /** Bebidas — fuerte presencia de txakoli, sidra y kalimotxo. */
 export const BEBIDAS: Product[] = [
-  p('agua-mineral',     'Agua mineral 1.5L',       '💧', 'paquete'),
-  p('agua-grande',      'Agua mineral 5L',         '💧'),
+  p('agua-mineral',     'Agua mineral 1.5l',       '💧', 'paquete'),
+  p('agua-grande',      'Agua mineral 5l',         '💧'),
   p('agua-gas',         'Agua con gas',            '💧'),
-  p('cocacola',         'Coca-Cola',               '🥤'),
-  p('cocacola-zero',    'Coca-Cola Zero',          '🥤'),
+  p('cocacola',         'Coca-cola',               '🥤'),
+  p('cocacola-zero',    'Coca-cola zero',          '🥤'),
   p('fanta-naranja',    'Fanta naranja',           '🥤'),
   p('fanta-limon',      'Fanta limón',             '🥤'),
   p('aquarius',         'Aquarius',                '🥤'),
@@ -26,8 +26,8 @@ export const BEBIDAS: Product[] = [
   p('cerveza-sin',      'Cerveza sin alcohol',     '🍺', 'paquete'),
   p('cerveza-artesana', 'Cerveza artesana',        '🍺'),
   p('txakoli',          'Txakoli',                 '🍷'),
-  p('txakoli-getaria',  'Txakoli de Getaria',      '🍷'),
-  p('txakoli-bizkaia',  'Txakoli de Bizkaia',      '🍷'),
+  p('txakoli-getaria',  'Txakoli de getaria',      '🍷'),
+  p('txakoli-bizkaia',  'Txakoli de bizkaia',      '🍷'),
   p('sidra-natural',    'Sidra natural',           '🍏'),
   p('sidra-gaitera',    'Sidra (escanciar)',       '🍏'),
   p('rioja-tinto',      'Rioja tinto',             '🍷'),

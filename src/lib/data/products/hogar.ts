@@ -36,7 +36,7 @@ export const HOGAR: Product[] = [
   p('cortina-ducha',     'Cortina de ducha',        '🚿','hog-bano'),
   p('jabonera',          'Jabonera',                '🧼','hog-bano'),
   p('vaso-baño',         'Vaso de baño',            '🥛','hog-bano'),
-  p('escobilla-wc',      'Escobilla WC',            '🚽','hog-bano'),
+  p('escobilla-wc',      'Escobilla wc',            '🚽','hog-bano'),
   p('cubo-pedal',        'Cubo con pedal',          '🗑️','hog-bano'),
   // Decoración
   p('cuadro',            'Cuadro',                  '🖼️','hog-decoracion'),

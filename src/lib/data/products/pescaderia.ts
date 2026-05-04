@@ -48,6 +48,7 @@ export const PESCADERIA: Product[] = [
   // Conservas / ahumados
   p('anchoas-aceite',   'Anchoas en aceite',     '🥫', 'pes-conserva', 'unidad'),
   p('bonito-aceite',    'Bonito en aceite',      '🥫', 'pes-conserva', 'unidad'),
+  p('bonito-aceite-oliva','Bonito en bote con aceite de oliva','🥫','pes-conserva','unidad'),
   p('mejillones-escabeche','Mejillones en escabeche','🥫','pes-conserva','unidad'),
   p('sardinillas',      'Sardinillas',           '🥫', 'pes-conserva', 'unidad'),
   p('salmon-ahumado',   'Salmón ahumado',        '🐟', 'pes-conserva', 'paquete'),

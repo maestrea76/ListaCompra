@@ -9,13 +9,13 @@ const p = (id: string, name: string, emoji: string, unit: Unit = 'unidad'): Prod
  *  habituales (guaraná, frutas tropicales). Complementa bebidas.ts. */
 export const BEBIDAS_EXTRA: Product[] = [
   // Cola
-  p('cocacola-light',  'Coca-Cola Light',         '🥤'),
-  p('cocacola-cherry', 'Coca-Cola Cherry',        '🥤'),
-  p('cocacola-vainilla','Coca-Cola Vainilla',     '🥤'),
-  p('cocacola-sin-cafeina','Coca-Cola sin cafeína','🥤'),
+  p('cocacola-light',  'Coca-cola light',         '🥤'),
+  p('cocacola-cherry', 'Coca-cola cherry',        '🥤'),
+  p('cocacola-vainilla','Coca-cola vainilla',     '🥤'),
+  p('cocacola-sin-cafeina','Coca-cola sin cafeína','🥤'),
   p('pepsi',           'Pepsi',                   '🥤'),
-  p('pepsi-max',       'Pepsi Max',               '🥤'),
-  p('pepsi-light',     'Pepsi Light',             '🥤'),
+  p('pepsi-max',       'Pepsi max',               '🥤'),
+  p('pepsi-light',     'Pepsi light',             '🥤'),
 
   // Naranja / limón / otros sabores
   p('fanta-uva',       'Fanta uva',               '🥤'),
@@ -25,11 +25,11 @@ export const BEBIDAS_EXTRA: Product[] = [
   p('trinaranjus-limon','Trinaranjus limón',      '🍋'),
   p('mirinda',         'Mirinda',                 '🥤'),
   p('sprite',          'Sprite',                  '🥤'),
-  p('seven-up',        '7 Up',                    '🥤'),
+  p('seven-up',        '7 up',                    '🥤'),
   p('schweppes-naranja','Schweppes naranja',      '🥤'),
   p('schweppes-limon', 'Schweppes limón',         '🥤'),
   p('schweppes-tonica','Schweppes tónica',        '🥤'),
-  p('bitter-kas',      'Bitter Kas',              '🥤'),
+  p('bitter-kas',      'Bitter kas',              '🥤'),
   p('kas-naranja',     'Kas naranja',             '🥤'),
   p('kas-limon',       'Kas limón',               '🥤'),
 
@@ -40,8 +40,8 @@ export const BEBIDAS_EXTRA: Product[] = [
   p('nestea-verde',    'Nestea té verde',         '🧃'),
   p('te-limon-frio',   'Té con limón',            '🧃'),
   p('te-melocoton-frio','Té con melocotón',       '🧃'),
-  p('lipton-ice-tea',  'Lipton Ice Tea',          '🧃'),
-  p('arizona',         'Arizona Iced Tea',        '🧃'),
+  p('lipton-ice-tea',  'Lipton ice tea',          '🧃'),
+  p('arizona',         'Arizona iced tea',        '🧃'),
 
   // Isotónicas / vitamínicas
   p('aquarius-naranja','Aquarius naranja',        '💧'),
@@ -50,9 +50,9 @@ export const BEBIDAS_EXTRA: Product[] = [
   p('gatorade',        'Gatorade',                '💧'),
 
   // Energéticas
-  p('red-bull',        'Red Bull',                '⚡'),
-  p('red-bull-sin-azucar','Red Bull sin azúcar',  '⚡'),
-  p('monster-energy',  'Monster Energy',          '⚡'),
+  p('red-bull',        'Red bull',                '⚡'),
+  p('red-bull-sin-azucar','Red bull sin azúcar',  '⚡'),
+  p('monster-energy',  'Monster energy',          '⚡'),
   p('burn',            'Burn',                    '⚡'),
   p('rockstar',        'Rockstar',                '⚡'),
 
@@ -72,8 +72,8 @@ export const BEBIDAS_EXTRA: Product[] = [
   p('horchata',        'Horchata',                '🥛'),
 
   // Brasileños / latinoamericanos
-  p('guarana-antarctica','Guaraná Antarctica',    '🥤'),
-  p('guarana-brahma',  'Guaraná Brahma',          '🥤'),
+  p('guarana-antarctica','Guaraná antarctica',    '🥤'),
+  p('guarana-brahma',  'Guaraná brahma',          '🥤'),
   p('zumo-guayaba',    'Zumo de guayaba',         '🥭'),
   p('zumo-maracuya',   'Zumo de maracuyá',        '🥭'),
   p('zumo-acai',       'Zumo de açaí',            '🫐'),
@@ -81,8 +81,8 @@ export const BEBIDAS_EXTRA: Product[] = [
   p('zumo-fruta-pasion','Zumo de fruta de la pasión','🥭'),
   p('caldo-cana',      'Caldo de caña',           '🌾'),
   p('cachaca',         'Cachaça',                 '🥃'),
-  p('inca-kola',       'Inca Kola',               '🥤'),
+  p('inca-kola',       'Inca kola',               '🥤'),
   p('jarritos',        'Jarritos',                '🥤'),
   p('chinotto',        'Chinotto',                '🥤'),
-  p('mate-cola',       'Club-Mate / mate cola',   '🍵'),
+  p('mate-cola',       'Club-mate / mate cola',   '🍵'),
 ];

@@ -26,7 +26,7 @@
   };
 
   // Cuántos productos "habituales" mostramos cuando no hay búsqueda.
-  const HABITUALES_LIMIT = 12;
+  const HABITUALES_LIMIT = 20;
 
   onMount(() => app.hydrate());
 

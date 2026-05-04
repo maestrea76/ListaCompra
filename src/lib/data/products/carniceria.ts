@@ -42,7 +42,7 @@ export const CARNICERIA: Product[] = [
   // Embutidos
   p('chorizo-fresco',   'Chorizo fresco',        '🌭', 'car-embutidos'),
   p('chorizo-curado',   'Chorizo curado',        '🌭', 'car-embutidos'),
-  p('morcilla-beasain', 'Morcilla de Beasain',   '🌭', 'car-embutidos'),
+  p('morcilla-beasain', 'Morcilla de beasain',   '🌭', 'car-embutidos'),
   p('morcilla-arroz',   'Morcilla de arroz',     '🌭', 'car-embutidos'),
   p('salchicha-fresca', 'Salchicha fresca',      '🌭', 'car-embutidos'),
   p('butifarra',        'Butifarra',             '🌭', 'car-embutidos'),
@@ -54,5 +54,5 @@ export const CARNICERIA: Product[] = [
   p('albondigas',       'Albóndigas',            '🍡', 'car-preparados'),
   p('pinchos-moruno',   'Pinchos morunos',       '🍢', 'car-preparados'),
   p('flamenquin',       'Flamenquín',            '🥩', 'car-preparados', 'unidad'),
-  p('san-jacobo',       'San Jacobo',            '🥪', 'car-preparados', 'unidad'),
+  p('san-jacobo',       'San jacobo',            '🥪', 'car-preparados', 'unidad'),
 ];

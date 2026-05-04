@@ -21,6 +21,10 @@ jobs:
       GITHUB_PAGES: 'true'
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Historia completa para que git pueda verificar fast-forward
+          # al actualizar la rama v0.2.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -41,12 +45,16 @@ jobs:
           path: ./dist
 
       # Mantiene la rama v0.2 al día con main automáticamente.
-      # Sólo se ejecuta cuando el push viene de la rama main, para no
-      # tirar para atrás v0.2 si en el futuro lanzamos manualmente el
-      # workflow desde otra rama.
+      # - 'continue-on-error: true' evita que un fallo aquí rompa el
+      #   deploy (la rama v0.2 es sólo un mirror; si falla la actualización
+      #   no es crítico).
+      # - '--force-with-lease' fuerza la actualización siempre que el
+      #   estado remoto sea el que esperamos (evita atropellar cambios
+      #   ajenos hipotéticos).
       - name: Fast-forward branch v0.2 a main
         if: github.ref == 'refs/heads/main'
-        run: git push origin HEAD:refs/heads/v0.2
+        continue-on-error: true
+        run: git push --force-with-lease origin HEAD:refs/heads/v0.2
 
   deploy:
     needs: build

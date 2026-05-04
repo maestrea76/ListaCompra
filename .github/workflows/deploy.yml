@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
+  contents: write    # write para que el step de fast-forward pueda
+  pages: write       # actualizar la rama v0.2 a la última de main.
   id-token: write
 
 concurrency:
@@ -39,6 +39,14 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
+
+      # Mantiene la rama v0.2 al día con main automáticamente.
+      # Sólo se ejecuta cuando el push viene de la rama main, para no
+      # tirar para atrás v0.2 si en el futuro lanzamos manualmente el
+      # workflow desde otra rama.
+      - name: Fast-forward branch v0.2 a main
+        if: github.ref == 'refs/heads/main'
+        run: git push origin HEAD:refs/heads/v0.2
 
   deploy:
     needs: build

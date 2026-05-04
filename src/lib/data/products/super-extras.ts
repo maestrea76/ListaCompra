@@ -41,6 +41,7 @@ export const CONSERVAS_VEG: Product[] = [
   p('esparragos-blancos','Espárragos blancos',      '🌱','sup-despensa'),
   p('esparragos-verdes', 'Espárragos verdes',       '🌱','sup-despensa'),
   p('alcachofas-conserva','Alcachofas en conserva', '🌿','sup-despensa'),
+  p('menestra-bote',     'Menestra en bote',        '🥫','sup-despensa'),
   p('maiz-dulce',        'Maíz dulce',              '🌽','sup-despensa'),
   p('judias-verdes-cons','Judías verdes en conserva','🌱','sup-despensa'),
   p('garbanzos-cocidos', 'Garbanzos cocidos',       '🫘','sup-despensa','unidad'),

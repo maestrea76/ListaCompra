@@ -29,7 +29,8 @@
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'fix: indicador de sync en su propia línea bajo el nombre *)",
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'chore: bump 0.2.0 — inicio ciclo v0.2 *)",
       "Bash(git tag *)",
-      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'ci: auto-sync rama v0.2 con main en cada deploy *)"
+      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'ci: auto-sync rama v0.2 con main en cada deploy *)",
+      "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'feat\\(seed\\): añadir '\\\\''Menestra en bote'\\\\'' y '\\\\''Esponja especial vitro'\\\\'' *)"
     ]
   }
 }

@@ -36,6 +36,7 @@ export const LIMPIEZA: Product[] = [
   p('bayetas',          'Bayetas',                 '🧽', 'paquete'),
   p('estropajos',       'Estropajos',              '🧽', 'paquete'),
   p('esponjas',         'Esponjas',                '🧽', 'paquete'),
+  p('esponja-vitro',    'Esponja especial vitro',  '🧽'),
   p('guantes-latex',    'Guantes de látex',        '🧤', 'paquete'),
   p('guantes-fregar',   'Guantes de fregar',       '🧤'),
   p('fregona',          'Fregona',                 '🧹'),

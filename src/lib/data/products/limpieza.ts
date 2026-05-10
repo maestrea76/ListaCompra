@@ -47,4 +47,5 @@ export const LIMPIEZA: Product[] = [
   p('insecticida',      'Insecticida',             '🦟'),
   p('antipolillas',     'Antipolillas',            '🦋', 'paquete'),
   p('blanqueador',      'Blanqueador ropa',        '🧴'),
+  p('recambio-deshumidificador','Recambio deshumidificador','💧'),
 ];

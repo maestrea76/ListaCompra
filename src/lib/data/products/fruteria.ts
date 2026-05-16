@@ -11,6 +11,8 @@ export const FRUTERIA: Product[] = [
   p('manzana-golden',  'Manzana golden',  '🍎'),
   p('pera-conferencia','Pera conferencia','🍐'),
   p('platano-canarias','Plátano de canarias','🍌', 'kg'),
+  p('platano',         'Plátano',           '🍌', 'kg'),
+  p('tomate-cherry',   'Tomate cherry',     '🍅', 'paquete'),
   p('naranja-zumo',    'Naranja de zumo', '🍊'),
   p('mandarina',       'Mandarina',       '🍊'),
   p('limon',           'Limón',           '🍋'),

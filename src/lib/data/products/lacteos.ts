@@ -40,6 +40,7 @@ export const LACTEOS: Product[] = [
   p('arroz-leche',      'Arroz con leche',        '🍚'),
   p('flan',             'Flan',                   '🍮', 'paquete'),
   p('natillas',         'Natillas',               '🍮', 'paquete'),
+  p('huevos',           'Huevos',                 '🥚', 'docena'),
   p('huevos-l',         'Huevos l',               '🥚', 'docena'),
   p('huevos-m',         'Huevos m',               '🥚', 'docena'),
   p('huevos-camperos',  'Huevos camperos',        '🥚', 'docena'),

@@ -18,6 +18,7 @@ export const SUPER_PANADERIA: Product[] = [
   p('sup-pan-payés',        'Pan payés',               '🍞'),
   p('sup-hogaza',           'Hogaza',                  '🍞'),
   p('sup-pan-integral-s',   'Pan integral',            '🍞'),
+  p('sup-pan-sin-gluten',   'Pan sin gluten',          '🍞'),
   p('sup-pan-centeno-s',    'Pan de centeno',          '🍞'),
   p('sup-pan-espelta-s',    'Pan de espelta',          '🍞'),
   p('sup-pan-semillas-s',   'Pan de semillas',         '🍞'),

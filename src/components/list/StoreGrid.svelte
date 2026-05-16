@@ -7,7 +7,8 @@
   let editing = $state<Store | undefined>(undefined);
   let creating = $state(false);
 
-  // Orden alfabético, pero la tienda "Otros" siempre al final.
+  // Orden: 1º por nº de artículos en lista (desc), 2º alfabético.
+  // "Otros" siempre al final independientemente del resto.
   const visibleStores = $derived(
     app.state.stores
       .filter((s) => s.enabled !== false)
@@ -15,6 +16,9 @@
         const aOtros = /^otros$/i.test(a.name.trim());
         const bOtros = /^otros$/i.test(b.name.trim());
         if (aOtros !== bOtros) return aOtros ? 1 : -1;
+        const aCount = (app.state.lists[a.id]?.items ?? []).length;
+        const bCount = (app.state.lists[b.id]?.items ?? []).length;
+        if (bCount !== aCount) return bCount - aCount;
         return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
       }),
   );

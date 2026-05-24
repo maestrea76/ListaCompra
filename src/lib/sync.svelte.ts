@@ -177,7 +177,19 @@ function applySnapshot(snap: SyncSnapshot): void {
   if (app.state.profile && snap.profile) {
     app.state.profile = snap.profile;
   }
-  app.state.lists = snap.lists ?? {};
+
+  // Merge de listas lista a lista: ganamos la versión más reciente por storeId.
+  // Nunca borramos una lista local que no esté en el snapshot remoto.
+  const remoteLists = snap.lists ?? {};
+  const merged: typeof remoteLists = { ...app.state.lists };
+  for (const [id, remoteList] of Object.entries(remoteLists)) {
+    const local = merged[id];
+    if (!local || remoteList.updatedAt > local.updatedAt) {
+      merged[id] = remoteList;
+    }
+  }
+  app.state.lists = merged;
+
   const seedProducts = app.state.products.filter((p) => !p.id.startsWith('custom-'));
   app.state.products = [...seedProducts, ...(snap.customProducts ?? [])];
   const seedStoreIds = new Set(STORES_SEED.map((s) => s.id));
@@ -190,7 +202,7 @@ function applySnapshot(snap: SyncSnapshot): void {
   app.persist();
   syncStatus.lastSyncAt = Date.now();
   lastAppliedAt = snap.updatedAt;
-  log(`⬇️ Aplicado snapshot remoto (${Object.keys(snap.lists).length} listas)`);
+  log(`⬇️ Aplicado snapshot remoto (${Object.keys(remoteLists).length} listas remotas, ${Object.keys(merged).length} tras merge)`);
 }
 
 // ─── Shares (membresía) ─────────────────────────────────────────────────

@@ -28,6 +28,33 @@
   // Cuántos productos "habituales" mostramos cuando no hay búsqueda.
   const HABITUALES_LIMIT = 20;
 
+  // Normaliza texto para búsquedas tolerantes: minúsculas + sin acentos/diacríticos.
+  const norm = (s: string) =>
+    s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+  // ¿Aparecen los caracteres de `needle` en orden dentro de `hay`?
+  // (coincidencia por subsecuencia → tolera letras intercaladas y typos leves).
+  const isSubsequence = (needle: string, hay: string) => {
+    let i = 0;
+    for (let j = 0; j < hay.length && i < needle.length; j++) {
+      if (hay[j] === needle[i]) i++;
+    }
+    return i === needle.length;
+  };
+
+  // Puntúa cómo de bien casa `name` con la consulta `q` (ya normalizados).
+  // Mayor = mejor. -1 = no casa. Criterios, de más a menos fuerte:
+  //  4 nombre empieza por la consulta · 3 contiene la consulta entera ·
+  //  2 todas las palabras de la consulta aparecen · 1 subsecuencia difusa.
+  const scoreMatch = (name: string, q: string): number => {
+    if (name.startsWith(q)) return 4;
+    if (name.includes(q)) return 3;
+    const words = q.split(/\s+/).filter(Boolean);
+    if (words.length > 1 && words.every((w) => name.includes(w))) return 2;
+    if (isSubsequence(q.replace(/\s+/g, ''), name)) return 1;
+    return -1;
+  };
+
   onMount(() => app.hydrate());
 
   const store = $derived(app.state.stores.find((s) => s.id === storeId));
@@ -60,10 +87,16 @@
     let pool = productsForType;
     if (activeCat !== 'all') pool = pool.filter((p) => p.categoryId === activeCat);
 
-    const q = query.trim().toLowerCase();
+    const q = norm(query.trim());
     if (q) {
-      return pool.filter((p) => p.name.toLowerCase().includes(q))
-        .slice().sort(byName).slice(0, 60);
+      // Búsqueda tolerante: puntuamos cada producto y nos quedamos con los
+      // que casan (score >= 0), ordenados por relevancia y luego alfabético.
+      return pool
+        .map((p) => ({ p, score: scoreMatch(norm(p.name), q) }))
+        .filter((x) => x.score >= 0)
+        .sort((a, b) => b.score - a.score || byName(a.p, b.p))
+        .slice(0, 60)
+        .map((x) => x.p);
     }
 
     // Sin texto: ordenamos por uso descendente y cogemos los top.
@@ -125,7 +158,7 @@
     e.preventDefault();
     const q = query.trim();
     if (!q || !store) return;
-    const exact = productsForType.find((p) => p.name.toLowerCase() === q.toLowerCase());
+    const exact = productsForType.find((p) => norm(p.name) === norm(q));
     if (exact) return addProduct(exact.id);
     if (filtered.length > 0) return addProduct(filtered[0].id);
     const created = app.createFreeProduct(q, store.typeId);

@@ -8,6 +8,8 @@ const p = (id: string, name: string, emoji: string, unit: Unit = 'unidad'): Prod
 export const LIMPIEZA: Product[] = [
   p('detergente-liquido','Detergente líquido',     '🧴'),
   p('detergente-capsulas','Detergente cápsulas',   '🧴', 'paquete'),
+  p('jabon-lavadora',   'Jabón de lavadora',       '🧼'),
+  p('vinagre-limpieza', 'Vinagre de limpieza',     '🧴'),
   p('suavizante',       'Suavizante',              '🧴'),
   p('lejia',            'Lejía',                   '🧴'),
   p('amoniaco',         'Amoniaco',                '🧴'),

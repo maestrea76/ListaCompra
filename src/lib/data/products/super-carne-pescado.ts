@@ -33,6 +33,7 @@ export const SUPER_CARNE: Product[] = [
   p('sup-secreto-iberico', 'Secreto ibérico',       '🥓', 'sup-carniceria'),
   p('sup-presa-iberica',   'Presa ibérica',         '🥓', 'sup-carniceria'),
   p('sup-pluma-iberica',   'Pluma ibérica',         '🥓', 'sup-carniceria'),
+  p('sup-codillo',         'Codillo',               '🍖', 'sup-carniceria'),
   // Cordero
   p('sup-chuletillas-cord','Chuletillas de cordero','🍖', 'sup-carniceria'),
   p('sup-paletilla-cord',  'Paletilla de cordero',  '🍖', 'sup-carniceria'),

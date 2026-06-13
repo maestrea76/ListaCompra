@@ -75,6 +75,7 @@ export const DESPENSA: Product[] = [
   p('alcaparras',        'Alcaparras',              '🫒','sup-despensa'),
   p('caldo-pollo',       'Caldo de pollo',          '🍲','sup-despensa'),
   p('caldo-verduras',    'Caldo de verduras',       '🍲','sup-despensa'),
+  p('caldo-paella',      'Caldo de paella',         '🥘','sup-despensa'),
 ];
 
 export const CONGELADOS: Product[] = [

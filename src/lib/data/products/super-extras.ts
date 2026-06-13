@@ -62,6 +62,7 @@ export const CONSERVAS_VEG: Product[] = [
 export const PREPARADOS: Product[] = [
   p('tortilla-patata',   'Tortilla de patata',      '🥚','sup-despensa'),
   p('ensaladilla-rusa',  'Ensaladilla rusa',        '🥗','sup-despensa'),
+  p('paella',            'Paella',                  '🥘','sup-despensa'),
   p('hummus',            'Hummus',                  '🌰','sup-despensa'),
   p('guacamole',         'Guacamole',               '🥑','sup-despensa'),
   p('gazpacho',          'Gazpacho',                '🍅','sup-despensa','l'),

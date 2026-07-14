@@ -141,3 +141,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Build del panel HA — se genera en CI y se adjunta al Release (no al repo)
+custom_components/tucompra/panel/app/
+tucompra.zip

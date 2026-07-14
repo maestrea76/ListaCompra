@@ -53,10 +53,18 @@ turrón de Jijona, vinos de Rioja/Ribera, etc.).
 > Las listas compartidas se crean desde el panel de sincronización (icono de
 > estado bajo tu nombre) por cualquier usuario **administrador** de HA.
 
-### Desarrollo del panel
+> **Los usuarios no compilan nada.** Cada Release lo construye GitHub Actions:
+> al empujar un tag `vX.Y.Z`, el workflow compila el panel, lo empaqueta en
+> `tucompra.zip` y lo publica como asset del Release. HACS descarga ese asset
+> (`zip_release`), así que instalar/actualizar es un clic.
 
-El panel embebe la SPA de Astro. Para regenerar el build que consume la
-integración:
+### Publicar una versión (solo el desarrollador)
+
+```bash
+git tag v0.3.1 && git push origin v0.3.1
+```
+
+CI se encarga del resto. Para probar el panel en local sin HA:
 
 ```bash
 npm install

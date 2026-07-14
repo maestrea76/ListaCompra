@@ -1,0 +1,51 @@
+name: Release HACS
+
+# Al empujar un tag vX.Y.Z:
+#   1. compila el panel (npm run build:ha),
+#   2. empaqueta la integración (con el panel ya construido) en tucompra.zip,
+#   3. publica un GitHub Release con ese zip como asset.
+# HACS (zip_release en hacs.json) descarga ese asset → los usuarios instalan
+# la versión ya compilada. Nadie tiene que construir nada a mano.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build panel (SPA → custom_components/tucompra/panel/app)
+        run: npm run build:ha
+
+      - name: Sincronizar versión de manifest con el tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Publicando versión $VERSION"
+          # Fija manifest.version = versión del tag (HACS la usa).
+          python -c "import json,sys; p='custom_components/tucompra/manifest.json'; d=json.load(open(p)); d['version']='$VERSION'; json.dump(d, open(p,'w'), indent=2, ensure_ascii=False)"
+
+      - name: Empaquetar integración
+        run: |
+          cd custom_components/tucompra
+          zip -r "$GITHUB_WORKSPACE/tucompra.zip" . -x '*.pyc' -x '*/__pycache__/*'
+
+      - name: Publicar Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: tucompra.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true

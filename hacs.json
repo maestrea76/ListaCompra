@@ -2,5 +2,7 @@
   "name": "Tu Compra",
   "content_in_root": false,
   "render_readme": true,
+  "zip_release": true,
+  "filename": "tucompra.zip",
   "homeassistant": "2024.7.0"
 }

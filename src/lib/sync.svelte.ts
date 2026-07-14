@@ -175,12 +175,23 @@ export async function hydrateAuth(): Promise<void> {
     log(`👤 ${syncStatus.user?.name}${syncStatus.isAdmin ? ' (admin)' : ''}`);
     await refreshShares();
 
-    // Share activo: el guardado, o el personal por defecto.
-    let active = '';
-    try { active = localStorage.getItem(ACTIVE_SHARE_KEY) ?? ''; } catch {}
-    if (!active || !syncStatus.shares.find((s) => s.id === active)) {
-      active = syncStatus.shares.find((s) => s.id.startsWith('personal:'))?.id
-        ?? syncStatus.shares[0]?.id ?? '';
+    // Lista activa por defecto: si el usuario pertenece a alguna lista
+    // COMPARTIDA, esa manda (es la del hogar). Solo respetamos la elección
+    // guardada si apunta a otra compartida (el usuario cambió entre varias).
+    // La personal solo es la predeterminada cuando no hay ninguna compartida.
+    let saved = '';
+    try { saved = localStorage.getItem(ACTIVE_SHARE_KEY) ?? ''; } catch {}
+    const savedValid = !!saved && syncStatus.shares.some((s) => s.id === saved);
+    const firstShared = syncStatus.shares.find((s) => s.id.startsWith('shared:'))?.id;
+
+    let active: string;
+    if (firstShared) {
+      active = savedValid && saved.startsWith('shared:') ? saved : firstShared;
+    } else {
+      active = savedValid
+        ? saved
+        : (syncStatus.shares.find((s) => s.id.startsWith('personal:'))?.id
+          ?? syncStatus.shares[0]?.id ?? '');
     }
     syncStatus.activeShareId = active;
     try { localStorage.setItem(ACTIVE_SHARE_KEY, active); } catch {}

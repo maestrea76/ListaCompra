@@ -1,22 +1,27 @@
 # 🛒 Tu Compra
 
 Aplicación web de listas de la compra **multi-tienda** con sincronización
-**100% local** a través de Home Assistant. Pensada y seedeada para hábitos de
-consumo de **Euskadi / País Vasco** (txuleta, kokotxas, txakoli, idiazabal,
-perretxikos…) y resto de España (jamón ibérico, aceite de la Vera, fabes,
-turrón de Jijona, vinos de Rioja/Ribera, etc.).
+**100% local** a través de Home Assistant. El catálogo se **adapta a la cultura**
+según el idioma de HA (🇪🇸🇬🇧🇺🇸🇫🇷🇩🇪). El seed español es el más completo, con
+fuerte sabor de **Euskadi / País Vasco** (txuleta, kokotxas, txakoli, idiazabal,
+perretxikos…) y resto de España (jamón ibérico, fabes, turrón de Jijona…).
 
 🔗 Demo: https://maestrea76.github.io/ListaCompra/
 
 ## Características principales
 
-- 🏪 **24 tiendas predefinidas** (Eroski, Mercadona, Lidl, BM, Día, Carrefour,
-  Alcampo, Carnicería, Pescadería, Farmacia, Ikea, Zara, Primark, Druni,
-  Arenal, El Corte Inglés, Leroy Merlin, …) con logos reales o badges con
-  colores corporativos. Añade/edita/borra desde la UI con un editor visual.
-- 📦 **Catálogo de ~900 productos** organizado en jerarquía
-  TipoTienda → Categoría → Producto. Cada producto con icono emoji por defecto,
-  cantidad y unidad (unidad / kg / g / l / ml / paquete / docena / caja).
+- 🌍 **Multi-cultura según el idioma de Home Assistant**: tiendas y catálogo se
+  adaptan solos al idioma/país de HA. 🇪🇸 España (Eroski, Mercadona…),
+  🇬🇧 UK (Tesco, Sainsbury's, Boots…), 🇺🇸 USA (Walmart, Costco, Kroger…),
+  🇫🇷 Francia (Carrefour, Leclerc, Monoprix…), 🇩🇪 Alemania (Aldi, Rewe, Edeka…),
+  con productos y nombres de categoría típicos de cada país. Una **bandera**
+  junto al selector de tema indica el idioma detectado.
+- 🏪 **Tiendas predefinidas** con logos reales o badges de color; añade / edita /
+  borra desde la UI con un editor visual. El catálogo español es el más completo
+  (~900 productos); los demás locales parten de un set curado y se amplían.
+- 📦 **Catálogo** organizado en jerarquía TipoTienda → Categoría → Producto.
+  Cada producto con icono emoji, cantidad y unidad (unidad / kg / g / l / ml /
+  paquete / docena / caja).
 - 🔍 **Búsqueda inteligente** dentro de cada tienda: filtro por sección
   (categoría) + texto. Si no hay match, **Enter crea producto libre**.
 - ✏️ **Edición inline por producto**: +/- de cantidad y selector de unidad
@@ -188,9 +193,11 @@ src/
 ├── lib/
 │   ├── data/
 │   │   ├── storeTypes.ts        # 14 tipos
-│   │   ├── stores.ts            # 24 tiendas seed
+│   │   ├── stores.ts            # tiendas seed (ES)
 │   │   ├── categories.ts        # ~70 categorías
-│   │   └── products/            # ~900 productos en archivos por área
+│   │   ├── products/            # ~900 productos ES en archivos por área
+│   │   └── locales/            # tiendas/productos/labels por cultura (UK/US/FR/DE)
+│   ├── i18n/locale.ts          # idioma+país de HA → locale + bandera
 │   ├── stores/app.svelte.ts     # estado global (Svelte 5 runes)
 │   ├── storage.ts               # LocalStorage
 │   ├── sync.svelte.ts           # sync contra la API local de Home Assistant

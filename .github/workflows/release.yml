@@ -28,15 +28,17 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build panel (SPA → custom_components/tucompra/panel/app)
-        run: npm run build:ha
-
-      - name: Sincronizar versión de manifest con el tag
+      - name: Sincronizar versión con el tag (manifest + package.json)
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           echo "Publicando versión $VERSION"
-          # Fija manifest.version = versión del tag (HACS la usa).
-          python -c "import json,sys; p='custom_components/tucompra/manifest.json'; d=json.load(open(p)); d['version']='$VERSION'; json.dump(d, open(p,'w'), indent=2, ensure_ascii=False)"
+          # manifest.version → la usa HACS; package.json.version → footer del panel.
+          # Debe ir ANTES del build para que el footer tome la versión del tag.
+          python -c "import json; p='custom_components/tucompra/manifest.json'; d=json.load(open(p)); d['version']='$VERSION'; json.dump(d, open(p,'w'), indent=2, ensure_ascii=False)"
+          python -c "import json; p='package.json'; d=json.load(open(p)); d['version']='$VERSION'; json.dump(d, open(p,'w'), indent=2, ensure_ascii=False)"
+
+      - name: Build panel (SPA → custom_components/tucompra/panel/app)
+        run: npm run build:ha
 
       - name: Empaquetar integración
         run: |

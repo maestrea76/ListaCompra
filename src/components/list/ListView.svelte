@@ -230,8 +230,12 @@
       </h2>
     </header>
 
-    <!-- Buscador (sólo el input — la cantidad y unidad se editan después,
-         por item, abajo). Así en móvil no se descuadra. -->
+    <!-- Buscador + secciones + habituales. Bloque FIJO (sticky) al hacer
+         scroll vertical: así no pierdes las categorías ni los recientes al
+         navegar por una lista larga. El -mx-4/px-4 extiende el fondo para
+         cubrir el padding del contenedor y que los items no asomen por los
+         lados al pasar por debajo. -->
+    <div class="sticky top-0 z-30 -mx-4 px-4 pt-1 pb-2" style="background: var(--bg);">
     <div class="card-elev p-4 space-y-3">
       <input
         type="text" bind:value={query} placeholder="Buscar o crear producto (Enter)…"
@@ -300,6 +304,7 @@
           Aún no has añadido productos aquí. Escribe en la búsqueda o elige una sección.
         </p>
       {/if}
+    </div>
     </div>
 
     <!-- Lista agrupada -->

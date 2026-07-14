@@ -1,11 +1,13 @@
 ---
 import '../styles/global.css';
+import pkg from '../../package.json';
 
 interface Props {
   title?: string;
 }
 const { title = 'Tu Compra' } = Astro.props;
 const base = import.meta.env.BASE_URL;
+const version = pkg.version; // se muestra en el footer (v.0.3.x)
 ---
 
 <!doctype html>
@@ -37,7 +39,7 @@ const base = import.meta.env.BASE_URL;
     <slot />
     <footer class="text-center text-xs py-6 mt-8 px-4"
       style="color: var(--fg-muted);">
-      Tu Compra v.0.3 por <strong>maestrea</strong>
+      Tu Compra v.{version} por <strong>maestrea</strong>
     </footer>
   </body>
 </html>

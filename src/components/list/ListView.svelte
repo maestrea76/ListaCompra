@@ -14,6 +14,10 @@
 
   let query = $state('');
   let activeCat = $state<string | 'all'>('all');
+  // Item cuyo selector "mover a otra tienda" está abierto (triaje de bandeja).
+  let movingItemId = $state<string | null>(null);
+
+  const INBOX_ID = 'inbox';
 
   const UNITS: Unit[] = ['unidad', 'kg', 'g', 'l', 'ml', 'paquete', 'docena', 'caja'];
 
@@ -175,6 +179,26 @@
     app.setItemQty(storeId, itemId, it.qty + delta);
   }
 
+  const isInbox = $derived(storeId === INBOX_ID);
+
+  // Tiendas a las que mover (todas menos la actual), "Otros" al final.
+  const moveTargets = $derived(
+    app.state.stores.filter((s) => s.enabled !== false && s.id !== storeId).slice().sort(byName),
+  );
+
+  // Tienda sugerida para un producto (categoría → tipo → default), o null.
+  function suggestedStore(productId: string) {
+    const id = app.suggestStoreFor(productId);
+    if (!id || id === storeId) return null;
+    return app.state.stores.find((s) => s.id === id) ?? null;
+  }
+
+  function moveTo(itemId: string, toStoreId: string) {
+    if (!toStoreId) return;
+    app.moveItem(storeId, itemId, toStoreId);
+    movingItemId = null;
+  }
+
   const doneCount = $derived(list.items.filter((i) => i.done).length);
 
   function clearDone() {
@@ -307,9 +331,20 @@
     </div>
     </div>
 
+    {#if isInbox && list.items.length > 0}
+      <div class="card-elev p-3 text-sm flex items-start gap-2"
+        style="border-left: 3px solid var(--accent);">
+        <span class="text-lg leading-none">📥</span>
+        <span>Productos añadidos por voz que no se pudieron clasificar solos.
+          Toca <strong>↪</strong> en cada uno para enviarlo a su tienda.</span>
+      </div>
+    {/if}
+
     <!-- Lista agrupada -->
     {#if list.items.length === 0}
-      <p class="text-center text-muted py-12">Lista vacía. Añade productos arriba ⬆️</p>
+      <p class="text-center text-muted py-12">
+        {isInbox ? 'Bandeja vacía 🎉 Todo clasificado.' : 'Lista vacía. Añade productos arriba ⬆️'}
+      </p>
     {:else}
       <div class="space-y-4">
         {#each grouped as group (group.category?.id ?? 'x')}
@@ -322,7 +357,8 @@
             <ul class="divide-y" style="border-color: var(--border);">
               {#each group.items as item (item.id)}
                 {@const p = product(item.productId)}
-                <li class={`flex items-center gap-3 py-2.5 ${item.done ? 'product-done' : ''}`}>
+                {@const sug = suggestedStore(item.productId)}
+                <li class={`flex items-center gap-3 py-2.5 flex-wrap ${item.done ? 'product-done' : ''}`}>
                   <button onclick={() => app.toggleItem(storeId, item.id)}
                     class="size-9 shrink-0 rounded-full border-2 grid place-items-center transition"
                     style={item.done
@@ -354,8 +390,31 @@
                       </select>
                     </div>
                   </div>
+                  <button onclick={() => (movingItemId = movingItemId === item.id ? null : item.id)}
+                    class="text-muted hover:text-current text-lg shrink-0"
+                    title="Mover a otra tienda">↪</button>
                   <button onclick={() => app.removeItem(storeId, item.id)}
                     class="text-muted hover:text-red-500 text-2xl shrink-0" title="Quitar">×</button>
+
+                  {#if movingItemId === item.id}
+                    <div class="basis-full mt-2 flex items-center gap-2 flex-wrap pl-12">
+                      <span class="text-xs text-muted">Mover a:</span>
+                      {#if sug}
+                        <button onclick={() => moveTo(item.id, sug.id)}
+                          class="rounded-full px-3 py-1 text-xs font-medium text-white"
+                          style="background: var(--accent);"
+                          title="Tienda sugerida">⭐ {sug.name}</button>
+                      {/if}
+                      <select onchange={(e) => moveTo(item.id, e.currentTarget.value)}
+                        class="text-xs rounded-md border px-2 py-1 bg-transparent"
+                        style="border-color: var(--border);">
+                        <option value="">Elegir tienda…</option>
+                        {#each moveTargets as s (s.id)}<option value={s.id}>{s.name}</option>{/each}
+                      </select>
+                      <button onclick={() => (movingItemId = null)}
+                        class="text-xs text-muted hover:underline">cancelar</button>
+                    </div>
+                  {/if}
                 </li>
               {/each}
             </ul>

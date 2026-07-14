@@ -197,6 +197,37 @@ class AppStore {
     return this.state.usage?.[storeId]?.[productId] ?? 0;
   }
 
+  /** Mueve un ítem de una tienda a otra (triaje de la bandeja "Por clasificar").
+   *  Conserva cantidad, unidad y estado; suma uso en la tienda destino. */
+  moveItem(fromStoreId: string, itemId: string, toStoreId: string): void {
+    if (fromStoreId === toStoreId) return;
+    const from = this.state.lists[fromStoreId];
+    if (!from) return;
+    const idx = from.items.findIndex((i) => i.id === itemId);
+    if (idx < 0) return;
+    const [item] = from.items.splice(idx, 1);
+    from.updatedAt = Date.now();
+    const to = this.getList(toStoreId);
+    to.items.push(item);
+    to.updatedAt = Date.now();
+    this.state.lists[toStoreId] = to;
+    if (!this.state.usage) this.state.usage = {};
+    if (!this.state.usage[toStoreId]) this.state.usage[toStoreId] = {};
+    this.state.usage[toStoreId][item.productId] =
+      (this.state.usage[toStoreId][item.productId] ?? 0) + 1;
+    this.persist();
+  }
+
+  /** Sugiere la tienda destino de un producto: su categoría → tipo → tienda
+   *  por defecto de ese tipo. undefined si no se puede deducir. */
+  suggestStoreFor(productId: string): string | undefined {
+    const p = this.state.products.find((x) => x.id === productId);
+    if (!p) return undefined;
+    const cat = this.state.categories.find((c) => c.id === p.categoryId);
+    if (!cat) return undefined;
+    return this.getDefaultStore(cat.typeId);
+  }
+
   /** Ajusta la cantidad. Si delta hace que baje a <=0, no hace nada (usa
    *  removeItem para borrar). Permite decimales (0.5 kg, etc.). */
   setItemQty(storeId: string, itemId: string, qty: number): void {

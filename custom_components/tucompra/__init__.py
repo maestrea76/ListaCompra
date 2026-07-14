@@ -12,9 +12,12 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+import voluptuous as vol
+
 from homeassistant.components import panel_custom
 from homeassistant.components.http import StaticPathConfig
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from .api import async_register_views
@@ -28,6 +31,15 @@ from .const import (
 from .store import TuCompraStore
 
 _LOGGER = logging.getLogger(__name__)
+
+ADD_ITEM_SCHEMA = vol.Schema(
+    {
+        vol.Required("name"): cv.string,
+        vol.Optional("quantity", default=1): vol.Coerce(float),
+        vol.Optional("unit"): cv.string,
+        vol.Optional("share_id"): cv.string,
+    }
+)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -43,6 +55,24 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     )
 
     async_register_views(hass)
+
+    async def _handle_add_item(call: ServiceCall) -> dict:
+        result = await store.async_add_named_item(
+            name=call.data["name"],
+            quantity=call.data.get("quantity", 1),
+            unit=call.data.get("unit"),
+            share_id=call.data.get("share_id"),
+        )
+        _LOGGER.debug("add_item(%s) → %s", call.data.get("name"), result)
+        return result
+
+    hass.services.async_register(
+        DOMAIN,
+        "add_item",
+        _handle_add_item,
+        schema=ADD_ITEM_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
 
     # Panel lateral: HA carga el web component `tucompra-panel`, que a su vez
     # incrusta la SPA en un iframe y le pasa el token de acceso del usuario.

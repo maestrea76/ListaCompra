@@ -12,16 +12,38 @@ from __future__ import annotations
 
 import time
 import uuid
+from pathlib import Path
 from typing import Any
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from .const import STORAGE_KEY, STORAGE_VERSION
+from .routing import INBOX_STORE_ID, load_catalog, resolve
 
 
 def _now_ms() -> int:
     return int(time.time() * 1000)
+
+
+def _titlecase_es(name: str) -> str:
+    name = name.strip()
+    return name[:1].upper() + name[1:].lower() if name else name
+
+
+def _ensure_inbox_store(snapshot: dict) -> None:
+    """Añade la tienda 'Por clasificar' al snapshot si aún no existe."""
+    stores = snapshot.setdefault("customStores", [])
+    if not any(s.get("id") == INBOX_STORE_ID for s in stores):
+        stores.append(
+            {
+                "id": INBOX_STORE_ID,
+                "name": "📥 Por clasificar",
+                "typeId": "otros",
+                "icon": {"kind": "emoji", "value": "📥"},
+                "edited": True,
+            }
+        )
 
 
 class TuCompraStore:
@@ -30,6 +52,7 @@ class TuCompraStore:
     def __init__(self, hass: HomeAssistant) -> None:
         self._store: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
         self._data: dict[str, Any] = {"shares": {}}
+        self.catalog = load_catalog(Path(__file__).parent / "catalog.json")
 
     async def async_load(self) -> dict[str, Any]:
         data = await self._store.async_load()
@@ -138,3 +161,85 @@ class TuCompraStore:
             await self._async_save()
             return True
         return False
+
+    # ── Alta de producto por nombre (servicio add_item / voz) ───────────
+    def _pick_target_share(self, share_id: str | None) -> dict[str, Any] | None:
+        """Share destino: el indicado; si no, la compartida (hogar); si no, la
+        primera personal. Coincide con el 'compartida por defecto' del frontend."""
+        shares = self.shares
+        if share_id and share_id in shares:
+            return shares[share_id]
+        shared = [s for sid, s in shares.items() if sid.startswith("shared:")]
+        if shared:
+            return shared[0]
+        personal = [s for sid, s in shares.items() if sid.startswith("personal:")]
+        return personal[0] if personal else None
+
+    async def async_add_named_item(
+        self,
+        name: str,
+        quantity: float = 1,
+        unit: str | None = None,
+        share_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Añade un producto por nombre: fuzzy match → tipo → tienda por defecto,
+        o bandeja 'Por clasificar' si no se puede resolver."""
+        share = self._pick_target_share(share_id)
+        if not share:
+            return {"ok": False, "error": "No hay ninguna lista disponible todavía."}
+
+        snap = share.get("snapshot") or {
+            "lists": {}, "customProducts": [], "customStores": [],
+            "defaultStores": {}, "updatedAt": 0,
+        }
+        res = resolve(name, snap, self.catalog)
+        now = _now_ms()
+
+        product = res["product"]
+        store_id = res["store_id"]
+        if store_id is None:
+            store_id = INBOX_STORE_ID
+            _ensure_inbox_store(snap)
+
+        if product:
+            product_id = product["id"]
+            item_unit = unit or product.get("defaultUnit") or "unidad"
+        else:
+            # Producto no reconocido → producto libre en la bandeja.
+            product_id = f"custom-voice-{uuid.uuid4().hex[:8]}"
+            snap.setdefault("customProducts", []).append(
+                {
+                    "id": product_id,
+                    "name": _titlecase_es(name),
+                    "categoryId": "otros-otros",
+                    "icon": {"kind": "emoji", "value": "🏷️"},
+                    "defaultUnit": unit or "unidad",
+                }
+            )
+            item_unit = unit or "unidad"
+
+        lists = snap.setdefault("lists", {})
+        lst = lists.setdefault(store_id, {"storeId": store_id, "items": [], "updatedAt": 0})
+        lst["items"].append(
+            {
+                "id": uuid.uuid4().hex,
+                "productId": product_id,
+                "qty": quantity or 1,
+                "unit": item_unit,
+                "done": False,
+                "addedAt": now,
+            }
+        )
+        lst["updatedAt"] = now
+        snap["updatedAt"] = now
+        share["snapshot"] = snap
+        await self._async_save()
+
+        return {
+            "ok": True,
+            "share_id": share["id"],
+            "store_id": store_id,
+            "product_id": product_id,
+            "matched": product is not None,
+            "classified": store_id != INBOX_STORE_ID,
+        }

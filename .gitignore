@@ -145,3 +145,6 @@ vite.config.ts.timestamp-*
 # Build del panel HA — se genera en CI y se adjunta al Release (no al repo)
 custom_components/tucompra/panel/app/
 tucompra.zip
+
+# Catálogo generado en build (viaja en el zip del release, no en git)
+custom_components/tucompra/catalog.json

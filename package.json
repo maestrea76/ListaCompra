@@ -1,14 +1,15 @@
 {
   "name": "tu-compra",
   "type": "module",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Listas de la compra multi-tienda con integración Home Assistant",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "build:pages": "astro build",
-    "build:ha": "cross-env HA_PANEL=true astro build --outDir custom_components/tucompra/panel/app",
+    "export:catalog": "tsx scripts/export-catalog.ts",
+    "build:ha": "npm run export:catalog && cross-env HA_PANEL=true astro build --outDir custom_components/tucompra/panel/app",
     "astro": "astro",
     "check": "astro check"
   },
@@ -23,6 +24,7 @@
     "@tailwindcss/vite": "^4.0.0",
     "cross-env": "^7.0.3",
     "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }
 }

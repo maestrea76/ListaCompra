@@ -14,6 +14,9 @@
   import { syncStatus, hydrateAuth, stopSync } from '$lib/sync.svelte';
 
   let showDiag = $state(false);
+  // Falso hasta resolver la identidad de HA; evita que parpadee el ProfileSetup
+  // en el panel antes de saber quién es el usuario logueado.
+  let ready = $state(false);
 
   // Routing por hash (SPA de una sola página): así funciona igual servido como
   // estático dentro del panel de HA (aiohttp no sirve subdirectorios) y en GH
@@ -34,6 +37,21 @@
     // Obtiene el token de HA (si estamos en el panel), identidad, shares y
     // arranca la sync. Fuera de HA queda en modo local puro.
     await hydrateAuth();
+
+    // Dentro de HA la identidad es el usuario/person. logueado: no pedimos
+    // nombre, autocompletamos (y lo refrescamos) el perfil con ese person.
+    if (syncStatus.inHA && syncStatus.user) {
+      const name = syncStatus.user.person?.name ?? syncStatus.user.name ?? 'Usuario';
+      if (!app.state.profile) {
+        app.state.profile = { username: name, theme: 'system', createdAt: Date.now() };
+        app.persistLocalOnly();
+      } else if (app.state.profile.username !== name) {
+        app.state.profile = { ...app.state.profile, username: name };
+        app.persistLocalOnly();
+      }
+    }
+
+    ready = true;
   });
 
   function applyTheme(t: 'light' | 'dark' | 'system') {
@@ -64,7 +82,13 @@
 {#if !app.hydrated}
   <div class="min-h-screen grid place-items-center text-muted">Cargando…</div>
 {:else if !app.state.profile}
-  <ProfileSetup />
+  <!-- Sin perfil: dentro de HA se autocompleta (no llega aquí). Fuera de HA
+       esperamos a resolver la identidad antes de pedir nombre. -->
+  {#if ready}
+    <ProfileSetup />
+  {:else}
+    <div class="min-h-screen grid place-items-center text-muted">Cargando…</div>
+  {/if}
 {:else if activeStoreId}
   <!-- Vista de una tienda (routing por hash #/lista/<id>) -->
   <main class="mx-auto max-w-3xl px-4 py-6">

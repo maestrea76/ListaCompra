@@ -34,7 +34,9 @@ class TuCompraPanel extends HTMLElement {
     if (this._iframe) return;
 
     const iframe = document.createElement("iframe");
-    iframe.src = `${this._static}/app/index.html`;
+    // Anti-caché: el index.html es diminuto y así siempre trae la versión
+    // recién instalada (los assets van con hash y sí se cachean).
+    iframe.src = `${this._static}/app/index.html?v=${Date.now()}`;
     iframe.title = "Tu Compra";
     iframe.style.cssText =
       "border:0;width:100%;height:100%;display:block;background:transparent;";

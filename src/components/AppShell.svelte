@@ -11,9 +11,11 @@
   import ListView from './list/ListView.svelte';
   import ThemeToggle from './ui/ThemeToggle.svelte';
   import SyncDiag from './ui/SyncDiag.svelte';
+  import DefaultStores from './ui/DefaultStores.svelte';
   import { syncStatus, hydrateAuth, stopSync } from '$lib/sync.svelte';
 
   let showDiag = $state(false);
+  let showDefaults = $state(false);
   // Falso hasta resolver la identidad de HA; evita que parpadee el ProfileSetup
   // en el panel antes de saber quién es el usuario logueado.
   let ready = $state(false);
@@ -120,6 +122,9 @@
         </button>
       </div>
       <div class="flex items-center gap-2 shrink-0">
+        <button onclick={() => (showDefaults = true)} title="Tiendas por defecto (enrutado por voz)"
+          class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
+          style="border-color: var(--border);">🎯</button>
         <button onclick={signOut} title="Cerrar sesión y borrar datos del navegador"
           class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">🚪</button>
@@ -131,5 +136,8 @@
 
   {#if showDiag}
     <SyncDiag onClose={() => (showDiag = false)} />
+  {/if}
+  {#if showDefaults}
+    <DefaultStores onClose={() => (showDefaults = false)} />
   {/if}
 {/if}

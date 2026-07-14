@@ -102,7 +102,33 @@ class AppStore {
   removeStore(id: string): void {
     this.state.stores = this.state.stores.filter((s) => s.id !== id);
     delete this.state.lists[id];
+    // Si era la tienda por defecto de algún tipo, limpia esa preferencia.
+    if (this.state.defaultStores) {
+      for (const [typeId, storeId] of Object.entries(this.state.defaultStores)) {
+        if (storeId === id) delete this.state.defaultStores[typeId];
+      }
+    }
     this.persist();
+  }
+
+  // -------- Tienda por defecto por tipo (enrutado por voz) --------
+  /** Fija (o limpia, con null) la tienda por defecto de un tipo. */
+  setDefaultStore(typeId: string, storeId: string | null): void {
+    if (!this.state.defaultStores) this.state.defaultStores = {};
+    if (storeId) this.state.defaultStores[typeId] = storeId;
+    else delete this.state.defaultStores[typeId];
+    this.persist();
+  }
+
+  /** Devuelve la tienda por defecto de un tipo. Si no hay una fijada y solo
+   *  existe una tienda de ese tipo, devuelve esa (default implícito). */
+  getDefaultStore(typeId: string): string | undefined {
+    const explicit = this.state.defaultStores?.[typeId];
+    if (explicit && this.state.stores.some((s) => s.id === explicit)) return explicit;
+    const ofType = this.state.stores.filter(
+      (s) => s.typeId === typeId && s.enabled !== false,
+    );
+    return ofType.length === 1 ? ofType[0].id : undefined;
   }
 
   // -------- Catálogo de productos --------

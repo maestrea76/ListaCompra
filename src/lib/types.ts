@@ -95,4 +95,8 @@ export interface AppState {
    *  usuario añade un producto a una lista. Sirve para mostrar "habituales"
    *  en la UI sin tener que listar todo el catálogo. */
   usage?: Record<Store['id'], Record<Product['id'], number>>;
+  /** Tienda por defecto de cada TipoTienda. La usa el enrutado por voz
+   *  (Google Nest → HA): un producto implica un tipo de tienda; si hay varias
+   *  tiendas de ese tipo, aquí se fija a cuál va. Lo gestiona el administrador. */
+  defaultStores?: Record<StoreType['id'], Store['id']>;
 }

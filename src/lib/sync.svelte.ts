@@ -18,6 +18,7 @@ interface SyncSnapshot {
   lists: Record<string, ShoppingList>;
   customProducts: Product[];
   customStores: Store[];
+  defaultStores?: Record<string, string>;
   updatedAt: number;
 }
 
@@ -131,6 +132,7 @@ function buildSnapshot(): SyncSnapshot {
     lists,
     customProducts: products.filter((p) => p.id.startsWith('custom-')),
     customStores: stores.filter((s) => !seedStoreIds.has(s.id) || s.edited),
+    defaultStores: app.state.defaultStores,
     updatedAt: Date.now(),
   };
 }
@@ -153,6 +155,8 @@ function applySnapshot(snap: SyncSnapshot): void {
     (s) => seedStoreIds.has(s.id) && !s.edited,
   );
   app.state.stores = [...localUntouched, ...(snap.customStores ?? [])];
+
+  if (snap.defaultStores) app.state.defaultStores = snap.defaultStores;
 
   app.persistLocalOnly();
   syncStatus.lastSyncAt = Date.now();

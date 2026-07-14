@@ -10,7 +10,6 @@ Sin servicios externos: los datos viven en `.storage/tucompra`.
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
 from pathlib import Path
 
 import voluptuous as vol
@@ -19,7 +18,6 @@ from homeassistant.components import panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.event import async_call_later, async_track_time_interval
 from homeassistant.helpers.typing import ConfigType
 
 from .api import async_register_views
@@ -41,28 +39,6 @@ ADD_ITEM_SCHEMA = vol.Schema(
         vol.Optional("unit"): cv.string,
         vol.Optional("share_id"): cv.string,
     }
-)
-
-# Config opcional de `configuration.yaml`. `tucompra:` a secas (sin nada) sigue
-# valiendo; el bloque `google_keep` activa el puente con la lista de Google.
-_KEEP_SCHEMA = vol.Schema(
-    {
-        vol.Required("email"): cv.string,
-        vol.Required("master_token"): cv.string,
-        vol.Optional("list_name"): cv.string,
-        vol.Optional("interval", default=120): cv.positive_int,
-        vol.Optional("share_id"): cv.string,
-    }
-)
-
-CONFIG_SCHEMA = vol.Schema(
-    {
-        DOMAIN: vol.Any(
-            None,
-            vol.Schema({vol.Optional("google_keep"): _KEEP_SCHEMA}),
-        )
-    },
-    extra=vol.ALLOW_EXTRA,
 )
 
 
@@ -97,22 +73,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         schema=ADD_ITEM_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
-
-    # Puente opcional con la lista de la compra de Google (Google Keep).
-    keep_conf = (config.get(DOMAIN) or {}).get("google_keep")
-    if keep_conf:
-        from .keep_bridge import KeepBridge
-
-        bridge = KeepBridge(hass, store, keep_conf)
-        interval = timedelta(seconds=keep_conf.get("interval", 120))
-        # Primer sondeo poco después del arranque y luego periódico.
-        async_call_later(hass, 15, bridge.async_poll)
-        hass.data[f"{DOMAIN}_keep_unsub"] = async_track_time_interval(
-            hass, bridge.async_poll, interval
-        )
-        _LOGGER.info(
-            "Tu Compra: puente Google Keep activo (cada %ss)", keep_conf.get("interval", 120)
-        )
 
     # Panel lateral: HA carga el web component `tucompra-panel`, que a su vez
     # incrusta la SPA en un iframe y le pasa el token de acceso del usuario.

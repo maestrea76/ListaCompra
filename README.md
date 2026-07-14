@@ -124,13 +124,13 @@ Ver [`src/lib/sync.svelte.ts`](src/lib/sync.svelte.ts) (cliente) y
   da acceso a **toda** la cuenta de esa lista (tiendas + productos + items).
 - Cambias de lista activa desde el panel de estado (icono bajo tu nombre).
 
-## Añadir productos por voz
+## Añadir productos por voz (Assist)
 
-### Servicio `tucompra.add_item`
-La integración expone un servicio que añade un producto **por su nombre** y lo
-**enruta a la tienda** adecuada: reconoce el producto con búsqueda difusa, deduce
-su tipo de tienda y lo coloca en la **tienda por defecto** de ese tipo (ajustable
-con el botón 🎯). Si no puede clasificarlo, va a la bandeja **"📥 Por clasificar"**.
+La integración expone el servicio **`tucompra.add_item`**, que añade un producto
+**por su nombre** y lo **enruta a la tienda** adecuada: lo reconoce con búsqueda
+difusa, deduce su tipo de tienda y lo coloca en la **tienda por defecto** de ese
+tipo (ajustable con el botón 🎯). Si no puede clasificarlo, va a la bandeja
+**"📥 Por clasificar"**, desde donde lo recolocas con un toque (botón ↪).
 
 ```yaml
 action: tucompra.add_item
@@ -139,68 +139,36 @@ data:
   quantity: 2
 ```
 
-Sirve directamente para **Assist de HA** (móvil, Voice PE) y como base del puente
-con Google.
-
-### Puente con Google Keep (Google Nest)
-Con esto, *"Ok Google, añade papel higiénico a la lista de la compra"* acaba
-clasificado en Tu Compra. La integración lee tu lista de Google Keep, importa los
-ítems y los **borra de Keep** tras importarlos.
-
-#### 1. Conseguir el master_token de Google
-
-Se hace **una vez, en tu PC** (no en la máquina de HA): el token va ligado a la
-cuenta de Google, no al equipo. ⚠️ Da **acceso completo** a esa cuenta de Google;
-trátalo como una contraseña y considera usar una **cuenta secundaria/desechable**
-que comparta la lista con la principal.
-
-**a) Consigue el `oauth_token`** (necesita navegador):
-
-1. Abre una ventana de **incógnito** y ve a
-   `https://accounts.google.com/EmbeddedSetup`.
-2. Inicia sesión (resuelve el 2FA si lo pide).
-3. Cuando la página se quede cargando/en blanco, abre DevTools (F12) →
-   **Application → Cookies → `https://accounts.google.com`** y copia el valor de
-   la cookie **`oauth_token`** (empieza por `oauth2_4/…`). Caduca en minutos.
-
-**b) Cámbialo por el master_token** con el helper incluido:
-
-```bash
-pip install gpsoauth
-python scripts/keep-token.py        # pide correo y oauth_token (oculto)
-```
-
-Imprime directamente las líneas para tu `secrets.yaml`:
+Al ser un servicio de HA, funciona con **Assist** (móvil, Voice PE, etc.). Para
+dispararlo por voz basta una frase personalizada que llame al servicio, p. ej. en
+`configuration.yaml`:
 
 ```yaml
-google_email: tucuenta@gmail.com
-google_keep_token: aas_et/xxxxxxxx
+intent_script:
+  AddShoppingItem:
+    action:
+      - action: tucompra.add_item
+        data:
+          name: "{{ item }}"
+    speech:
+      text: "Añadido {{ item }} a la lista"
 ```
-
-> Si no ves la cookie `oauth_token` (la UI de Google cambia a veces), busca
-> "gkeepapi master token" para la variación del momento. No funciona con cuentas
-> de Advanced Protection.
-
-#### 2. Configurar el puente en `configuration.yaml`
 
 ```yaml
-tucompra:
-  google_keep:
-    email: !secret google_email
-    master_token: !secret google_keep_token
-    # list_name: "Lista de la compra"   # opcional; por defecto detecta la de la compra
-    # interval: 120                       # opcional, segundos entre sondeos
-    # share_id: "shared:abc123"           # opcional; por defecto la compartida/personal
+# custom_sentences/es/tucompra.yaml
+language: es
+intents:
+  AddShoppingItem:
+    data:
+      - sentences:
+          - "añade {item} a la (lista|compra)"
+          - "apunta {item} en la (lista|compra)"
+lists:
+  item:
+    wildcard: true
 ```
 
-#### 3. Reiniciar HA
-
-Cada `interval` segundos importará lo nuevo. En los logs verás
-`Tu Compra: puente Google Keep activo`; si falla, `Tu Compra/Keep: fallo al leer…`.
-
-> **Nota**: `gkeepapi` es una librería **no oficial**; si Google cambia algo puede
-> dejar de funcionar. Es el único modo de leer la lista de la compra nativa del
-> Assistant.
+Así, *"Oye Nabu, añade papel higiénico a la compra"* lo clasifica en su tienda.
 
 ## Estructura del repo
 
@@ -273,7 +241,7 @@ turrón de Jijona/Alicante, polvorones, mantecados…
 - [x] GitHub Actions → Pages
 - [x] Integración local con Home Assistant (HACS): API + panel + shares
 - [ ] config_flow para instalar desde la UI de HA (sin `configuration.yaml`)
-- [ ] Entidades `todo.*` para Assist / Google Nest por voz
+- [ ] Entidades `todo.*` para Assist por voz
 - [ ] Editor visual de productos del catálogo
 - [ ] Foto personalizada por producto
 - [ ] PWA con service worker + offline real

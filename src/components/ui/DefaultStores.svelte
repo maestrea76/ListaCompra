@@ -1,6 +1,6 @@
 <script lang="ts">
   // Ajuste: tienda por defecto de cada tipo (para el enrutado por voz).
-  // Cuando entra un producto por voz (Google Nest → HA), su categoría implica
+  // Cuando entra un producto por voz (Assist → add_item), su categoría implica
   // un TipoTienda; si hay varias tiendas de ese tipo, aquí se decide a cuál va.
   // Solo lo edita un administrador de HA (fuera de HA, el usuario local manda).
 

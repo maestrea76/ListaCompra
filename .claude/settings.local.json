@@ -33,7 +33,10 @@
       "Bash(git -c user.email=maestrea76@users.noreply.github.com -c user.name=maestrea76 commit -m 'feat\\(seed\\): añadir '\\\\''Menestra en bote'\\\\'' y '\\\\''Esponja especial vitro'\\\\'' *)",
       "Bash(git commit *)",
       "Bash(npx tsc *)",
-      "Bash(npx svelte-check *)"
+      "Bash(npx svelte-check *)",
+      "Bash(git commit -m 'feat\\(ha\\): usar el person. logueado como identidad; no pedir nombre en el panel *)",
+      "Bash(git commit -q -m 'feat\\(ui\\): triaje de la bandeja '\\\\''Por clasificar'\\\\'' — mover ítems a su tienda *)",
+      "Bash(git commit -q -m 'chore\\(scripts\\): helper keep-token.py para generar el master_token de Google *)"
     ]
   }
 }

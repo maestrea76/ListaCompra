@@ -9,6 +9,7 @@ Sin servicios externos: los datos viven en `.storage/tucompra`.
 """
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 
@@ -31,6 +32,13 @@ from .const import (
 from .store import TuCompraStore
 
 _LOGGER = logging.getLogger(__name__)
+
+# Versión del manifest (el release la fija = tag). Se usa como cache-buster del
+# wrapper del panel: así cada actualización carga un wrapper fresco, que a su vez
+# refresca la SPA, sin que el usuario tenga que limpiar caché.
+_VERSION = json.loads(
+    (Path(__file__).parent / "manifest.json").read_text(encoding="utf-8")
+).get("version", "0")
 
 ADD_ITEM_SCHEMA = vol.Schema(
     {
@@ -80,7 +88,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         hass,
         frontend_url_path=PANEL_URL_PATH,
         webcomponent_name="tucompra-panel",
-        module_url=f"{STATIC_PATH}/tucompra-panel.js",
+        module_url=f"{STATIC_PATH}/tucompra-panel.js?v={_VERSION}",
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
         require_admin=False,

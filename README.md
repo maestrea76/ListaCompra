@@ -156,19 +156,24 @@ intent_script:
 
 ```yaml
 # custom_sentences/es/tucompra.yaml
-language: es
+language: "es"
 intents:
   AddShoppingItem:
     data:
       - sentences:
-          - "añade {item} a la (lista|compra)"
-          - "apunta {item} en la (lista|compra)"
+          - "(añade|agrega|apunta|pon|mete) {item} a la (lista|compra|lista de la compra)"
+          - "(añade|agrega|apunta|pon|mete) {item} en la (lista|compra|lista de la compra)"
 lists:
   item:
     wildcard: true
 ```
 
 Así, *"Oye Nabu, añade papel higiénico a la compra"* lo clasifica en su tienda.
+
+> ⚠️ Las `custom_sentences` solo las reconoce el agente de conversación
+> **"Home Assistant"**. Si usas un agente LLM (Gemini, ChatGPT…), cámbialo a
+> "Home Assistant" en el diálogo de Assist, o activa **"Preferir gestionar
+> comandos localmente"** en los ajustes de ese asistente.
 
 ## Estructura del repo
 

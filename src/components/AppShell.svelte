@@ -13,13 +13,16 @@
   import SyncDiag from './ui/SyncDiag.svelte';
   import DefaultStores from './ui/DefaultStores.svelte';
   import { syncStatus, hydrateAuth, stopSync } from '$lib/sync.svelte';
-  import { resolveLocale, localeFlag } from '$lib/i18n/locale';
+  import { resolveLocale, countryToFlag, LOCALE_FLAG } from '$lib/i18n/locale';
 
   let showDiag = $state(false);
   let showDefaults = $state(false);
 
-  // Bandera del idioma/país de Home Assistant.
-  const flag = $derived(localeFlag(syncStatus.haLanguage, syncStatus.haCountry));
+  // Bandera: país de HA si lo reporta; si no, la del catálogo cargado (locale
+  // efectivo), que siempre coincide con las tiendas/productos mostrados.
+  const flag = $derived(
+    countryToFlag(syncStatus.haCountry) || LOCALE_FLAG[app.state.locale ?? 'es'],
+  );
   // Falso hasta resolver la identidad de HA; evita que parpadee el ProfileSetup
   // en el panel antes de saber quién es el usuario logueado.
   let ready = $state(false);

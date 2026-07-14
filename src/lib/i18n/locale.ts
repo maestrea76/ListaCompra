@@ -46,3 +46,9 @@ export function localeFlag(language?: string, country?: string): string {
 export const LOCALE_LABEL: Record<Locale, string> = {
   es: 'España', en: 'UK', us: 'USA', fr: 'France', de: 'Deutschland',
 };
+
+// Bandera del catálogo cargado (locale efectivo). Fiable aunque HA no reporte
+// país: siempre coincide con las tiendas/productos que se están mostrando.
+export const LOCALE_FLAG: Record<Locale, string> = {
+  es: '🇪🇸', en: '🇬🇧', us: '🇺🇸', fr: '🇫🇷', de: '🇩🇪',
+};

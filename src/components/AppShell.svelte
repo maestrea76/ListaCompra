@@ -8,15 +8,28 @@
   import { clearState } from '$lib/storage';
   import ProfileSetup from './auth/ProfileSetup.svelte';
   import StoreGrid from './list/StoreGrid.svelte';
+  import ListView from './list/ListView.svelte';
   import ThemeToggle from './ui/ThemeToggle.svelte';
   import SyncDiag from './ui/SyncDiag.svelte';
   import { syncStatus, hydrateAuth, stopSync } from '$lib/sync.svelte';
 
   let showDiag = $state(false);
 
+  // Routing por hash (SPA de una sola página): así funciona igual servido como
+  // estático dentro del panel de HA (aiohttp no sirve subdirectorios) y en GH
+  // Pages, y las tiendas creadas en runtime no necesitan página pre-generada.
+  let hash = $state('');
+  const activeStoreId = $derived.by(() => {
+    const m = hash.match(/^#\/lista\/(.+)$/);
+    return m ? decodeURIComponent(m[1]) : null;
+  });
+
   onMount(async () => {
     app.hydrate();
     applyTheme(app.state.profile?.theme ?? 'system');
+
+    hash = location.hash;
+    window.addEventListener('hashchange', () => { hash = location.hash; });
 
     // Obtiene el token de HA (si estamos en el panel), identidad, shares y
     // arranca la sync. Fuera de HA queda en modo local puro.
@@ -52,6 +65,11 @@
   <div class="min-h-screen grid place-items-center text-muted">Cargando…</div>
 {:else if !app.state.profile}
   <ProfileSetup />
+{:else if activeStoreId}
+  <!-- Vista de una tienda (routing por hash #/lista/<id>) -->
+  <main class="mx-auto max-w-3xl px-4 py-6">
+    <ListView storeId={activeStoreId} />
+  </main>
 {:else}
   <main class="mx-auto max-w-5xl px-4 py-6">
     <header class="flex items-center justify-between mb-6 gap-3">

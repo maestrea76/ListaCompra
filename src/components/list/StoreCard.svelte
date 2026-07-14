@@ -31,7 +31,7 @@
 
 <div class="relative">
   <a
-    href={base(`/lista/${store.id}`)}
+    href={`#/lista/${encodeURIComponent(store.id)}`}
     class="card-elev p-3 flex flex-col items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.99] transition aspect-square overflow-hidden"
   >
     <div

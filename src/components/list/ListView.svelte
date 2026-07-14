@@ -201,7 +201,7 @@
          provoquen scroll horizontal. -->
     <header class="space-y-2">
       <div class="flex items-center justify-between gap-2">
-        <a href={base('/')} class="text-sm text-muted hover:underline shrink-0">← Tiendas</a>
+        <a href="#/" class="text-sm text-muted hover:underline shrink-0">← Tiendas</a>
         <div class="flex gap-1 shrink-0">
           <button onclick={clearDone}
             disabled={doneCount === 0}

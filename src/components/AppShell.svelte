@@ -12,17 +12,15 @@
   import ThemeToggle from './ui/ThemeToggle.svelte';
   import SyncDiag from './ui/SyncDiag.svelte';
   import DefaultStores from './ui/DefaultStores.svelte';
+  import Flag from './ui/Flag.svelte';
   import { syncStatus, hydrateAuth, stopSync } from '$lib/sync.svelte';
-  import { resolveLocale, countryToFlag, LOCALE_FLAG } from '$lib/i18n/locale';
+  import { resolveLocale } from '$lib/i18n/locale';
 
   let showDiag = $state(false);
   let showDefaults = $state(false);
 
-  // Bandera: país de HA si lo reporta; si no, la del catálogo cargado (locale
-  // efectivo), que siempre coincide con las tiendas/productos mostrados.
-  const flag = $derived(
-    countryToFlag(syncStatus.haCountry) || LOCALE_FLAG[app.state.locale ?? 'es'],
-  );
+  // Locale efectivo (catálogo cargado) → determina la bandera SVG mostrada.
+  const activeLocale = $derived(app.state.locale ?? 'es');
   // Falso hasta resolver la identidad de HA; evita que parpadee el ProfileSetup
   // en el panel antes de saber quién es el usuario logueado.
   let ready = $state(false);
@@ -142,10 +140,9 @@
           class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">🚪</button>
         <ThemeToggle />
-        {#if syncStatus.inHA && flag}
-          <span class="text-xl leading-none select-none"
-            title={`Idioma de Home Assistant: ${syncStatus.haLanguage}${syncStatus.haCountry ? '-' + syncStatus.haCountry : ''}`}>
-            {flag}
+        {#if syncStatus.inHA}
+          <span title={`Idioma de Home Assistant: ${syncStatus.haLanguage || activeLocale}${syncStatus.haCountry ? '-' + syncStatus.haCountry : ''}`}>
+            <Flag locale={activeLocale} />
           </span>
         {/if}
       </div>

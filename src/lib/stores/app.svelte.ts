@@ -3,59 +3,68 @@
 
 import type { AppState, ListItem, Product, ShoppingList, Store, UserProfile } from '../types';
 import { createInitialState, loadState, saveState } from '../storage';
-import { STORES_SEED } from '../data/stores';
-import { STORE_TYPES } from '../data/storeTypes';
-import { CATEGORIES_SEED } from '../data/categories';
-import { PRODUCTS_SEED } from '../data/products';
+import { getLocalizedSeed, LOCALIZED_STORES } from '../data/locales';
+import { LOCALES, type Locale } from '../i18n/locale';
+
+// IDs de tienda de TODOS los locales: sirve para distinguir "tienda de seed
+// (de cualquier idioma)" de "tienda custom del usuario".
+const ALL_SEED_STORE_IDS = new Set(
+  LOCALES.flatMap((l) => LOCALIZED_STORES[l].map((s) => s.id)),
+);
 
 class AppStore {
   state = $state<AppState>(createInitialState());
   hydrated = $state(false);
 
-  /** Re-sincroniza las entidades del seed (tipos, tiendas, categorías, productos)
-   *  con los valores actuales del código. Las customizaciones del usuario
-   *  (tiendas/productos creados por él, estado enabled/order de tiendas seed,
-   *  listas de la compra) se preservan. */
+  /** Re-sincroniza el seed (tipos, tiendas, categorías, productos) con el locale
+   *  actual. Preserva las customizaciones del usuario (tiendas/productos creados
+   *  por él, enabled/order de tiendas seed, listas). Al cambiar de locale, las
+   *  tiendas/productos del locale anterior se retiran (no son custom). */
   private refreshSeed(): void {
-    const seedStoreIds = new Set(STORES_SEED.map((s) => s.id));
-    const seedProductIds = new Set(PRODUCTS_SEED.map((p) => p.id));
-    const seedCategoryIds = new Set(CATEGORIES_SEED.map((c) => c.id));
+    const seed = getLocalizedSeed(this.state.locale ?? 'es');
+    const seedStoreIds = new Set(seed.stores.map((s) => s.id));
+    const seedCategoryIds = new Set(seed.categories.map((c) => c.id));
 
     // Tiendas:
-    //  - Si el usuario editó la tienda (edited: true), la dejamos tal cual.
-    //  - Si no, usamos los datos del seed pero preservamos order/enabled.
-    //  - Las tiendas custom (id no-seed) siempre se mantienen.
-    //  - Si el seed ya no incluye un id (p.ej. quitamos Menta), también
-    //    se elimina del local salvo que el usuario la hubiera editado.
+    //  - Editadas por el usuario (edited) del locale actual: se respetan.
+    //  - Seed normales del locale actual: refresh preservando order/enabled.
+    //  - Custom del usuario (id que no es seed de NINGÚN locale): se mantienen.
+    //  - Tiendas seed de OTROS locales: se descartan (cambio de idioma limpio).
     const localById = new Map(this.state.stores.map((s) => [s.id, s]));
-    const customStores = this.state.stores.filter((s) => !seedStoreIds.has(s.id));
+    const customStores = this.state.stores.filter((s) => !ALL_SEED_STORE_IDS.has(s.id));
     const editedSeedStores = this.state.stores.filter(
       (s) => seedStoreIds.has(s.id) && s.edited,
     );
     const editedSeedIds = new Set(editedSeedStores.map((s) => s.id));
 
     this.state.stores = [
-      // Seed normales (no editados): refresh desde código
-      ...STORES_SEED
+      ...seed.stores
         .filter((s) => !editedSeedIds.has(s.id))
         .map((s) => {
           const local = localById.get(s.id);
           return { ...s, order: local?.order ?? s.order, enabled: local?.enabled ?? s.enabled };
         }),
-      // Seed editados por el usuario: respetar tal cual
       ...editedSeedStores,
-      // Tiendas custom del usuario
       ...customStores,
     ];
 
-    // Categorías y productos: refresco completo del seed; preservamos customs.
+    // Categorías y productos: refresco completo del seed localizado; preservamos
+    // los custom (categorías no-seed, productos con prefijo custom-).
     const customCategories = this.state.categories.filter((c) => !seedCategoryIds.has(c.id));
-    this.state.categories = [...CATEGORIES_SEED, ...customCategories];
+    this.state.categories = [...seed.categories, ...customCategories];
 
-    const customProducts = this.state.products.filter((p) => !seedProductIds.has(p.id));
-    this.state.products = [...PRODUCTS_SEED, ...customProducts];
+    const customProducts = this.state.products.filter((p) => p.id.startsWith('custom-'));
+    this.state.products = [...seed.products, ...customProducts];
 
-    this.state.storeTypes = STORE_TYPES;
+    this.state.storeTypes = seed.storeTypes;
+  }
+
+  /** Cambia el locale (idioma/cultura del catálogo) y re-seedea. */
+  setLocale(locale: Locale): void {
+    if ((this.state.locale ?? 'es') === locale) return;
+    this.state.locale = locale;
+    this.refreshSeed();
+    this.persist();
   }
 
   hydrate(): void {

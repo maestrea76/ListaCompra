@@ -13,9 +13,13 @@
   import SyncDiag from './ui/SyncDiag.svelte';
   import DefaultStores from './ui/DefaultStores.svelte';
   import { syncStatus, hydrateAuth, stopSync } from '$lib/sync.svelte';
+  import { resolveLocale, localeFlag } from '$lib/i18n/locale';
 
   let showDiag = $state(false);
   let showDefaults = $state(false);
+
+  // Bandera del idioma/país de Home Assistant.
+  const flag = $derived(localeFlag(syncStatus.haLanguage, syncStatus.haCountry));
   // Falso hasta resolver la identidad de HA; evita que parpadee el ProfileSetup
   // en el panel antes de saber quién es el usuario logueado.
   let ready = $state(false);
@@ -39,6 +43,12 @@
     // Obtiene el token de HA (si estamos en el panel), identidad, shares y
     // arranca la sync. Fuera de HA queda en modo local puro.
     await hydrateAuth();
+
+    // Localiza el catálogo (tiendas/productos/idioma) según HA. Fuera de HA
+    // se mantiene el locale ya guardado (o 'es' por defecto).
+    if (syncStatus.inHA) {
+      app.setLocale(resolveLocale(syncStatus.haLanguage, syncStatus.haCountry));
+    }
 
     // Dentro de HA la identidad es el usuario/person. logueado: no pedimos
     // nombre, autocompletamos (y lo refrescamos) el perfil con ese person.
@@ -129,6 +139,12 @@
           class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">🚪</button>
         <ThemeToggle />
+        {#if syncStatus.inHA && flag}
+          <span class="text-xl leading-none select-none"
+            title={`Idioma de Home Assistant: ${syncStatus.haLanguage}${syncStatus.haCountry ? '-' + syncStatus.haCountry : ''}`}>
+            {flag}
+          </span>
+        {/if}
       </div>
     </header>
     <StoreGrid />

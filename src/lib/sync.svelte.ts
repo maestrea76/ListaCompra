@@ -12,7 +12,14 @@
 
 import { app } from './stores/app.svelte';
 import type { ShoppingList, Product, Store } from './types';
-import { STORES_SEED } from './data/stores';
+import { LOCALIZED_STORES } from './data/locales';
+import { LOCALES } from './i18n/locale';
+
+// IDs de tienda de todos los locales: distingue seed (de cualquier idioma) de
+// tienda custom del usuario, para no sincronizar el seed como si fuera custom.
+const ALL_SEED_STORE_IDS = new Set(
+  LOCALES.flatMap((l) => LOCALIZED_STORES[l].map((s) => s.id)),
+);
 
 interface SyncSnapshot {
   lists: Record<string, ShoppingList>;
@@ -54,6 +61,8 @@ export const syncStatus = $state({
   isAdmin: false,
   shares: [] as ShareInfo[],
   activeShareId: '',
+  haLanguage: '' as string, // idioma de HA (p.ej. "en", "de")
+  haCountry: '' as string, // país de HA (p.ej. "US", "GB")
   lastSyncAt: 0,
   lastError: '',
   log: [] as string[],
@@ -80,6 +89,8 @@ function listenForToken(): Promise<boolean> {
       if (!d || d.type !== 'tucompra-token' || !d.token) return;
       token = d.token;
       hassUrl = d.hassUrl || window.location.origin;
+      syncStatus.haLanguage = d.language || '';
+      syncStatus.haCountry = d.country || '';
       syncStatus.inHA = true;
       if (!settled) {
         settled = true;
@@ -127,11 +138,10 @@ async function api<T = any>(
 
 function buildSnapshot(): SyncSnapshot {
   const { lists, products, stores } = app.state;
-  const seedStoreIds = new Set(STORES_SEED.map((s) => s.id));
   return {
     lists,
     customProducts: products.filter((p) => p.id.startsWith('custom-')),
-    customStores: stores.filter((s) => !seedStoreIds.has(s.id) || s.edited),
+    customStores: stores.filter((s) => !ALL_SEED_STORE_IDS.has(s.id) || s.edited),
     defaultStores: app.state.defaultStores,
     updatedAt: Date.now(),
   };
@@ -150,9 +160,8 @@ function applySnapshot(snap: SyncSnapshot): void {
   const seedProducts = app.state.products.filter((p) => !p.id.startsWith('custom-'));
   app.state.products = [...seedProducts, ...(snap.customProducts ?? [])];
 
-  const seedStoreIds = new Set(STORES_SEED.map((s) => s.id));
   const localUntouched = app.state.stores.filter(
-    (s) => seedStoreIds.has(s.id) && !s.edited,
+    (s) => ALL_SEED_STORE_IDS.has(s.id) && !s.edited,
   );
   app.state.stores = [...localUntouched, ...(snap.customStores ?? [])];
 

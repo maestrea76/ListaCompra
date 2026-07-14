@@ -36,7 +36,20 @@
       "Bash(npx svelte-check *)",
       "Bash(git commit -m 'feat\\(ha\\): usar el person. logueado como identidad; no pedir nombre en el panel *)",
       "Bash(git commit -q -m 'feat\\(ui\\): triaje de la bandeja '\\\\''Por clasificar'\\\\'' — mover ítems a su tienda *)",
-      "Bash(git commit -q -m 'chore\\(scripts\\): helper keep-token.py para generar el master_token de Google *)"
+      "Bash(git commit -q -m 'chore\\(scripts\\): helper keep-token.py para generar el master_token de Google *)",
+      "Bash(curl -s \"https://api.github.com/repos/maestrea76/ListaCompra/actions/workflows/validate.yml/runs?per_page=1\")",
+      "Bash(python -c \"import sys,PIL; print\\('PIL', PIL.__version__, sys.version.split\\(\\)[0]\\)\")",
+      "Bash(echo \"exit=$?\")",
+      "Bash(curl -s \"https://api.github.com/repos/maestrea76/ListaCompra\")",
+      "Bash(curl -s \"https://api.github.com/repos/home-assistant/brands/pulls?state=open&per_page=100\")",
+      "Bash(curl -s \"https://api.github.com/repos/maestrea76/ListaCompra/topics\" -H \"Accept: application/vnd.github+json\")",
+      "Bash(curl -s \"https://api.github.com/search/issues?q=repo:home-assistant/brands+type:pr+author:maestrea76\")",
+      "Bash(curl -s \"https://api.github.com/repos/home-assistant/brands/pulls/10766\")",
+      "Bash(curl -s \"https://api.github.com/repos/home-assistant/brands/issues/10766/comments\")",
+      "Bash(curl -sL \"https://developers.home-assistant.io/blog/2026/02/24/brands-proxy-api\")",
+      "Bash(grep -viE '^\\\\s*$')",
+      "Bash(git commit -q -m 'feat\\(brand\\): icono local en la integración \\(HA 2026.3+\\) — se ve al instalar, sin PR a brands *)",
+      "Bash(git commit -q -m 'feat\\(i18n\\): catálogos y tiendas por cultura \\(ES/UK/US/FR/DE\\) + bandera del idioma de HA *)"
     ]
   }
 }

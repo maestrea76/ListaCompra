@@ -99,4 +99,7 @@ export interface AppState {
    *  (Assist → add_item): un producto implica un tipo de tienda; si hay varias
    *  tiendas de ese tipo, aquí se fija a cuál va. Lo gestiona el administrador. */
   defaultStores?: Record<StoreType['id'], Store['id']>;
+  /** Locale del catálogo (tiendas/productos/idioma de nombres). Se deriva del
+   *  idioma/país de Home Assistant. 'es' por defecto. */
+  locale?: 'es' | 'en' | 'us' | 'fr' | 'de';
 }

@@ -67,9 +67,13 @@ class TuCompraPanel extends HTMLElement {
     if (!token) return;
     const hassUrl =
       (auth.data && auth.data.hassUrl) || window.location.origin;
+    // Idioma y país de HA para localizar el catálogo y mostrar la bandera.
+    const language = this._hass.language || null;
+    const country =
+      (this._hass.config && this._hass.config.country) || null;
     // targetOrigin = mismo origen: la SPA se sirve desde el propio HA.
     this._iframe.contentWindow.postMessage(
-      { type: "tucompra-token", token, hassUrl },
+      { type: "tucompra-token", token, hassUrl, language, country },
       window.location.origin,
     );
   }

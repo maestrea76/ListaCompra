@@ -147,10 +147,41 @@ Con esto, *"Ok Google, añade papel higiénico a la lista de la compra"* acaba
 clasificado en Tu Compra. La integración lee tu lista de Google Keep, importa los
 ítems y los **borra de Keep** tras importarlos.
 
-1. Obtén un **token maestro** de tu cuenta de Google (necesario para `gkeepapi`;
-   se hace una vez con la utilidad `gpsoauth`/token de Google — busca "gkeepapi
-   master token"). ⚠️ Da acceso completo a tu Keep: guárdalo en `secrets.yaml`.
-2. Configura en `configuration.yaml`:
+#### 1. Conseguir el master_token de Google
+
+Se hace **una vez, en tu PC** (no en la máquina de HA): el token va ligado a la
+cuenta de Google, no al equipo. ⚠️ Da **acceso completo** a esa cuenta de Google;
+trátalo como una contraseña y considera usar una **cuenta secundaria/desechable**
+que comparta la lista con la principal.
+
+**a) Consigue el `oauth_token`** (necesita navegador):
+
+1. Abre una ventana de **incógnito** y ve a
+   `https://accounts.google.com/EmbeddedSetup`.
+2. Inicia sesión (resuelve el 2FA si lo pide).
+3. Cuando la página se quede cargando/en blanco, abre DevTools (F12) →
+   **Application → Cookies → `https://accounts.google.com`** y copia el valor de
+   la cookie **`oauth_token`** (empieza por `oauth2_4/…`). Caduca en minutos.
+
+**b) Cámbialo por el master_token** con el helper incluido:
+
+```bash
+pip install gpsoauth
+python scripts/keep-token.py        # pide correo y oauth_token (oculto)
+```
+
+Imprime directamente las líneas para tu `secrets.yaml`:
+
+```yaml
+google_email: tucuenta@gmail.com
+google_keep_token: aas_et/xxxxxxxx
+```
+
+> Si no ves la cookie `oauth_token` (la UI de Google cambia a veces), busca
+> "gkeepapi master token" para la variación del momento. No funciona con cuentas
+> de Advanced Protection.
+
+#### 2. Configurar el puente en `configuration.yaml`
 
 ```yaml
 tucompra:
@@ -162,7 +193,10 @@ tucompra:
     # share_id: "shared:abc123"           # opcional; por defecto la compartida/personal
 ```
 
-3. Reinicia HA. Cada `interval` segundos importará lo nuevo.
+#### 3. Reiniciar HA
+
+Cada `interval` segundos importará lo nuevo. En los logs verás
+`Tu Compra: puente Google Keep activo`; si falla, `Tu Compra/Keep: fallo al leer…`.
 
 > **Nota**: `gkeepapi` es una librería **no oficial**; si Google cambia algo puede
 > dejar de funcionar. Es el único modo de leer la lista de la compra nativa del

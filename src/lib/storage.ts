@@ -1,5 +1,5 @@
 // Capa de persistencia local. El estado completo vive en LocalStorage;
-// la sync entre dispositivos se hace vía Supabase (lib/sync.svelte.ts).
+// la sync entre dispositivos se hace contra Home Assistant (lib/sync.svelte.ts).
 
 import type { AppState } from './types';
 import { STORE_TYPES } from './data/storeTypes';

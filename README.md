@@ -23,10 +23,12 @@ turrón de Jijona, vinos de Rioja/Ribera, etc.).
   sin abandonar la lista.
 - 👤 **Perfil local sin fricción**: sólo nombre. Los datos viven en
   LocalStorage. Sin servidor obligatorio para uso single-device.
-- ☁️ **Sincronización online opcional** (Supabase + Realtime) con
-  **cifrado E2E AES-GCM**. El servidor sólo ve bytes opacos.
+- 🏠 **Sincronización 100% local con Home Assistant** (integración instalable
+  vía HACS). Sin servicios externos: los datos viven en tu propio HA.
+  - Identidad = tu usuario de HA (entidades `person.`), sin login ni passphrase.
   - Multi-dispositivo: tus listas siempre al día en móvil + portátil.
-  - Multi-usuario: comparte una lista con tu pareja/familia vía `share_id`.
+  - Multi-usuario: listas **personales** o **compartidas** entre usuarios de HA
+    (las compartidas las gestiona un administrador).
 - 🌙 **Tema claro/oscuro** persistido por usuario.
 - 📱 **Mobile-first**, PWA-ready (manifest + favicon).
 - 🚀 **GitHub Pages** vía Actions (deploy automático en cada push a `main`).
@@ -36,8 +38,30 @@ turrón de Jijona, vinos de Rioja/Ribera, etc.).
 - [Astro 5](https://astro.build/) + [Svelte 5](https://svelte.dev/) (runes)
 - [Tailwind CSS v4](https://tailwindcss.com/) con tema inline
 - TypeScript estricto
-- [Supabase](https://supabase.com/) (Postgres + Auth + Realtime) — opcional
-- WebCrypto API (AES-GCM 256, PBKDF2-200k)
+- [Home Assistant](https://www.home-assistant.io/) — integración local
+  (`custom_components/tucompra`) distribuida por [HACS](https://hacs.xyz/)
+
+## Instalación en Home Assistant (HACS)
+
+1. En HACS → menú ⋮ → **Repositorios personalizados**, añade
+   `https://github.com/maestrea76/ListaCompra` como tipo **Integración**.
+2. Instala **Tu Compra** y **reinicia** Home Assistant.
+3. Añade la línea `tucompra:` a tu `configuration.yaml` y reinicia.
+4. Aparecerá **Tu Compra** en la barra lateral. La identidad es tu usuario de
+   HA; las listas se guardan en `.storage/tucompra`.
+
+> Las listas compartidas se crean desde el panel de sincronización (icono de
+> estado bajo tu nombre) por cualquier usuario **administrador** de HA.
+
+### Desarrollo del panel
+
+El panel embebe la SPA de Astro. Para regenerar el build que consume la
+integración:
+
+```bash
+npm install
+npm run build:ha   # genera custom_components/tucompra/panel/app
+```
 
 ## Desarrollo
 

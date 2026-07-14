@@ -73,8 +73,8 @@ export interface ShoppingList {
   updatedAt: number;
 }
 
-/** Perfil de usuario local. La autenticación real (cuando el usuario
- *  activa la sync online) la gestiona Supabase con email+password. */
+/** Perfil de usuario local (nombre y tema de este dispositivo). La identidad
+ *  para sincronizar la aporta Home Assistant (usuario logueado en HA). */
 export interface UserProfile {
   username: string;
   companion?: boolean;         // true si username acaba en "@MOVIL"

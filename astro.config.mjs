@@ -2,14 +2,23 @@ import { defineConfig } from 'astro/config';
 import svelte from '@astrojs/svelte';
 import tailwindcss from '@tailwindcss/vite';
 
-// El repo se llama "ListaCompra", así que en GH Pages la app vive en
-// https://maestrea76.github.io/ListaCompra/ → necesita `base: '/ListaCompra'`.
+// Tres destinos de build según variables de entorno:
+//  - GITHUB_PAGES=true → https://maestrea76.github.io/ListaCompra/  (base /ListaCompra)
+//  - HA_PANEL=true     → servido por la integración HA en /tucompra_static/app
+//  - (ninguna)         → dev local en la raíz
 const isPages = process.env.GITHUB_PAGES === 'true';
+const isHAPanel = process.env.HA_PANEL === 'true';
+
+const base = isPages
+  ? '/ListaCompra'
+  : isHAPanel
+    ? '/tucompra_static/app'
+    : undefined;
 
 export default defineConfig({
   output: 'static',
   site: isPages ? 'https://maestrea76.github.io' : undefined,
-  base: isPages ? '/ListaCompra' : undefined,
+  base,
   trailingSlash: 'ignore',
   integrations: [svelte()],
   vite: {

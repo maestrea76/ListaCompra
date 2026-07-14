@@ -1,6 +1,6 @@
 <script lang="ts">
-  // Setup inicial: sólo nombre de usuario y tema. La sync entre dispositivos
-  // se gestiona desde el panel 📡 (Supabase email+password).
+  // Setup inicial: sólo nombre de usuario y tema. La sincronización entre
+  // dispositivos la aporta Home Assistant (usuario logueado en HA).
 
   import { app } from '$lib/stores/app.svelte';
 
@@ -66,8 +66,8 @@
     </button>
 
     <p class="text-xs text-muted text-center">
-      Para sincronizar entre dispositivos o compartir listas con otra persona,
-      activa la nube desde el panel 📡 (email + passphrase).
+      Abriendo "Tu Compra" desde Home Assistant, tus listas se sincronizan
+      automáticamente entre dispositivos con tu usuario de HA.
     </p>
   </div>
 </div>

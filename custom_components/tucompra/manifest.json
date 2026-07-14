@@ -1,0 +1,12 @@
+{
+  "domain": "tucompra",
+  "name": "Tu Compra",
+  "version": "0.3.0",
+  "documentation": "https://github.com/maestrea76/ListaCompra",
+  "issue_tracker": "https://github.com/maestrea76/ListaCompra/issues",
+  "codeowners": ["@maestrea76"],
+  "dependencies": ["http", "frontend", "person"],
+  "iot_class": "local_push",
+  "integration_type": "service",
+  "config_flow": false
+}

@@ -1,0 +1,2 @@
+# El build de la SPA se genera en panel/app/ con `npm run build:ha`.
+# Este archivo mantiene el directorio en git aunque el build no esté aún.

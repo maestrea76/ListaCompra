@@ -66,12 +66,18 @@ class AppStore {
     saveState(this.state);
   }
 
-  /** Persiste a LocalStorage y empuja al doc Y.js si la sync está activa. */
+  /** Persiste a LocalStorage y, si la sync está activa, agenda un push a HA. */
   persist(): void {
     saveState(this.state);
     // Importación dinámica para no romper SSR ni cargar el bundle de sync
     // si el usuario aún no ha entrado en la app.
     import('../sync.svelte').then((m) => m.schedulePush()).catch(() => {});
+  }
+
+  /** Guarda en LocalStorage SIN disparar push. Se usa al aplicar un snapshot
+   *  remoto, para no reenviar de vuelta lo que acabamos de recibir. */
+  persistLocalOnly(): void {
+    saveState(this.state);
   }
 
   // -------- Perfil --------

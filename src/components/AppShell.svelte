@@ -1,7 +1,7 @@
 <script lang="ts">
   // Wrapper raíz: hidrata el store y decide si mostrar el setup inicial o
-  // la app. Sin PIN — la autenticación real (cuando el usuario activa la
-  // sync online) la gestiona Supabase con email+password.
+  // la app. La identidad la aporta Home Assistant (el usuario logueado en HA):
+  // cuando la app corre dentro del panel de HA, la sync se activa sola.
 
   import { onMount } from 'svelte';
   import { app } from '$lib/stores/app.svelte';
@@ -10,7 +10,7 @@
   import StoreGrid from './list/StoreGrid.svelte';
   import ThemeToggle from './ui/ThemeToggle.svelte';
   import SyncDiag from './ui/SyncDiag.svelte';
-  import { startSync, stopSync, syncStatus, syncWasEnabled, hydrateAuth } from '$lib/sync.svelte';
+  import { syncStatus, hydrateAuth, stopSync } from '$lib/sync.svelte';
 
   let showDiag = $state(false);
 
@@ -18,14 +18,9 @@
     app.hydrate();
     applyTheme(app.state.profile?.theme ?? 'system');
 
-    // Hidrata sesión Supabase si la había de antes.
+    // Obtiene el token de HA (si estamos en el panel), identidad, shares y
+    // arranca la sync. Fuera de HA queda en modo local puro.
     await hydrateAuth();
-
-    // Si la sync estaba activa antes y tenemos auth + passphrase
-    // persistida, la re-arrancamos transparentemente.
-    if (syncWasEnabled() && syncStatus.user && syncStatus.passphraseSet) {
-      startSync().catch((e) => console.warn('Sync auto-start falló:', e));
-    }
   });
 
   function applyTheme(t: 'light' | 'dark' | 'system') {
@@ -37,15 +32,14 @@
     if (app.state.profile?.theme) applyTheme(app.state.profile.theme);
   });
 
-  /** Cierra sesión = borra TODO del navegador.
-   *  Si tenías sync online activa, los datos siguen en Supabase y puedes
-   *  recuperarlos al volver a iniciar sesión con el mismo email + passphrase. */
+  /** Borra los datos locales de este navegador. Si la sync con HA está activa,
+   *  los datos siguen en Home Assistant y se recuperan al recargar. */
   function signOut() {
     if (!confirm(
-      '¿Cerrar sesión y borrar tus datos de este navegador?\n\n' +
+      '¿Borrar tus datos de este navegador?\n\n' +
       'Se eliminan listas, productos personalizados y tiendas custom.\n' +
-      'Si tenías sync online activa, los datos siguen en la nube — vuelves\n' +
-      'a entrar con tu email + passphrase y los recuperas.\n\n' +
+      'Si la sincronización con Home Assistant está activa, los datos siguen\n' +
+      'en HA y se recuperan al recargar.\n\n' +
       'Esta acción no se puede deshacer en este dispositivo.'
     )) return;
     try { stopSync(); } catch {}
@@ -69,18 +63,18 @@
           class="mt-1 inline-flex items-center gap-1 text-xs rounded-full border px-2 py-1 hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">
           <span class="size-2 rounded-full"
-            style={syncStatus.enabled && syncStatus.signalingConnected
+            style={syncStatus.enabled && syncStatus.connected
               ? 'background:#22c55e; box-shadow: 0 0 6px #22c55e;'
               : syncStatus.enabled
                 ? 'background:#0ea5e9;'
                 : syncStatus.lastError
                   ? 'background:#ef4444;'
                   : 'background:#94a3b8;'}></span>
-          {syncStatus.enabled && syncStatus.signalingConnected
+          {syncStatus.enabled && syncStatus.connected
             ? 'sync'
             : syncStatus.enabled
               ? 'sync…'
-              : 'sync off'}
+              : syncStatus.inHA ? 'sync…' : 'local'}
         </button>
       </div>
       <div class="flex items-center gap-2 shrink-0">

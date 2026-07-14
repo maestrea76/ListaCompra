@@ -124,6 +124,50 @@ Ver [`src/lib/sync.svelte.ts`](src/lib/sync.svelte.ts) (cliente) y
   da acceso a **toda** la cuenta de esa lista (tiendas + productos + items).
 - Cambias de lista activa desde el panel de estado (icono bajo tu nombre).
 
+## Añadir productos por voz
+
+### Servicio `tucompra.add_item`
+La integración expone un servicio que añade un producto **por su nombre** y lo
+**enruta a la tienda** adecuada: reconoce el producto con búsqueda difusa, deduce
+su tipo de tienda y lo coloca en la **tienda por defecto** de ese tipo (ajustable
+con el botón 🎯). Si no puede clasificarlo, va a la bandeja **"📥 Por clasificar"**.
+
+```yaml
+action: tucompra.add_item
+data:
+  name: papel higiénico
+  quantity: 2
+```
+
+Sirve directamente para **Assist de HA** (móvil, Voice PE) y como base del puente
+con Google.
+
+### Puente con Google Keep (Google Nest)
+Con esto, *"Ok Google, añade papel higiénico a la lista de la compra"* acaba
+clasificado en Tu Compra. La integración lee tu lista de Google Keep, importa los
+ítems y los **borra de Keep** tras importarlos.
+
+1. Obtén un **token maestro** de tu cuenta de Google (necesario para `gkeepapi`;
+   se hace una vez con la utilidad `gpsoauth`/token de Google — busca "gkeepapi
+   master token"). ⚠️ Da acceso completo a tu Keep: guárdalo en `secrets.yaml`.
+2. Configura en `configuration.yaml`:
+
+```yaml
+tucompra:
+  google_keep:
+    email: !secret google_email
+    master_token: !secret google_keep_token
+    # list_name: "Lista de la compra"   # opcional; por defecto detecta la de la compra
+    # interval: 120                       # opcional, segundos entre sondeos
+    # share_id: "shared:abc123"           # opcional; por defecto la compartida/personal
+```
+
+3. Reinicia HA. Cada `interval` segundos importará lo nuevo.
+
+> **Nota**: `gkeepapi` es una librería **no oficial**; si Google cambia algo puede
+> dejar de funcionar. Es el único modo de leer la lista de la compra nativa del
+> Assistant.
+
 ## Estructura del repo
 
 ```

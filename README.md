@@ -1,7 +1,7 @@
 # 🛒 Tu Compra
 
 Aplicación web de listas de la compra **multi-tienda** con sincronización
-en tiempo real cifrada extremo-a-extremo. Pensada y seedeada para hábitos de
+**100% local** a través de Home Assistant. Pensada y seedeada para hábitos de
 consumo de **Euskadi / País Vasco** (txuleta, kokotxas, txakoli, idiazabal,
 perretxikos…) y resto de España (jamón ibérico, aceite de la Vera, fabes,
 turrón de Jijona, vinos de Rioja/Ribera, etc.).
@@ -86,54 +86,35 @@ Para activarlo en tu fork: Settings → Pages → Source = **GitHub Actions**.
 Como es output estático, sirve desde cualquier sitio (nginx, Caddy, Vercel,
 Cloudflare Pages…).
 
-### Integración con Home Assistant
+## Sincronización con Home Assistant
 
-La forma recomendada es **embeber la URL de la app en una tarjeta `iframe`**
-del dashboard de HA. La sync online se encarga de mantener la lista al día
-en cualquier dispositivo, incluyendo el panel de HA.
+La sincronización es **100% local**: los datos viven en tu propio HA
+(`.storage/tucompra`), sin servicios externos. Instalando la integración
+(ver [Instalación en Home Assistant](#instalación-en-home-assistant-hacs))
+aparece "Tu Compra" en la barra lateral.
 
-```yaml
-type: iframe
-url: https://maestrea76.github.io/ListaCompra/
-aspect_ratio: 75%
-```
+### Cómo funciona
 
-Así no hace falta REST/MQTT/webhooks — la app es la misma allí donde la
-abras y los cambios se ven en tiempo real.
+- La SPA se sirve **desde el propio HA** dentro del panel. Un pequeño web
+  component (`tucompra-panel.js`) la incrusta en un iframe y le entrega el
+  **token de acceso del usuario logueado en HA** por `postMessage`.
+- Con ese token la app llama a `/api/tucompra/*`, autenticada como ese usuario.
+  La identidad se resuelve con `request["hass_user"]` y se mapea a la entidad
+  `person.` correspondiente (para nombre y foto). **Sin login ni passphrase.**
+- Cada dispositivo mantiene su copia local (LocalStorage) y sincroniza contra
+  HA (pull periódico + push al editar), reconciliando por `updatedAt`. Offline
+  sigue funcionando y sincroniza al recuperar HA.
 
-## Sincronización online — setup propio
+Ver [`src/lib/sync.svelte.ts`](src/lib/sync.svelte.ts) (cliente) y
+[`custom_components/tucompra/`](custom_components/tucompra/) (backend).
 
-La demo apunta a un proyecto Supabase concreto. Si quieres uno tuyo:
+### Listas personales y compartidas
 
-1. Crea cuenta gratis en https://supabase.com (sin tarjeta).
-2. Nuevo proyecto → anota `URL` y `publishable key` (Settings → API).
-3. SQL Editor → pega y ejecuta el script de [`supabase/schema.sql`](supabase/schema.sql)
-   (crea tablas `tucompra_snapshots` + `tucompra_members` y políticas RLS).
-4. Edita [`src/lib/supabase.ts`](src/lib/supabase.ts) con tu URL y key.
-5. (Opcional) Authentication → Providers → Email → desactiva "Confirm email"
-   si quieres login sin verificación.
-6. Build + deploy.
-
-### Cómo funciona el cifrado E2E
-
-- Al crear cuenta o iniciar sesión, el usuario define una **passphrase**
-  (mín. 6 chars). Esta nunca se envía al servidor.
-- La passphrase se pasa por **PBKDF2-SHA256 (200.000 iteraciones)** con un
-  salt fijo → clave AES-GCM de 256 bits.
-- Cada snapshot (perfil + listas + tiendas/productos custom) se serializa,
-  se cifra con AES-GCM (IV aleatorio por cada cifrado) y se sube en base64.
-- El servidor sólo ve la columna `snapshot text` con bytes opacos.
-  La RLS garantiza que sólo miembros del `share_id` pueden leer/escribir.
-
-Ver [`src/lib/sync.svelte.ts`](src/lib/sync.svelte.ts) para los detalles.
-
-### Sharing de listas
-
-- Cada usuario tiene su lista personal `personal:<userId>` por defecto.
-- `joinShare(shareId)` añade al usuario actual a la membresía de otra lista.
-- Para compartir: pasa tu `share_id` (visible en el panel 📡) Y la passphrase
-  por un canal externo (WhatsApp, en persona…). Quien los tenga puede leer
-  tus datos; sin la passphrase, el `share_id` solo no sirve.
+- Cada usuario tiene su **lista personal** (`personal:<user_id>`) por defecto.
+- Un **administrador** de HA puede crear **listas compartidas**, ponerles
+  nombre (p.ej. "Hogar") y elegir miembros entre las personas de HA. Compartir
+  da acceso a **toda** la cuenta de esa lista (tiendas + productos + items).
+- Cambias de lista activa desde el panel de estado (icono bajo tu nombre).
 
 ## Estructura del repo
 
@@ -153,8 +134,7 @@ src/
 │   │   └── products/            # ~900 productos en archivos por área
 │   ├── stores/app.svelte.ts     # estado global (Svelte 5 runes)
 │   ├── storage.ts               # LocalStorage
-│   ├── supabase.ts              # cliente Supabase
-│   ├── sync.svelte.ts           # sync + AES-GCM + Realtime + sharing
+│   ├── sync.svelte.ts           # sync contra la API local de Home Assistant
 │   ├── base.ts                  # helper para BASE_URL en GH Pages
 │   └── types.ts
 ├── pages/
@@ -163,7 +143,13 @@ src/
 └── styles/global.css
 
 public/logos/          # PNGs/SVGs de las cadenas
-supabase/schema.sql    # script para montar tu propio backend
+custom_components/tucompra/    # integración HA (API + panel + storage)
+│   ├── __init__.py            # registra panel, estáticos y API
+│   ├── api.py                 # vistas REST autenticadas (hass_user)
+│   ├── store.py               # persistencia en .storage/tucompra + shares
+│   ├── const.py / manifest.json
+│   └── panel/                 # wrapper + build de la SPA (npm run build:ha)
+hacs.json              # metadatos para instalación vía HACS
 .github/workflows/     # deploy automático a Pages
 ```
 
@@ -199,8 +185,9 @@ turrón de Jijona/Alicante, polvorones, mantecados…
 - [x] Subida de foto personalizada para tiendas
 - [x] Backup en código (sin servidor)
 - [x] GitHub Actions → Pages
-- [x] Sync online (Supabase + AES-GCM + Realtime + sharing)
-- [x] Integración Home Assistant vía iframe (no requiere REST/MQTT)
+- [x] Integración local con Home Assistant (HACS): API + panel + shares
+- [ ] config_flow para instalar desde la UI de HA (sin `configuration.yaml`)
+- [ ] Entidades `todo.*` para Assist / Google Nest por voz
 - [ ] Editor visual de productos del catálogo
 - [ ] Foto personalizada por producto
 - [ ] PWA con service worker + offline real

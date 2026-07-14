@@ -98,10 +98,30 @@ const DE: Store[] = [
   s('de-kiosk',       'Kiosk / Späti',  'otros',        '🏪', '#444444', '#FFFFFF'),
 ];
 
+// 🇧🇷 Brasil
+const BR: Store[] = [
+  s('br-mendoza',     'Mendoza',        'supermercado', '🛒', '#D32F2F', '#FFFFFF', 'M'),
+  s('br-pao-acucar',  'Pão de Açúcar',  'supermercado', '🛒', '#E30613', '#FFFFFF', 'PA'),
+  s('br-carrefour',   'Carrefour',      'supermercado', '🛒', '#004E9F', '#FFFFFF', 'C'),
+  s('br-extra',       'Extra',          'supermercado', '🛒', '#E2001A', '#FFDD00', 'E'),
+  s('br-assai',       'Assaí',          'supermercado', '🛒', '#002D74', '#FFFFFF', 'A'),
+  s('br-atacadao',    'Atacadão',       'supermercado', '🛒', '#E30613', '#FFDD00', 'AT'),
+  s('br-dia',         'Dia',            'supermercado', '🛒', '#E20613', '#FFE600', 'D'),
+  s('br-acougue',     'Açougue',        'carniceria',   '🥩', '#8B1E1E', '#FFFFFF'),
+  s('br-peixaria',    'Peixaria',       'pescaderia',   '🐟', '#0E6BA8', '#FFFFFF'),
+  s('br-padaria',     'Padaria',        'panaderia',    '🥖', '#B5651D', '#FFFFFF'),
+  s('br-drogaria',    'Drogaria',       'farmacia',     '💊', '#00A651', '#FFFFFF'),
+  s('br-renner',      'Renner',         'ropa',         '👕', '#E4002B', '#FFFFFF', 'R'),
+  s('br-casas-bahia', 'Casas Bahia',    'hogar',        '🛋️', '#003DA5', '#FFFFFF', 'CB'),
+  s('br-leroy',       'Leroy Merlin',   'ferreteria',   '🔧', '#78BE20', '#FFFFFF', 'LM'),
+  s('br-mercadinho',  'Mercadinho',     'otros',        '🏪', '#555555', '#FFFFFF'),
+];
+
 export const LOCALIZED_STORES: Record<Locale, Store[]> = {
   es: STORES_SEED,
   en: UK,
   us: US,
   fr: FR,
   de: DE,
+  br: BR,
 };

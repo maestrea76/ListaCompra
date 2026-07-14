@@ -33,6 +33,13 @@ export const TYPE_NAMES: Partial<Record<Locale, Record<string, string>>> = {
     ropa: 'Kleidung', herboristeria: 'Reformhaus', locutorio: 'Kiosk',
     hogar: 'Haushalt / Möbel', otros: 'Andere',
   },
+  br: {
+    supermercado: 'Supermercado', panaderia: 'Padaria', carniceria: 'Açougue',
+    pescaderia: 'Peixaria', farmacia: 'Farmácia', 'centro-comercial': 'Shopping',
+    ferreteria: 'Materiais de construção', delicatessen: 'Empório', perfumeria: 'Perfumaria',
+    ropa: 'Roupas', herboristeria: 'Produtos naturais', locutorio: 'Banca',
+    hogar: 'Casa / Móveis', otros: 'Outros',
+  },
 };
 
 const EN_SUP: Record<string, string> = {
@@ -59,5 +66,12 @@ export const CATEGORY_NAMES: Partial<Record<Locale, Record<string, string>>> = {
     'sup-despensa': 'Vorratskammer', 'sup-congelados': 'Tiefkühl', 'sup-bebidas': 'Getränke',
     'sup-snacks': 'Snacks & Süßes', 'sup-desayuno': 'Frühstück', 'sup-limpieza': 'Reinigung',
     'sup-higiene': 'Körperpflege', 'sup-bebe': 'Baby', 'sup-mascotas': 'Haustiere', 'sup-otros': 'Andere',
+  },
+  br: {
+    'sup-fruteria': 'Hortifruti', 'sup-carniceria': 'Carnes', 'sup-pescaderia': 'Peixes',
+    'sup-lacteos': 'Laticínios e Ovos', 'sup-panaderia': 'Padaria', 'sup-charcuteria': 'Frios',
+    'sup-despensa': 'Mercearia', 'sup-congelados': 'Congelados', 'sup-bebidas': 'Bebidas',
+    'sup-snacks': 'Salgadinhos e Doces', 'sup-desayuno': 'Café da manhã', 'sup-limpieza': 'Limpeza',
+    'sup-higiene': 'Higiene', 'sup-bebe': 'Bebê', 'sup-mascotas': 'Pets', 'sup-otros': 'Outros',
   },
 };

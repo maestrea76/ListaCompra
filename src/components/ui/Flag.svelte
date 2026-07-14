@@ -38,6 +38,10 @@
           <circle {cx} {cy} r="1.1" fill="#FFFFFF" />
         {/each}
       {/each}
+    {:else if locale === 'br'}
+      <rect width="60" height="42" fill="#009C3B" />
+      <polygon points="30,4 55,21 30,38 5,21" fill="#FFDF00" />
+      <circle cx="30" cy="21" r="8.5" fill="#002776" />
     {/if}
   </g>
 </svg>

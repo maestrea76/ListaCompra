@@ -101,5 +101,5 @@ export interface AppState {
   defaultStores?: Record<StoreType['id'], Store['id']>;
   /** Locale del catálogo (tiendas/productos/idioma de nombres). Se deriva del
    *  idioma/país de Home Assistant. 'es' por defecto. */
-  locale?: 'es' | 'en' | 'us' | 'fr' | 'de';
+  locale?: 'es' | 'en' | 'us' | 'fr' | 'de' | 'br';
 }

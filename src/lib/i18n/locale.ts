@@ -5,9 +5,9 @@
 //  - qué catálogo de tiendas/productos cargar (seed localizado), y
 //  - qué bandera mostrar junto al selector de tema.
 
-export type Locale = 'es' | 'en' | 'us' | 'fr' | 'de';
+export type Locale = 'es' | 'en' | 'us' | 'fr' | 'de' | 'br';
 
-export const LOCALES: Locale[] = ['es', 'en', 'us', 'fr', 'de'];
+export const LOCALES: Locale[] = ['es', 'en', 'us', 'fr', 'de', 'br'];
 
 /** Mapea idioma+país de HA al locale de catálogo soportado (fallback 'es'). */
 export function resolveLocale(language?: string, country?: string): Locale {
@@ -15,6 +15,7 @@ export function resolveLocale(language?: string, country?: string): Locale {
   const cc = (country ?? '').toUpperCase();
   if (lang === 'de') return 'de';
   if (lang === 'fr') return 'fr';
+  if (lang === 'pt') return 'br';
   if (lang === 'en') return cc === 'US' ? 'us' : 'en';
   if (lang === 'es') return 'es';
   return 'es';
@@ -31,7 +32,7 @@ export function countryToFlag(cc?: string): string {
 
 // Bandera por idioma cuando HA no reporta país.
 const LANG_FLAG: Record<string, string> = {
-  es: '🇪🇸', en: '🇬🇧', fr: '🇫🇷', de: '🇩🇪', it: '🇮🇹', pt: '🇵🇹',
+  es: '🇪🇸', en: '🇬🇧', fr: '🇫🇷', de: '🇩🇪', it: '🇮🇹', pt: '🇧🇷',
   nl: '🇳🇱', pl: '🇵🇱', ca: '🇪🇸', eu: '🇪🇸', gl: '🇪🇸',
 };
 
@@ -44,11 +45,11 @@ export function localeFlag(language?: string, country?: string): string {
 }
 
 export const LOCALE_LABEL: Record<Locale, string> = {
-  es: 'España', en: 'UK', us: 'USA', fr: 'France', de: 'Deutschland',
+  es: 'España', en: 'UK', us: 'USA', fr: 'France', de: 'Deutschland', br: 'Brasil',
 };
 
 // Bandera del catálogo cargado (locale efectivo). Fiable aunque HA no reporte
 // país: siempre coincide con las tiendas/productos que se están mostrando.
 export const LOCALE_FLAG: Record<Locale, string> = {
-  es: '🇪🇸', en: '🇬🇧', us: '🇺🇸', fr: '🇫🇷', de: '🇩🇪',
+  es: '🇪🇸', en: '🇬🇧', us: '🇺🇸', fr: '🇫🇷', de: '🇩🇪', br: '🇧🇷',
 };

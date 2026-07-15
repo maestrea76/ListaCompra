@@ -2,7 +2,7 @@
 
 Aplicación web de listas de la compra **multi-tienda** con sincronización
 **100% local** a través de Home Assistant. El catálogo se **adapta a la cultura**
-según el idioma de HA (🇪🇸🇬🇧🇺🇸🇫🇷🇩🇪). El seed español es el más completo, con
+según el idioma de HA (🇪🇸🇬🇧🇺🇸🇫🇷🇩🇪🇧🇷). El seed español es el más completo, con
 fuerte sabor de **Euskadi / País Vasco** (txuleta, kokotxas, txakoli, idiazabal,
 perretxikos…) y resto de España (jamón ibérico, fabes, turrón de Jijona…).
 
@@ -14,8 +14,9 @@ perretxikos…) y resto de España (jamón ibérico, fabes, turrón de Jijona…
   adaptan solos al idioma/país de HA. 🇪🇸 España (Eroski, Mercadona…),
   🇬🇧 UK (Tesco, Sainsbury's, Boots…), 🇺🇸 USA (Walmart, Costco, Kroger…),
   🇫🇷 Francia (Carrefour, Leclerc, Monoprix…), 🇩🇪 Alemania (Aldi, Rewe, Edeka…),
-  con productos y nombres de categoría típicos de cada país. Una **bandera**
-  junto al selector de tema indica el idioma detectado.
+  🇧🇷 Brasil (Mendoza, Pão de Açúcar, Assaí…), con productos y nombres de
+  categoría típicos de cada país. Una **bandera** (dibujada en SVG, se ve igual
+  en todos los sistemas) junto al selector de tema indica el idioma detectado.
 - 🏪 **Tiendas predefinidas** con logos reales o badges de color; añade / edita /
   borra desde la UI con un editor visual. El catálogo español es el más completo
   (~900 productos); los demás locales parten de un set curado y se amplían.
@@ -196,7 +197,7 @@ src/
 │   │   ├── stores.ts            # tiendas seed (ES)
 │   │   ├── categories.ts        # ~70 categorías
 │   │   ├── products/            # ~900 productos ES en archivos por área
-│   │   └── locales/            # tiendas/productos/labels por cultura (UK/US/FR/DE)
+│   │   └── locales/            # tiendas/productos/labels por cultura (UK/US/FR/DE/BR)
 │   ├── i18n/locale.ts          # idioma+país de HA → locale + bandera
 │   ├── stores/app.svelte.ts     # estado global (Svelte 5 runes)
 │   ├── storage.ts               # LocalStorage

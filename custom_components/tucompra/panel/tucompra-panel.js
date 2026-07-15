@@ -47,15 +47,18 @@ class TuCompraPanel extends HTMLElement {
     this.appendChild(iframe);
     this._iframe = iframe;
 
-    // Mensajes de la SPA hacia el wrapper.
+    // Mensajes de la SPA hacia el wrapper. No exigimos que event.source sea
+    // exactamente iframe.contentWindow: en el WebView del companion de Android
+    // esa comparación puede fallar. Los mensajes van con un tipo propio
+    // (namespaced) y las acciones son inocuas, así que basta con el tipo.
     window.addEventListener("message", (event) => {
-      if (event.source !== iframe.contentWindow) return;
       const type = event.data && event.data.type;
       if (type === "tucompra-request-token") {
         this._postToken();
       } else if (type === "tucompra-toggle-menu") {
-        // Abre/cierra la barra lateral de HA (el evento burbujea hasta
-        // home-assistant-main, que la gestiona).
+        // Abre/cierra la barra lateral de HA. El evento burbujea (bubbles +
+        // composed) hasta home-assistant-main, que lo gestiona en cualquier
+        // layout (barra fija en escritorio, cajón lateral en móvil).
         this.dispatchEvent(
           new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }),
         );

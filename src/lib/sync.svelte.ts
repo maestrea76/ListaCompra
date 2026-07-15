@@ -347,3 +347,11 @@ export async function deleteShare(id: string): Promise<void> {
 export function syncWasEnabled(): boolean {
   return true;
 }
+
+/** Pide al wrapper que abra/cierre la barra lateral de Home Assistant. */
+export function toggleHaSidebar(): void {
+  if (typeof window === 'undefined' || window.parent === window) return;
+  try {
+    window.parent.postMessage({ type: 'tucompra-toggle-menu' }, '*');
+  } catch {}
+}

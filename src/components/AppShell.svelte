@@ -13,6 +13,7 @@
   import SyncDiag from './ui/SyncDiag.svelte';
   import DefaultStores from './ui/DefaultStores.svelte';
   import Flag from './ui/Flag.svelte';
+  import MenuButton from './ui/MenuButton.svelte';
   import { syncStatus, hydrateAuth, stopSync } from '$lib/sync.svelte';
   import { resolveLocale } from '$lib/i18n/locale';
 
@@ -110,7 +111,9 @@
 {:else}
   <main class="mx-auto max-w-5xl px-4 py-6">
     <header class="flex items-center justify-between mb-6 gap-3">
-      <div class="min-w-0">
+      <div class="flex items-center gap-2 min-w-0">
+        <MenuButton />
+        <div class="min-w-0">
         <h1 class="text-2xl font-bold">🛒 Tu Compra</h1>
         <p class="text-sm text-muted truncate">Hola, {app.state.profile.username}</p>
         <button onclick={() => (showDiag = true)}
@@ -131,6 +134,7 @@
               ? 'sync…'
               : syncStatus.inHA ? 'sync…' : 'local'}
         </button>
+        </div>
       </div>
       <div class="flex items-center gap-2 shrink-0">
         <button onclick={() => (showDefaults = true)} title="Tiendas por defecto (enrutado por voz)"

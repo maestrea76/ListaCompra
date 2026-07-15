@@ -9,6 +9,7 @@
   import { app } from '$lib/stores/app.svelte';
   import { base } from '$lib/base';
   import type { Unit } from '$lib/types';
+  import MenuButton from '../ui/MenuButton.svelte';
 
   let { storeId }: { storeId: string } = $props();
 
@@ -225,7 +226,10 @@
          provoquen scroll horizontal. -->
     <header class="space-y-2">
       <div class="flex items-center justify-between gap-2">
-        <a href="#/" class="text-sm text-muted hover:underline shrink-0">← Tiendas</a>
+        <div class="flex items-center gap-2 shrink-0">
+          <MenuButton />
+          <a href="#/" class="text-sm text-muted hover:underline">← Tiendas</a>
+        </div>
         <div class="flex gap-1 shrink-0">
           <button onclick={clearDone}
             disabled={doneCount === 0}

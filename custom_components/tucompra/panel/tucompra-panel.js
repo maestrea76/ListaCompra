@@ -47,11 +47,18 @@ class TuCompraPanel extends HTMLElement {
     this.appendChild(iframe);
     this._iframe = iframe;
 
-    // La SPA puede pedir el token explícitamente al arrancar.
+    // Mensajes de la SPA hacia el wrapper.
     window.addEventListener("message", (event) => {
       if (event.source !== iframe.contentWindow) return;
-      if (event.data && event.data.type === "tucompra-request-token") {
+      const type = event.data && event.data.type;
+      if (type === "tucompra-request-token") {
         this._postToken();
+      } else if (type === "tucompra-toggle-menu") {
+        // Abre/cierra la barra lateral de HA (el evento burbujea hasta
+        // home-assistant-main, que la gestiona).
+        this.dispatchEvent(
+          new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }),
+        );
       }
     });
   }

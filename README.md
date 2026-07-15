@@ -273,8 +273,13 @@ turrón de Jijona/Alicante, polvorones, mantecados…
 - [x] Backup en código (sin servidor)
 - [x] GitHub Actions → Pages
 - [x] Integración local con Home Assistant (HACS): API + panel + shares
+- [x] Multi-cultura según idioma de HA (🇪🇸🇬🇧🇺🇸🇫🇷🇩🇪🇧🇷) + bandera SVG
+- [x] Voz por Assist: servicio `tucompra.add_item` con enrutado por tienda
+- [x] Bandeja "Por clasificar" con triaje a la tienda correcta
+- [x] Icono propio en la integración (se ve al instalar por HACS)
+- [x] Botón para abrir la barra lateral de HA desde el panel
 - [ ] config_flow para instalar desde la UI de HA (sin `configuration.yaml`)
-- [ ] Entidades `todo.*` para Assist por voz
+- [ ] Entidades `todo.*` (tarjeta To-do nativa de HA)
 - [ ] Editor visual de productos del catálogo
 - [ ] Foto personalizada por producto
 - [ ] PWA con service worker + offline real

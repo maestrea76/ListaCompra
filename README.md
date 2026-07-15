@@ -8,6 +8,18 @@ perretxikos…) y resto de España (jamón ibérico, fabes, turrón de Jijona…
 
 🔗 Demo: https://maestrea76.github.io/ListaCompra/
 
+> **English summary** — **Tu Compra** ("My Shopping") is a multi-store shopping
+> list web app that runs **100% locally inside Home Assistant** as a HACS
+> integration. No external services: data lives in your own HA (`.storage`),
+> identity is your logged-in HA user (`person.`), and lists can be personal or
+> shared between HA users. The **catalog adapts to your HA language/country**
+> (🇪🇸 Spain, 🇬🇧 UK, 🇺🇸 USA, 🇫🇷 France, 🇩🇪 Germany, 🇧🇷 Brazil) with
+> culture-specific stores and products. You can add items by voice through HA
+> **Assist** (`tucompra.add_item`, auto-routed to the right store). Install it
+> from HACS as a custom repository (`https://github.com/maestrea76/ListaCompra`);
+> the icon ships with the integration. See the sections below (in Spanish) for
+> full details.
+
 ## Características principales
 
 - 🌍 **Multi-cultura según el idioma de Home Assistant**: tiendas y catálogo se

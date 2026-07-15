@@ -221,50 +221,44 @@
 {#if !store}
   <p>Tienda no encontrada.</p>
 {:else}
-  <div class="space-y-5">
-    <!-- Header en 2 filas en móvil para que el nombre largo y los botones no
-         provoquen scroll horizontal. -->
-    <header class="space-y-2">
+  <div class="space-y-4">
+    <!-- Sticky COMPACTO: controles (volver/limpiar) SIEMPRE visibles + buscador.
+         Al escribir, los resultados salen en una tira fina aquí mismo, para
+         añadir sin subir. Las secciones y habituales van debajo (no sticky) y
+         scrollan, así en pantallas pequeñas la lista queda visible. -->
+    <div class="sticky top-0 z-30 -mx-4 px-4 pt-1 pb-2 space-y-2" style="background: var(--bg);">
       <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-2 min-w-0">
           <MenuButton />
-          <a href="#/" class="text-sm text-muted hover:underline">← Tiendas</a>
+          <a href="#/" class="text-sm text-muted hover:underline shrink-0">← Tiendas</a>
+          <span class="font-semibold flex items-center gap-1 min-w-0">
+            {#if store.icon.kind === 'image'}
+              <img src={store.icon.value.startsWith('data:') ? store.icon.value : base(store.icon.value)}
+                alt="" class="size-5 object-contain shrink-0" />
+            {:else if store.icon.kind === 'emoji'}
+              <span class="shrink-0">{store.icon.value}</span>
+            {/if}
+            <span class="truncate">{store.name}</span>
+          </span>
         </div>
         <div class="flex gap-1 shrink-0">
           <button onclick={clearDone}
             disabled={doneCount === 0}
-            class="text-xs rounded-full border px-3 py-1.5 hover:bg-[var(--bg)] transition disabled:opacity-40"
+            class="text-xs rounded-full border px-2.5 py-1.5 hover:bg-[var(--bg)] transition disabled:opacity-40"
             style="border-color: var(--border);"
             title="Borrar productos marcados como comprados">
-            🧹 Limpiar comprados {doneCount > 0 ? `(${doneCount})` : ''}
+            🧹<span class="hidden sm:inline"> Limpiar comprados</span> {doneCount > 0 ? `(${doneCount})` : ''}
           </button>
           <button onclick={clearAll}
             disabled={list.items.length === 0}
-            class="text-xs rounded-full border px-3 py-1.5 hover:bg-[var(--bg)] transition disabled:opacity-40"
+            class="text-xs rounded-full border px-2.5 py-1.5 hover:bg-[var(--bg)] transition disabled:opacity-40"
             style="border-color: var(--border); color: #dc2626;"
             title="Vaciar la lista entera">
             🗑️
           </button>
         </div>
       </div>
-      <h2 class="text-xl font-bold flex items-center gap-2 min-w-0">
-        {#if store.icon.kind === 'image'}
-          <img src={store.icon.value.startsWith('data:') ? store.icon.value : base(store.icon.value)}
-            alt="" class="size-7 object-contain shrink-0" />
-        {:else if store.icon.kind === 'emoji'}
-          <span class="shrink-0">{store.icon.value}</span>
-        {/if}
-        <span class="truncate">{store.name}</span>
-      </h2>
-    </header>
 
-    <!-- Buscador + secciones + habituales. Bloque FIJO (sticky) al hacer
-         scroll vertical: así no pierdes las categorías ni los recientes al
-         navegar por una lista larga. El -mx-4/px-4 extiende el fondo para
-         cubrir el padding del contenedor y que los items no asomen por los
-         lados al pasar por debajo. -->
-    <div class="sticky top-0 z-30 -mx-4 px-4 pt-1 pb-2" style="background: var(--bg);">
-    <div class="card-elev p-4 space-y-3">
       <input
         type="text" bind:value={query} placeholder="Buscar o crear producto (Enter)…"
         onkeydown={handleQueryKeydown}
@@ -272,68 +266,80 @@
         style="border-color: var(--border);"
       />
 
-      <!-- Filtro por categoría/sección -->
-      <div>
-        <div class="flex items-center justify-between mb-1.5">
-          <span class="text-xs font-semibold uppercase tracking-wider text-muted">Sección</span>
-          {#if activeCat !== 'all'}
-            <button onclick={() => (activeCat = 'all')}
-              class="text-xs text-muted hover:underline">limpiar</button>
-          {/if}
-        </div>
-        <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scroll-smooth">
-          <button onclick={() => (activeCat = 'all')}
-            class="shrink-0 w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 transition"
-            class:cat-active={activeCat === 'all'}
-            style="border-color: var(--border);">
-            <span class="text-2xl">🗂️</span>
-            <span class="text-[11px] font-medium leading-tight text-center">Todas</span>
-          </button>
-          {#each categories as c (c.id)}
-            <button onclick={() => (activeCat = c.id)}
-              class="shrink-0 w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 px-1 transition"
-              class:cat-active={activeCat === c.id}
-              style="border-color: var(--border);">
-              <span class="text-2xl">{c.icon.kind === 'emoji' ? c.icon.value : '📁'}</span>
-              <span class="text-[11px] font-medium leading-tight text-center line-clamp-2">{c.name}</span>
-            </button>
-          {/each}
-        </div>
-      </div>
-
-      <!-- Sugerencias de productos según filtro -->
-      {#if filtered.length > 0}
-        {#if showingHabituales}
-          <p class="text-xs font-semibold uppercase tracking-wider text-muted">
-            ⭐ Tus habituales {activeCat !== 'all' ? 'de esta sección' : 'aquí'}
-          </p>
-        {/if}
-        <div class="flex flex-wrap gap-2">
-          {#each filtered as p (p.id)}
-            <button onclick={() => addProduct(p.id)}
-              class="rounded-full border px-3 py-1.5 text-sm hover:bg-[var(--accent)] hover:text-white transition"
-              style="border-color: var(--border);">
-              {p.icon.kind === 'emoji' ? p.icon.value : '🏷️'} {p.name}
-            </button>
-          {/each}
-        </div>
-        {#if showingHabituales}
+      <!-- Resultados de búsqueda: una fila con scroll horizontal (compacta). -->
+      {#if query.trim()}
+        {#if filtered.length > 0}
+          <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            {#each filtered as p (p.id)}
+              <button onclick={() => addProduct(p.id)}
+                class="shrink-0 rounded-full border px-3 py-1.5 text-sm hover:bg-[var(--accent)] hover:text-white transition"
+                style="border-color: var(--border);">
+                {p.icon.kind === 'emoji' ? p.icon.value : '🏷️'} {p.name}
+              </button>
+            {/each}
+          </div>
+        {:else}
           <p class="text-xs text-muted">
-            Para encontrar otros productos del catálogo, escribe en la búsqueda.
+            Sin resultados. Pulsa <kbd class="rounded border px-1.5 py-0.5 text-xs"
+              style="border-color: var(--border);">Enter</kbd> para crear "<strong>{query}</strong>".
           </p>
         {/if}
-      {:else if query.trim()}
-        <p class="text-sm text-muted">
-          Sin resultados. Pulsa <kbd class="rounded border px-1.5 py-0.5 text-xs"
-            style="border-color: var(--border);">Enter</kbd> para crear "<strong>{query}</strong>".
-        </p>
-      {:else}
-        <p class="text-sm text-muted">
-          Aún no has añadido productos aquí. Escribe en la búsqueda o elige una sección.
-        </p>
       {/if}
     </div>
-    </div>
+
+    <!-- Secciones + habituales: NO sticky, solo cuando no hay búsqueda activa. -->
+    {#if !query.trim()}
+      <div class="card-elev p-4 space-y-3">
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-semibold uppercase tracking-wider text-muted">Sección</span>
+            {#if activeCat !== 'all'}
+              <button onclick={() => (activeCat = 'all')}
+                class="text-xs text-muted hover:underline">limpiar</button>
+            {/if}
+          </div>
+          <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scroll-smooth">
+            <button onclick={() => (activeCat = 'all')}
+              class="shrink-0 w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 transition"
+              class:cat-active={activeCat === 'all'}
+              style="border-color: var(--border);">
+              <span class="text-2xl">🗂️</span>
+              <span class="text-[11px] font-medium leading-tight text-center">Todas</span>
+            </button>
+            {#each categories as c (c.id)}
+              <button onclick={() => (activeCat = c.id)}
+                class="shrink-0 w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 px-1 transition"
+                class:cat-active={activeCat === c.id}
+                style="border-color: var(--border);">
+                <span class="text-2xl">{c.icon.kind === 'emoji' ? c.icon.value : '📁'}</span>
+                <span class="text-[11px] font-medium leading-tight text-center line-clamp-2">{c.name}</span>
+              </button>
+            {/each}
+          </div>
+        </div>
+
+        {#if filtered.length > 0}
+          {#if showingHabituales}
+            <p class="text-xs font-semibold uppercase tracking-wider text-muted">
+              ⭐ Tus habituales {activeCat !== 'all' ? 'de esta sección' : 'aquí'}
+            </p>
+          {/if}
+          <div class="flex flex-wrap gap-2">
+            {#each filtered as p (p.id)}
+              <button onclick={() => addProduct(p.id)}
+                class="rounded-full border px-3 py-1.5 text-sm hover:bg-[var(--accent)] hover:text-white transition"
+                style="border-color: var(--border);">
+                {p.icon.kind === 'emoji' ? p.icon.value : '🏷️'} {p.name}
+              </button>
+            {/each}
+          </div>
+        {:else}
+          <p class="text-sm text-muted">
+            Aún no has añadido productos aquí. Escribe en la búsqueda o elige una sección.
+          </p>
+        {/if}
+      </div>
+    {/if}
 
     {#if isInbox && list.items.length > 0}
       <div class="card-elev p-3 text-sm flex items-start gap-2"

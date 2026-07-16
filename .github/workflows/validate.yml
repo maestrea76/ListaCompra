@@ -44,6 +44,17 @@ jobs:
       - run: npm ci
       # Genera catalog.json para que la prueba pueda comprobar que lleva los
       # seis idiomas y no solo el español.
-      - run: npm run export:catalog
+      - name: Export catalog
+        run: |
+          set +e
+          out=$(npm run export:catalog 2>&1)
+          code=$?
+          echo "$out"
+          if [ $code -ne 0 ]; then
+            # Como anotación: así el error se puede leer por API sin descargar
+            # el log completo.
+            echo "::error title=export:catalog::$(echo "$out" | tail -25 | tr '\n' ' | ')"
+            exit $code
+          fi
       - run: pip install pytest
       - run: pytest tests/ -q

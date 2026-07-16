@@ -20,9 +20,29 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// Ojo con los imports: este script lo ejecuta tsx (Node, ESM puro), no Vite.
+// Vite resuelve imports de DIRECTORIO ('./products' → products/index.ts); Node
+// en ESM no. Por eso aquí se importa cada fichero de forma explícita en vez de
+// pasar por los barrels (locales/index.ts, locales/products/index.ts), que sí
+// usan imports de directorio y funcionan solo dentro del bundler.
+import type { Product } from '../src/lib/types.ts';
 import { CATEGORIES_SEED } from '../src/lib/data/categories.ts';
-import { LOCALIZED_PRODUCTS, LOCALIZED_STORES } from '../src/lib/data/locales/index.ts';
-import { LOCALES } from '../src/lib/i18n/locale.ts';
+import { PRODUCTS_SEED } from '../src/lib/data/products/index.ts';
+import { UK } from '../src/lib/data/locales/products/uk.ts';
+import { US } from '../src/lib/data/locales/products/us.ts';
+import { FR } from '../src/lib/data/locales/products/fr.ts';
+import { DE } from '../src/lib/data/locales/products/de.ts';
+import { BR } from '../src/lib/data/locales/products/br.ts';
+import { LOCALIZED_STORES } from '../src/lib/data/locales/stores.ts';
+import { LOCALES, type Locale } from '../src/lib/i18n/locale.ts';
+
+// Mismo mapa que LOCALIZED_PRODUCTS (src/lib/data/locales/products/index.ts),
+// replicado aquí solo para no importar ese barrel. Si se añade un idioma, hay
+// que tocar los dos — la prueba de tests/ comprueba que catalog.json lleve los
+// seis, así que un olvido salta en CI.
+const PRODUCTS_BY_LOCALE: Record<Locale, Product[]> = {
+  es: PRODUCTS_SEED, en: UK, us: US, fr: FR, de: DE, br: BR,
+};
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(__dirname, '../custom_components/tucompra/catalog.json');
@@ -35,7 +55,7 @@ const catalog = {
     LOCALES.map((loc) => [
       loc,
       {
-        products: LOCALIZED_PRODUCTS[loc].map((p) => ({
+        products: PRODUCTS_BY_LOCALE[loc].map((p) => ({
           id: p.id,
           name: p.name,
           categoryId: p.categoryId,

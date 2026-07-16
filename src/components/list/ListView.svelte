@@ -10,6 +10,7 @@
   import { base } from '$lib/base';
   import type { Unit } from '$lib/types';
   import MenuButton from '../ui/MenuButton.svelte';
+  import LoyaltyCard from '../loyalty/LoyaltyCard.svelte';
 
   let { storeId }: { storeId: string } = $props();
 
@@ -17,6 +18,8 @@
   let activeCat = $state<string | 'all'>('all');
   // Item cuyo selector "mover a otra tienda" está abierto (triaje de bandeja).
   let movingItemId = $state<string | null>(null);
+  // Tarjeta de fidelización a pantalla completa (para pasarla por caja).
+  let showLoyalty = $state(false);
 
   const INBOX_ID = 'inbox';
 
@@ -242,6 +245,12 @@
           </span>
         </div>
         <div class="flex gap-1 shrink-0">
+          {#if store.loyalty}
+            <button onclick={() => (showLoyalty = true)}
+              title="Mostrar tarjeta de fidelización"
+              class="text-xs rounded-full border px-2.5 py-1.5 hover:bg-[var(--bg)] transition"
+              style="border-color: var(--border);">🎟️</button>
+          {/if}
           <button onclick={clearDone}
             disabled={doneCount === 0}
             class="text-xs rounded-full border px-2.5 py-1.5 hover:bg-[var(--bg)] transition disabled:opacity-40"
@@ -433,6 +442,10 @@
       </div>
     {/if}
   </div>
+
+  {#if showLoyalty && store.loyalty}
+    <LoyaltyCard {store} onClose={() => (showLoyalty = false)} />
+  {/if}
 {/if}
 
 <style>

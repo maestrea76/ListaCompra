@@ -16,6 +16,17 @@ export interface StoreType {
   icon: IconRef;
 }
 
+/** Formatos de tarjeta de fidelización soportados (renderizables en pantalla). */
+export type LoyaltyFormat = 'qr' | 'ean13' | 'ean8' | 'code128' | 'code39' | 'upca';
+
+/** Tarjeta de fidelización de una tienda. Se guarda en la propia tienda, así que
+ *  se sincroniza con la lista (compartida ⇒ visible por sus miembros) y entra en
+ *  los backups de HA. Solo se almacena el código; se re-dibuja en pantalla. */
+export interface LoyaltyCard {
+  code: string;
+  format: LoyaltyFormat;
+}
+
 /** Tienda concreta del usuario (Eroski, Mercadona, Lidl, ...) */
 export interface Store {
   id: string;
@@ -32,6 +43,8 @@ export interface Store {
   /** True si el usuario la ha editado vía StoreEditor. refreshSeed
    *  no la sobreescribe con los valores del código si está marcada. */
   edited?: boolean;
+  /** Tarjeta de fidelización de esta tienda (opcional). */
+  loyalty?: LoyaltyCard;
 }
 
 /** Categoría dentro de un tipo de tienda */

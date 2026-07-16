@@ -3,11 +3,33 @@
   // basado en slug del nombre.
 
   import { app } from '$lib/stores/app.svelte';
-  import type { Store, IconRef } from '$lib/types';
+  import type { Store, IconRef, LoyaltyFormat } from '$lib/types';
+  import BarcodeScanner from '../loyalty/BarcodeScanner.svelte';
+  import LoyaltyCode from '../loyalty/LoyaltyCode.svelte';
 
   let { store, onClose }: { store?: Store; onClose: () => void } = $props();
 
   const isEdit = $derived(!!store);
+
+  // Tarjeta de fidelización (se guarda en la tienda → se sincroniza con la lista).
+  let loyaltyCode = $state(store?.loyalty?.code ?? '');
+  let loyaltyFormat = $state<LoyaltyFormat>(store?.loyalty?.format ?? 'qr');
+  let showScanner = $state(false);
+
+  const FORMATS: { id: LoyaltyFormat; label: string }[] = [
+    { id: 'qr', label: 'QR' },
+    { id: 'ean13', label: 'EAN-13' },
+    { id: 'ean8', label: 'EAN-8' },
+    { id: 'code128', label: 'Code 128' },
+    { id: 'code39', label: 'Code 39' },
+    { id: 'upca', label: 'UPC-A' },
+  ];
+
+  function onScanned(code: string, format: LoyaltyFormat) {
+    loyaltyCode = code;
+    loyaltyFormat = format;
+    showScanner = false;
+  }
 
   let name = $state(store?.name ?? '');
   let typeId = $state(store?.typeId ?? 'supermercado');
@@ -58,6 +80,9 @@
       order: store?.order ?? app.state.stores.length,
       enabled: true,
       edited: true,    // marca para que refreshSeed no la sobreescriba
+      loyalty: loyaltyCode.trim()
+        ? { code: loyaltyCode.trim(), format: loyaltyFormat }
+        : undefined,
     };
     app.upsertStore(finalStore);
     onClose();
@@ -167,6 +192,43 @@
         </div>
       </fieldset>
 
+      <fieldset class="rounded-xl border p-3 space-y-2" style="border-color: var(--border);">
+        <legend class="text-sm font-medium px-2">🎟️ Tarjeta de fidelización</legend>
+
+        <div class="flex gap-2">
+          <input type="text" bind:value={loyaltyCode} placeholder="Número o código de la tarjeta"
+            class="flex-1 rounded-lg border px-3 py-2 text-sm bg-transparent"
+            style="border-color: var(--border);" />
+          <button type="button" onclick={() => (showScanner = true)}
+            title="Escanear con la cámara"
+            class="rounded-lg border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
+            style="border-color: var(--border);">📷</button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <select bind:value={loyaltyFormat}
+            class="flex-1 rounded-lg border px-2 py-1.5 text-xs bg-transparent"
+            style="border-color: var(--border);">
+            {#each FORMATS as f}<option value={f.id}>{f.label}</option>{/each}
+          </select>
+          {#if loyaltyCode.trim()}
+            <button type="button" onclick={() => (loyaltyCode = '')}
+              class="text-xs text-muted hover:underline">quitar</button>
+          {/if}
+        </div>
+
+        {#if loyaltyCode.trim()}
+          <div class="flex justify-center pt-1">
+            <LoyaltyCode card={{ code: loyaltyCode.trim(), format: loyaltyFormat }} />
+          </div>
+        {/if}
+
+        <p class="text-[10px] text-muted">
+          Se guarda en esta tienda: si la lista es compartida, la verán sus miembros.
+          Entra en los backups de Home Assistant.
+        </p>
+      </fieldset>
+
       {#if error}<p class="text-sm text-red-500">{error}</p>{/if}
 
       <div class="flex gap-2 pt-2">
@@ -183,3 +245,7 @@
       </div>
   </div>
 </div>
+
+{#if showScanner}
+  <BarcodeScanner onDetected={onScanned} onClose={() => (showScanner = false)} />
+{/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '$lib/i18n/ui.svelte';
   // Alta de producto escaneando su código de barras.
   //  1. Escanea el EAN con la cámara (BarcodeDetector nativo).
   //  2. Si `product_lookup` está activado, pregunta a la integración (que a su
@@ -138,27 +139,25 @@
       onclick={(e) => e.stopPropagation()} role="presentation">
 
       <header class="flex items-start justify-between">
-        <h2 class="text-lg font-bold">➕ Producto escaneado</h2>
+        <h2 class="text-lg font-bold">➕ {t('product.scannedTitle')}</h2>
         <button onclick={onClose} class="text-2xl leading-none text-muted hover:text-current">×</button>
       </header>
 
       <p class="text-xs text-muted font-mono">{barcode}</p>
 
       {#if busy}
-        <p class="text-sm text-muted">Buscando el producto…</p>
+        <p class="text-sm text-muted">{t('scan.searching')}</p>
       {:else if lookup && !lookup.enabled}
         <div class="rounded-xl bg-[var(--bg)] p-3 text-xs space-y-1"
           style="border: 1px solid var(--border);">
-          <p>🔒 <strong>Búsqueda online desactivada</strong> (la app no hace peticiones externas).</p>
-          <p class="text-muted">Escribe el nombre del producto abajo. Si quieres que
-            se rellene solo, añade <code>product_lookup: true</code> bajo
-            <code>tucompra:</code> en tu <code>configuration.yaml</code>.</p>
+          <p>🔒 <strong>{t('product.lookupOffTitle')}</strong> {t('product.lookupOffNote')}</p>
+          <p class="text-muted">{t('product.lookupOffBody', {
+            code: 'product_lookup: true', parent: 'tucompra:', file: 'configuration.yaml',
+          })}</p>
         </div>
       {:else if lookup && !lookup.found}
         <p class="text-xs text-muted">
-          {lookup.error === 'network'
-            ? 'No se pudo consultar (sin conexión o servicio caído). Escribe el nombre.'
-            : 'Este código no está en Open Food Facts. Escribe el nombre y quedará guardado.'}
+          {lookup.error === 'network' ? t('scan.offline') : t('scan.notInOff')}
         </p>
       {:else if lookup?.found}
         <div class="flex items-center gap-3">
@@ -173,14 +172,14 @@
       {/if}
 
       <label class="block">
-        <span class="text-sm font-medium">Nombre</span>
-        <input type="text" bind:value={name} placeholder="p. ej. Leche entera"
+        <span class="text-sm font-medium">{t('product.name')}</span>
+        <input type="text" bind:value={name} placeholder={t('product.namePlaceholder')}
           class="mt-1 w-full rounded-xl border px-4 py-2 bg-transparent"
           style="border-color: var(--border);" />
       </label>
 
       <label class="block">
-        <span class="text-sm font-medium">Sección</span>
+        <span class="text-sm font-medium">{t('product.section')}</span>
         <select bind:value={categoryId}
           class="mt-1 w-full rounded-xl border px-4 py-2 bg-transparent"
           style="border-color: var(--border);">
@@ -194,20 +193,18 @@
         style="border-color: var(--border);">
         <input type="checkbox" bind:checked={onlyHere} class="mt-0.5" />
         <span class="text-xs">
-          <strong>Solo en {storeName}</strong>
-          <span class="block text-muted">Márcalo si es marca propia o exclusiva de
-            esta tienda: así no aparecerá en el resto. Déjalo sin marcar para las
-            marcas normales que se venden en cualquier sitio.</span>
+          <strong>{t('product.onlyIn', { store: storeName })}</strong>
+          <span class="block text-muted">{t('product.onlyInHint')}</span>
         </span>
       </label>
 
       <div class="flex gap-2 pt-1">
         <button onclick={() => (step = 'scan')}
           class="rounded-xl border px-4 py-2.5 text-sm hover:bg-[var(--bg)] transition"
-          style="border-color: var(--border);">📷 Otro</button>
+          style="border-color: var(--border);">📷 {t('product.another')}</button>
         <button onclick={create} disabled={name.trim().length < 2}
           class="flex-1 rounded-xl py-2.5 font-semibold text-white disabled:opacity-50 transition"
-          style="background: var(--accent);">Añadir a la lista</button>
+          style="background: var(--accent);">{t('product.add')}</button>
       </div>
     </div>
   </div>

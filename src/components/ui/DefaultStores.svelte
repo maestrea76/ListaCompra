@@ -54,8 +54,7 @@
 
     {#if !canEdit}
       <div class="rounded-xl bg-[var(--bg)] p-3 text-sm" style="border: 1px solid var(--border);">
-        🔒 Solo un <strong>administrador</strong> de Home Assistant puede cambiar
-        estas preferencias.
+        {t('defaults.adminOnly')}
       </div>
     {/if}
 

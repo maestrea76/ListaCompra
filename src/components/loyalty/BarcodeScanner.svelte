@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '$lib/i18n/ui.svelte';
   // Escáner de códigos con la cámara. Dos motores:
   //  - Chrome/Edge: BarcodeDetector nativo (rápido, ~30 ms por lectura).
   //  - Safari/iOS y Firefox: no existe esa API → zxing-wasm DIRECTAMENTE.
@@ -197,7 +198,7 @@
         }
       }
     } catch (e) {
-      error = 'No se pudo abrir la cámara. Revisa los permisos del navegador.';
+      error = t('scan.errorCamera');
       detectError = String((e as Error)?.message ?? e).slice(0, 140);
       return;
     }
@@ -206,7 +207,7 @@
       readFrame = await setupEngine();
     } catch (e) {
       // Fallo al preparar el decodificador: se dice, no se oculta.
-      error = 'No se pudo iniciar el lector de códigos.';
+      error = t('scan.errorEngine');
       detectError = String((e as Error)?.message ?? e).slice(0, 200);
       return;
     }
@@ -292,7 +293,7 @@
     onclick={(e) => e.stopPropagation()} role="presentation">
 
     <header class="flex items-start justify-between">
-      <h2 class="text-lg font-bold">📷 Escanear código</h2>
+      <h2 class="text-lg font-bold">📷 {t('scan.title')}</h2>
       <button onclick={close} class="text-2xl leading-none text-muted hover:text-current">×</button>
     </header>
 
@@ -317,17 +318,13 @@
     </div>
 
     <p class="text-xs text-muted text-center">
-      Encuadra el código dentro del recuadro y <strong>acércate</strong> hasta
-      que ocupe casi todo el ancho. Se lee solo.
-      {#if continuous}<br />Puedes encadenar varios productos seguidos.{/if}
+      {t('scan.hint')}
+      {#if continuous}<br />{t('scan.hintChain')}{/if}
     </p>
 
     {#if devices.length > 1}
       <label class="block">
-        <span class="text-[11px] text-muted">
-          Cámara — si no enfoca de cerca, prueba otra (la principal suele tener
-          la distancia mínima más larga)
-        </span>
+        <span class="text-[11px] text-muted">{t('scan.camera')}</span>
         <select value={deviceId}
           onchange={(e) => switchCamera(e.currentTarget.value)}
           class="mt-1 w-full rounded-lg border px-2 py-1.5 text-xs bg-transparent"
@@ -343,21 +340,21 @@
 
     <details class="rounded-xl border p-2" style="border-color: var(--border);">
       <summary class="cursor-pointer text-[11px] text-muted">
-        Diagnóstico ({engine || '…'}{videoRes ? ` · ${videoRes}` : ''})
+        {t('scan.diag')} ({engine || '…'}{videoRes ? ` · ${videoRes}` : ''})
       </summary>
       <ul class="mt-1.5 text-[11px] space-y-0.5" style="color: var(--fg-muted);">
-        <li>Motor: <strong>{engine || 'arrancando…'}</strong></li>
-        <li>Resolución: <strong>{videoRes || '—'}</strong> · cámara: <strong>{facing || '—'}</strong></li>
-        <li>Tiempo por lectura: <strong>{decodeMs} ms</strong> · lecturas: <strong>{ticks}</strong></li>
-        <li>Linterna: <strong>{torchAvailable ? 'ofrecida' : 'no disponible'}</strong></li>
+        <li>{t('scan.diagEngine')}: <strong>{engine || t('scan.diagStarting')}</strong></li>
+        <li>{t('scan.diagResolution')}: <strong>{videoRes || '—'}</strong> · {t('scan.diagCamera')}: <strong>{facing || '—'}</strong></li>
+        <li>{t('scan.diagPerRead')}: <strong>{decodeMs} ms</strong> · {t('scan.diagReads')}: <strong>{ticks}</strong></li>
+        <li>{t('scan.torch')}: <strong>{torchAvailable ? t('scan.diagTorchYes') : t('scan.diagTorchNo')}</strong></li>
         {#if wasmInfo}<li>WASM: <strong>{wasmInfo}</strong></li>{/if}
-        <li class="break-all">Capacidades: {capsList || '—'}</li>
-        {#if detectError}<li class="break-all" style="color:#dc2626;">Error: {detectError}</li>{/if}
+        <li class="break-all">{t('scan.diagCaps')}: {capsList || '—'}</li>
+        {#if detectError}<li class="break-all" style="color:#dc2626;">{t('scan.diagError')}: {detectError}</li>{/if}
       </ul>
     </details>
 
     <button onclick={close}
       class="w-full rounded-xl border py-2.5 font-medium hover:bg-[var(--bg)] transition"
-      style="border-color: var(--border);">Cancelar</button>
+      style="border-color: var(--border);">{t('scan.cancel')}</button>
   </div>
 </div>

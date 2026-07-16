@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '$lib/i18n/ui.svelte';
   // Edita o borra un producto del catálogo creado por el usuario (escaneado o
   // creado con Enter). Los del seed no se tocan: refreshSeed los restauraría.
 
@@ -41,10 +42,8 @@
   }
 
   function confirmDelete() {
-    const extra = inLists > 0
-      ? `\n\nEstá en ${inLists} lista(s): también se quitará de ahí.`
-      : '';
-    if (!confirm(`¿Borrar "${product.name}" del catálogo?${extra}\n\nNo se puede deshacer.`)) return;
+    const extra = inLists > 0 ? `\n\n${t('product.inLists', { n: inLists })}` : '';
+    if (!confirm(t('product.confirmDeleteFull', { name: product.name, extra }))) return;
     app.removeProduct(product.id);
     onClose();
   }
@@ -56,7 +55,7 @@
     onclick={(e) => e.stopPropagation()} role="presentation">
 
     <header class="flex items-start justify-between">
-      <h2 class="text-lg font-bold">✏️ Editar producto</h2>
+      <h2 class="text-lg font-bold">✏️ {t('product.editTitle')}</h2>
       <button onclick={onClose} class="text-2xl leading-none text-muted hover:text-current">×</button>
     </header>
 
@@ -67,12 +66,12 @@
       </div>
       <div class="flex-1 space-y-1">
         {#if photo}
-          <p class="text-xs text-muted">Foto del producto.</p>
+          <p class="text-xs text-muted">{t('product.photoNote')}</p>
           <button type="button" onclick={() => (photo = '')}
-            class="text-xs text-muted hover:underline">quitar foto y usar emoji</button>
+            class="text-xs text-muted hover:underline">{t('product.removePhoto')}</button>
         {:else}
           <label class="block">
-            <span class="text-xs text-muted">Emoji</span>
+            <span class="text-xs text-muted">{t('product.emoji')}</span>
             <input type="text" bind:value={emoji} maxlength="4"
               class="mt-1 w-20 rounded-lg border px-2 py-1 text-center text-xl bg-transparent"
               style="border-color: var(--border);" />
@@ -82,14 +81,14 @@
     </div>
 
     <label class="block">
-      <span class="text-sm font-medium">Nombre</span>
+      <span class="text-sm font-medium">{t('product.name')}</span>
       <input type="text" bind:value={name}
         class="mt-1 w-full rounded-xl border px-4 py-2 bg-transparent"
         style="border-color: var(--border);" />
     </label>
 
     <label class="block">
-      <span class="text-sm font-medium">Sección</span>
+      <span class="text-sm font-medium">{t('product.section')}</span>
       <select bind:value={categoryId}
         class="mt-1 w-full rounded-xl border px-4 py-2 bg-transparent"
         style="border-color: var(--border);">
@@ -100,7 +99,7 @@
     </label>
 
     <label class="block">
-      <span class="text-sm font-medium">Unidad por defecto</span>
+      <span class="text-sm font-medium">{t('product.defaultUnit')}</span>
       <select bind:value={unit}
         class="mt-1 w-full rounded-xl border px-4 py-2 bg-transparent"
         style="border-color: var(--border);">
@@ -132,10 +131,10 @@
     <div class="flex gap-2 pt-1">
       <button onclick={confirmDelete}
         class="rounded-xl border px-4 py-2.5 text-sm font-medium"
-        style="border-color: #dc2626; color: #dc2626;">🗑️ Borrar</button>
+        style="border-color: #dc2626; color: #dc2626;">🗑️ {t('product.delete')}</button>
       <button onclick={save} disabled={name.trim().length < 2}
         class="flex-1 rounded-xl py-2.5 font-semibold text-white disabled:opacity-50"
-        style="background: var(--accent);">Guardar</button>
+        style="background: var(--accent);">{t('product.save')}</button>
     </div>
   </div>
 </div>

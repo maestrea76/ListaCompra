@@ -120,6 +120,7 @@ export interface AppState {
    *  tiendas de ese tipo, aquí se fija a cuál va. Lo gestiona el administrador. */
   defaultStores?: Record<StoreType['id'], Store['id']>;
   /** Locale del catálogo (tiendas/productos/idioma de nombres). Se deriva del
-   *  idioma/país de Home Assistant. 'es' por defecto. */
+   *  idioma/país de Home Assistant, o del navegador fuera de él. Si el idioma no
+   *  es ninguno de los soportados, DEFAULT_LOCALE ('en'). */
   locale?: 'es' | 'en' | 'us' | 'fr' | 'de' | 'br';
 }

@@ -4,7 +4,7 @@
 import type { AppState, IconRef, ListItem, Product, ShoppingList, Store, UserProfile } from '../types';
 import { createInitialState, loadState, saveState } from '../storage';
 import { getLocalizedSeed, LOCALIZED_STORES } from '../data/locales';
-import { LOCALES, type Locale } from '../i18n/locale';
+import { DEFAULT_LOCALE, LOCALES, type Locale } from '../i18n/locale';
 
 // IDs de tienda de TODOS los locales: sirve para distinguir "tienda de seed
 // (de cualquier idioma)" de "tienda custom del usuario".
@@ -21,7 +21,7 @@ class AppStore {
    *  por él, enabled/order de tiendas seed, listas). Al cambiar de locale, las
    *  tiendas/productos del locale anterior se retiran (no son custom). */
   private refreshSeed(): void {
-    const seed = getLocalizedSeed(this.state.locale ?? 'es');
+    const seed = getLocalizedSeed(this.state.locale ?? DEFAULT_LOCALE);
     const seedStoreIds = new Set(seed.stores.map((s) => s.id));
     const seedCategoryIds = new Set(seed.categories.map((c) => c.id));
 
@@ -61,7 +61,7 @@ class AppStore {
 
   /** Cambia el locale (idioma/cultura del catálogo) y re-seedea. */
   setLocale(locale: Locale): void {
-    if ((this.state.locale ?? 'es') === locale) return;
+    if ((this.state.locale ?? DEFAULT_LOCALE) === locale) return;
     this.state.locale = locale;
     this.refreshSeed();
     this.persist();

@@ -9,7 +9,12 @@ export type Locale = 'es' | 'en' | 'us' | 'fr' | 'de' | 'br';
 
 export const LOCALES: Locale[] = ['es', 'en', 'us', 'fr', 'de', 'br'];
 
-/** Mapea idioma+país de HA al locale de catálogo soportado (fallback 'es'). */
+/** Catálogo por defecto cuando el idioma no es ninguno de los soportados.
+ *  Inglés y no español: el proyecto nace en Euskadi, pero se publica en HACS
+ *  para todo el mundo y un italiano o un neerlandés no espera ver Mercadona. */
+export const DEFAULT_LOCALE: Locale = 'en';
+
+/** Mapea idioma+país al locale de catálogo soportado. */
 export function resolveLocale(language?: string, country?: string): Locale {
   const lang = (language ?? '').toLowerCase().split('-')[0];
   const cc = (country ?? '').toUpperCase();
@@ -17,8 +22,11 @@ export function resolveLocale(language?: string, country?: string): Locale {
   if (lang === 'fr') return 'fr';
   if (lang === 'pt') return 'br';
   if (lang === 'en') return cc === 'US' ? 'us' : 'en';
-  if (lang === 'es') return 'es';
-  return 'es';
+  // Lenguas cooficiales de España: el catálogo español es el que les sirve.
+  // Sin esto caerían al DEFAULT_LOCALE inglés, que para un HA en euskera sería
+  // absurdo (este proyecto nace precisamente en Euskadi).
+  if (lang === 'es' || lang === 'eu' || lang === 'ca' || lang === 'gl') return 'es';
+  return DEFAULT_LOCALE;
 }
 
 /** Locale a partir de la etiqueta de idioma del navegador ("en-US" → 'us').

@@ -1,5 +1,5 @@
 import type { Category, Product, Store, StoreType } from '../../types';
-import type { Locale } from '../../i18n/locale';
+import { DEFAULT_LOCALE, type Locale } from '../../i18n/locale';
 import { STORE_TYPES } from '../storeTypes';
 import { CATEGORIES_SEED } from '../categories';
 import { LOCALIZED_STORES } from './stores';
@@ -21,8 +21,8 @@ export function getLocalizedSeed(locale: Locale): LocalizedSeed {
   return {
     storeTypes: STORE_TYPES.map((t) => ({ ...t, name: typeNames[t.id] ?? t.name })),
     categories: CATEGORIES_SEED.map((c) => ({ ...c, name: catNames[c.id] ?? c.name })),
-    stores: LOCALIZED_STORES[locale] ?? LOCALIZED_STORES.es,
-    products: LOCALIZED_PRODUCTS[locale] ?? LOCALIZED_PRODUCTS.es,
+    stores: LOCALIZED_STORES[locale] ?? LOCALIZED_STORES[DEFAULT_LOCALE],
+    products: LOCALIZED_PRODUCTS[locale] ?? LOCALIZED_PRODUCTS[DEFAULT_LOCALE],
   };
 }
 

@@ -15,13 +15,13 @@
   import Flag from './ui/Flag.svelte';
   import MenuButton from './ui/MenuButton.svelte';
   import { syncStatus, hydrateAuth, stopSync } from '$lib/sync.svelte';
-  import { resolveLocale, resolveLocaleFromBrowser, LOCALE_LABEL } from '$lib/i18n/locale';
+  import { resolveLocale, resolveLocaleFromBrowser, LOCALE_LABEL, DEFAULT_LOCALE } from '$lib/i18n/locale';
 
   let showDiag = $state(false);
   let showDefaults = $state(false);
 
   // Locale efectivo (catálogo cargado) → determina la bandera SVG mostrada.
-  const activeLocale = $derived(app.state.locale ?? 'es');
+  const activeLocale = $derived(app.state.locale ?? DEFAULT_LOCALE);
   // Falso hasta resolver la identidad de HA; evita que parpadee el ProfileSetup
   // en el panel antes de saber quién es el usuario logueado.
   let ready = $state(false);

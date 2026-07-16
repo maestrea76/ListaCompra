@@ -1,8 +1,8 @@
 <script lang="ts">
   // Bandera dibujada en SVG (no emoji): se ve igual en todos los sistemas,
   // incluido Windows, que NO renderiza los emojis de bandera.
-  import type { Locale } from '$lib/i18n/locale';
-  let { locale = 'es' as Locale }: { locale?: Locale } = $props();
+  import { DEFAULT_LOCALE, type Locale } from '$lib/i18n/locale';
+  let { locale = DEFAULT_LOCALE }: { locale?: Locale } = $props();
 </script>
 
 <svg viewBox="0 0 60 42" width="26" height="18" role="img" aria-label={locale}

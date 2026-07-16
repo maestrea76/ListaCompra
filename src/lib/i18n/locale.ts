@@ -21,6 +21,15 @@ export function resolveLocale(language?: string, country?: string): Locale {
   return 'es';
 }
 
+/** Locale a partir de la etiqueta de idioma del navegador ("en-US" → 'us').
+ *  Se usa fuera de Home Assistant (la demo web), donde no hay idioma de HA que
+ *  consultar y antes se caía siempre al catálogo español. */
+export function resolveLocaleFromBrowser(tag?: string): Locale {
+  const raw = tag ?? (typeof navigator === 'undefined' ? '' : navigator.language);
+  const [lang = '', region = ''] = (raw ?? '').split('-');
+  return resolveLocale(lang, region);
+}
+
 /** Emoji de bandera a partir de un código de país ISO de 2 letras. */
 export function countryToFlag(cc?: string): string {
   if (!cc || cc.length !== 2) return '';

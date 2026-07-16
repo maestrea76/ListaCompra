@@ -15,7 +15,7 @@
   import Flag from './ui/Flag.svelte';
   import MenuButton from './ui/MenuButton.svelte';
   import { syncStatus, hydrateAuth, stopSync } from '$lib/sync.svelte';
-  import { resolveLocale } from '$lib/i18n/locale';
+  import { resolveLocale, resolveLocaleFromBrowser, LOCALE_LABEL } from '$lib/i18n/locale';
 
   let showDiag = $state(false);
   let showDefaults = $state(false);
@@ -46,10 +46,17 @@
     // arranca la sync. Fuera de HA queda en modo local puro.
     await hydrateAuth();
 
-    // Localiza el catálogo (tiendas/productos/idioma) según HA. Fuera de HA
-    // se mantiene el locale ya guardado (o 'es' por defecto).
+    // Localiza el catálogo (tiendas/productos/idioma). Dentro de HA manda el
+    // idioma de HA. Fuera (demo web) sirve el del navegador, pero solo en la
+    // primera visita: setLocale re-seedea y descarta las tiendas del locale
+    // anterior, así que no debe pisar una elección ya guardada.
     if (syncStatus.inHA) {
       app.setLocale(resolveLocale(syncStatus.haLanguage, syncStatus.haCountry));
+    } else if (app.state.locale === undefined && !app.state.profile) {
+      // Sin perfil = visita nueva de verdad. `locale === undefined` por sí solo
+      // no basta: también lo es para quien ya venía usando la demo, y a ese
+      // re-seedear le retiraría las tiendas del catálogo con el que trabajaba.
+      app.setLocale(resolveLocaleFromBrowser());
     }
 
     // Dentro de HA la identidad es el usuario/person. logueado: no pedimos
@@ -144,11 +151,14 @@
           class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">🚪</button>
         <ThemeToggle />
-        {#if syncStatus.inHA}
-          <span title={`Idioma de Home Assistant: ${syncStatus.haLanguage || activeLocale}${syncStatus.haCountry ? '-' + syncStatus.haCountry : ''}`}>
-            <Flag locale={activeLocale} />
-          </span>
-        {/if}
+        <!-- La bandera refleja el catálogo cargado, venga de HA o del navegador:
+             fuera de HA también hay cultura activa, y ocultarla ahí hacía parecer
+             que la demo no tenía idioma. -->
+        <span title={syncStatus.inHA
+          ? `Idioma de Home Assistant: ${syncStatus.haLanguage || activeLocale}${syncStatus.haCountry ? '-' + syncStatus.haCountry : ''}`
+          : `Catálogo: ${LOCALE_LABEL[activeLocale]} (según el idioma del navegador)`}>
+          <Flag locale={activeLocale} />
+        </span>
       </div>
     </header>
     <StoreGrid />

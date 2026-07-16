@@ -16,7 +16,14 @@ const ES = {
   'nav.greeting': 'Hola, {name}',
   'nav.defaultStores': 'Tiendas por defecto (enrutado por voz)',
   'nav.signOut': 'Cerrar sesión y borrar datos del navegador',
-  'nav.menu': 'Abrir el menú de Home Assistant',
+  'nav.menu': 'Menú de Home Assistant',
+  'nav.menuAria': 'Abrir menú lateral',
+  'nav.signOutConfirm': '¿Borrar tus datos de este navegador?
+
+Se eliminan listas, productos personalizados y tiendas custom.
+Si la sincronización con Home Assistant está activa, los datos siguen en HA y se recuperan al recargar.
+
+Esta acción no se puede deshacer en este dispositivo.',
   'nav.catalogHint': 'Catálogo: {label} (según el idioma del navegador)',
   'nav.haLanguage': 'Idioma de Home Assistant: {lang}',
 
@@ -29,11 +36,14 @@ const ES = {
   'setup.themeLight': 'Claro',
   'setup.themeDark': 'Oscuro',
   'setup.start': 'Empezar',
+  'setup.companion': '📱 Modo compañero (@MOVIL)',
   'setup.haNote': 'Abriendo "Tu Compra" desde Home Assistant, tus listas se sincronizan automáticamente entre dispositivos con tu usuario de HA.',
 
   // --- Rejilla de tiendas ---
   'stores.pending': '{pending} pend / {total}',
   'stores.add': 'Añadir tienda',
+  'stores.new': 'Nueva tienda',
+  'stores.editStore': 'Editar tienda',
   'stores.edit': 'Editar',
   'stores.hide': 'Ocultar',
   'stores.show': 'Mostrar',
@@ -122,7 +132,10 @@ const ES = {
   'defaults.none': 'Sin preferencia',
 
   // --- Varios ---
+  'common.loading': 'Cargando…',
   'common.close': 'Cerrar',
+  'photo.close': 'Cerrar',
+  'photo.tapClose': 'Toca para cerrar',
   'common.cancel': 'Cancelar',
   'common.units': 'ud',
   'photo.zoom': 'Ver la foto a pantalla completa',
@@ -130,6 +143,7 @@ const ES = {
   'sync.local': 'local',
   'sync.on': 'sync',
   'sync.diag': 'Diagnóstico de sincronización',
+  'sync.status': 'Ver estado de sincronización',
 } as const;
 
 export type UIKey = keyof typeof ES;
@@ -140,7 +154,14 @@ const EN: Dict = {
   'nav.greeting': 'Hi, {name}',
   'nav.defaultStores': 'Default shops (voice routing)',
   'nav.signOut': 'Sign out and delete this browser’s data',
-  'nav.menu': 'Open the Home Assistant menu',
+  'nav.menu': 'Home Assistant menu',
+  'nav.menuAria': 'Open the sidebar',
+  'nav.signOutConfirm': 'Delete your data from this browser?
+
+Lists, custom products and custom shops will be removed.
+If Home Assistant sync is on, the data stays in HA and comes back on reload.
+
+This cannot be undone on this device.',
   'nav.catalogHint': 'Catalog: {label} (from your browser language)',
   'nav.haLanguage': 'Home Assistant language: {lang}',
 
@@ -152,10 +173,13 @@ const EN: Dict = {
   'setup.themeLight': 'Light',
   'setup.themeDark': 'Dark',
   'setup.start': 'Get started',
+  'setup.companion': '📱 Companion mode (@MOVIL)',
   'setup.haNote': 'Open "Tu Compra" from Home Assistant and your lists sync automatically across devices under your HA user.',
 
   'stores.pending': '{pending} left / {total}',
   'stores.add': 'Add a shop',
+  'stores.new': 'New shop',
+  'stores.editStore': 'Edit shop',
   'stores.edit': 'Edit',
   'stores.hide': 'Hide',
   'stores.show': 'Show',
@@ -238,7 +262,10 @@ const EN: Dict = {
   'defaults.hint': 'When you ask by voice without naming a shop, it goes to the one you pick here for each kind.',
   'defaults.none': 'No preference',
 
+  'common.loading': 'Loading…',
   'common.close': 'Close',
+  'photo.close': 'Close',
+  'photo.tapClose': 'Tap to close',
   'common.cancel': 'Cancel',
   'common.units': 'pcs',
   'photo.zoom': 'View the photo full screen',
@@ -246,6 +273,7 @@ const EN: Dict = {
   'sync.local': 'local',
   'sync.on': 'sync',
   'sync.diag': 'Sync diagnostics',
+  'sync.status': 'See sync status',
 };
 
 // Inglés americano: solo cambia lo que de verdad diverge del británico.
@@ -254,6 +282,8 @@ const US: Dict = {
   'nav.stores': 'Stores',
   'nav.defaultStores': 'Default stores (voice routing)',
   'stores.add': 'Add a store',
+  'stores.new': 'New store',
+  'stores.editStore': 'Edit store',
   'list.move': 'Move to another store',
   'list.storeNotFound': 'Store not found.',
   'list.moveHint': 'Tap ↪ on each one to send it to its store.',
@@ -275,7 +305,14 @@ const FR: Dict = {
   'nav.greeting': 'Bonjour, {name}',
   'nav.defaultStores': 'Magasins par défaut (routage vocal)',
   'nav.signOut': 'Se déconnecter et effacer les données du navigateur',
-  'nav.menu': 'Ouvrir le menu de Home Assistant',
+  'nav.menu': 'Menu de Home Assistant',
+  'nav.menuAria': 'Ouvrir le menu latéral',
+  'nav.signOutConfirm': 'Effacer vos données de ce navigateur ?
+
+Listes, produits personnalisés et magasins créés seront supprimés.
+Si la synchronisation Home Assistant est active, les données restent dans HA et reviennent au rechargement.
+
+C’est irréversible sur cet appareil.',
   'nav.catalogHint': 'Catalogue : {label} (selon la langue du navigateur)',
   'nav.haLanguage': 'Langue de Home Assistant : {lang}',
 
@@ -287,10 +324,13 @@ const FR: Dict = {
   'setup.themeLight': 'Clair',
   'setup.themeDark': 'Sombre',
   'setup.start': 'Commencer',
+  'setup.companion': '📱 Mode compagnon (@MOVIL)',
   'setup.haNote': 'En ouvrant « Tu Compra » depuis Home Assistant, vos listes se synchronisent automatiquement entre appareils avec votre utilisateur HA.',
 
   'stores.pending': '{pending} rest. / {total}',
   'stores.add': 'Ajouter un magasin',
+  'stores.new': 'Nouveau magasin',
+  'stores.editStore': 'Modifier le magasin',
   'stores.edit': 'Modifier',
   'stores.hide': 'Masquer',
   'stores.show': 'Afficher',
@@ -373,7 +413,10 @@ const FR: Dict = {
   'defaults.hint': 'Quand vous demandez à la voix sans nommer le magasin, ça ira vers celui choisi ici pour chaque type.',
   'defaults.none': 'Sans préférence',
 
+  'common.loading': 'Chargement…',
   'common.close': 'Fermer',
+  'photo.close': 'Fermer',
+  'photo.tapClose': 'Touchez pour fermer',
   'common.cancel': 'Annuler',
   'common.units': 'u',
   'photo.zoom': 'Voir la photo en plein écran',
@@ -381,6 +424,7 @@ const FR: Dict = {
   'sync.local': 'local',
   'sync.on': 'sync',
   'sync.diag': 'Diagnostic de synchronisation',
+  'sync.status': 'Voir l’état de la synchronisation',
 };
 
 const DE: Dict = {
@@ -388,7 +432,14 @@ const DE: Dict = {
   'nav.greeting': 'Hallo, {name}',
   'nav.defaultStores': 'Standardläden (Sprachsteuerung)',
   'nav.signOut': 'Abmelden und Browserdaten löschen',
-  'nav.menu': 'Home-Assistant-Menü öffnen',
+  'nav.menu': 'Home-Assistant-Menü',
+  'nav.menuAria': 'Seitenleiste öffnen',
+  'nav.signOutConfirm': 'Deine Daten aus diesem Browser löschen?
+
+Listen, eigene Produkte und eigene Läden werden entfernt.
+Wenn die Home-Assistant-Sync an ist, bleiben die Daten in HA und kommen beim Neuladen zurück.
+
+Auf diesem Gerät nicht rückgängig zu machen.',
   'nav.catalogHint': 'Katalog: {label} (nach der Browsersprache)',
   'nav.haLanguage': 'Home-Assistant-Sprache: {lang}',
 
@@ -400,10 +451,13 @@ const DE: Dict = {
   'setup.themeLight': 'Hell',
   'setup.themeDark': 'Dunkel',
   'setup.start': 'Los geht’s',
+  'setup.companion': '📱 Begleitmodus (@MOVIL)',
   'setup.haNote': 'Wenn du "Tu Compra" aus Home Assistant öffnest, werden deine Listen mit deinem HA-Benutzer automatisch zwischen Geräten synchronisiert.',
 
   'stores.pending': '{pending} offen / {total}',
   'stores.add': 'Laden hinzufügen',
+  'stores.new': 'Neuer Laden',
+  'stores.editStore': 'Laden bearbeiten',
   'stores.edit': 'Bearbeiten',
   'stores.hide': 'Ausblenden',
   'stores.show': 'Anzeigen',
@@ -486,7 +540,10 @@ const DE: Dict = {
   'defaults.hint': 'Wenn du per Sprache etwas ohne Laden verlangst, landet es beim hier gewählten Laden der jeweiligen Art.',
   'defaults.none': 'Keine Präferenz',
 
+  'common.loading': 'Lädt…',
   'common.close': 'Schließen',
+  'photo.close': 'Schließen',
+  'photo.tapClose': 'Zum Schließen tippen',
   'common.cancel': 'Abbrechen',
   'common.units': 'St',
   'photo.zoom': 'Foto im Vollbild ansehen',
@@ -494,6 +551,7 @@ const DE: Dict = {
   'sync.local': 'lokal',
   'sync.on': 'sync',
   'sync.diag': 'Sync-Diagnose',
+  'sync.status': 'Sync-Status ansehen',
 };
 
 const BR: Dict = {
@@ -501,7 +559,14 @@ const BR: Dict = {
   'nav.greeting': 'Olá, {name}',
   'nav.defaultStores': 'Lojas padrão (roteamento por voz)',
   'nav.signOut': 'Sair e apagar os dados do navegador',
-  'nav.menu': 'Abrir o menu do Home Assistant',
+  'nav.menu': 'Menu do Home Assistant',
+  'nav.menuAria': 'Abrir o menu lateral',
+  'nav.signOutConfirm': 'Apagar seus dados deste navegador?
+
+Listas, produtos personalizados e lojas próprias serão removidos.
+Se a sincronização com o Home Assistant estiver ligada, os dados ficam no HA e voltam ao recarregar.
+
+Não dá para desfazer neste dispositivo.',
   'nav.catalogHint': 'Catálogo: {label} (conforme o idioma do navegador)',
   'nav.haLanguage': 'Idioma do Home Assistant: {lang}',
 
@@ -513,10 +578,13 @@ const BR: Dict = {
   'setup.themeLight': 'Claro',
   'setup.themeDark': 'Escuro',
   'setup.start': 'Começar',
+  'setup.companion': '📱 Modo companheiro (@MOVIL)',
   'setup.haNote': 'Abrindo o "Tu Compra" pelo Home Assistant, suas listas sincronizam automaticamente entre dispositivos com seu usuário do HA.',
 
   'stores.pending': '{pending} rest. / {total}',
   'stores.add': 'Adicionar loja',
+  'stores.new': 'Nova loja',
+  'stores.editStore': 'Editar loja',
   'stores.edit': 'Editar',
   'stores.hide': 'Ocultar',
   'stores.show': 'Mostrar',
@@ -599,7 +667,10 @@ const BR: Dict = {
   'defaults.hint': 'Quando você pedir por voz sem dizer a loja, vai para a que escolher aqui em cada tipo.',
   'defaults.none': 'Sem preferência',
 
+  'common.loading': 'Carregando…',
   'common.close': 'Fechar',
+  'photo.close': 'Fechar',
+  'photo.tapClose': 'Toque para fechar',
   'common.cancel': 'Cancelar',
   'common.units': 'un',
   'photo.zoom': 'Ver a foto em tela cheia',
@@ -607,6 +678,7 @@ const BR: Dict = {
   'sync.local': 'local',
   'sync.on': 'sync',
   'sync.diag': 'Diagnóstico de sincronização',
+  'sync.status': 'Ver o status da sincronização',
 };
 
 const UI: Record<Locale, Dict> = { es: ES, en: EN, us: US, fr: FR, de: DE, br: BR };

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '$lib/i18n/ui.svelte';
   import type { Store } from '$lib/types';
   import { app } from '$lib/stores/app.svelte';
   import { base } from '$lib/base';
@@ -68,7 +69,7 @@
   <button
     type="button"
     onclick={handleEdit}
-    title="Editar tienda"
+    title={t('stores.editStore')}
     class="absolute top-1.5 right-1.5 size-7 rounded-full grid place-items-center text-base font-bold shadow-sm hover:scale-110 transition"
     style="background: var(--bg-elev); color: var(--fg-muted); border: 1px solid var(--border);"
   >⋯</button>

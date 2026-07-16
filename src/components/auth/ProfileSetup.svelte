@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '$lib/i18n/ui.svelte';
   // Setup inicial: sólo nombre de usuario y tema. La sincronización entre
   // dispositivos la aporta Home Assistant (usuario logueado en HA).
 
@@ -32,28 +33,28 @@
     <header class="text-center space-y-1">
       <div class="text-5xl">🛒</div>
       <h1 class="text-2xl font-bold">Tu Compra</h1>
-      <p class="text-sm text-muted">¿Cómo te llamamos?</p>
+      <p class="text-sm text-muted">{t('setup.title')}</p>
     </header>
 
     <label class="block">
-      <span class="text-sm font-medium">Nombre de usuario</span>
-      <input type="text" bind:value={username} placeholder="p.ej. ander"
+      <span class="text-sm font-medium">{t('setup.nameLabel')}</span>
+      <input type="text" bind:value={username} placeholder={t('setup.namePlaceholder')}
         onkeydown={(e) => e.key === 'Enter' && submit()}
         class="mt-1 w-full rounded-xl border px-4 py-2.5 bg-transparent"
         style="border-color: var(--border);" autocomplete="username" autofocus />
       {#if isCompanion}
-        <span class="text-xs text-muted mt-1 block">📱 Modo compañero (@MOVIL)</span>
+        <span class="text-xs text-muted mt-1 block">{t('setup.companion')}</span>
       {/if}
     </label>
 
     <label class="block">
-      <span class="text-sm font-medium">Tema</span>
+      <span class="text-sm font-medium">{t('setup.theme')}</span>
       <select bind:value={theme}
         class="mt-1 w-full rounded-xl border px-4 py-2.5 bg-transparent"
         style="border-color: var(--border);">
-        <option value="system">Sistema</option>
-        <option value="light">Claro</option>
-        <option value="dark">Oscuro</option>
+        <option value="system">{t('setup.themeSystem')}</option>
+        <option value="light">{t('setup.themeLight')}</option>
+        <option value="dark">{t('setup.themeDark')}</option>
       </select>
     </label>
 
@@ -62,12 +63,9 @@
     <button type="button" onclick={submit} disabled={!valid}
       class="w-full rounded-xl py-3 font-semibold text-white disabled:opacity-50 transition"
       style="background: var(--accent);">
-      Empezar
+      {t('setup.start')}
     </button>
 
-    <p class="text-xs text-muted text-center">
-      Abriendo "Tu Compra" desde Home Assistant, tus listas se sincronizan
-      automáticamente entre dispositivos con tu usuario de HA.
-    </p>
+    <p class="text-xs text-muted text-center">{t('setup.haNote')}</p>
   </div>
 </div>

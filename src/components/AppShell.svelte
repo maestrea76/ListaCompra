@@ -16,6 +16,7 @@
   import MenuButton from './ui/MenuButton.svelte';
   import { syncStatus, hydrateAuth, stopSync } from '$lib/sync.svelte';
   import { resolveLocale, resolveLocaleFromBrowser, LOCALE_LABEL, DEFAULT_LOCALE } from '$lib/i18n/locale';
+  import { t } from '$lib/i18n/ui.svelte';
 
   let showDiag = $state(false);
   let showDefaults = $state(false);
@@ -87,13 +88,7 @@
   /** Borra los datos locales de este navegador. Si la sync con HA está activa,
    *  los datos siguen en Home Assistant y se recuperan al recargar. */
   function signOut() {
-    if (!confirm(
-      '¿Borrar tus datos de este navegador?\n\n' +
-      'Se eliminan listas, productos personalizados y tiendas custom.\n' +
-      'Si la sincronización con Home Assistant está activa, los datos siguen\n' +
-      'en HA y se recuperan al recargar.\n\n' +
-      'Esta acción no se puede deshacer en este dispositivo.'
-    )) return;
+    if (!confirm(t('nav.signOutConfirm'))) return;
     try { stopSync(); } catch {}
     clearState();
     location.reload();
@@ -101,14 +96,14 @@
 </script>
 
 {#if !app.hydrated}
-  <div class="min-h-screen grid place-items-center text-muted">Cargando…</div>
+  <div class="min-h-screen grid place-items-center text-muted">{t('common.loading')}</div>
 {:else if !app.state.profile}
   <!-- Sin perfil: dentro de HA se autocompleta (no llega aquí). Fuera de HA
        esperamos a resolver la identidad antes de pedir nombre. -->
   {#if ready}
     <ProfileSetup />
   {:else}
-    <div class="min-h-screen grid place-items-center text-muted">Cargando…</div>
+    <div class="min-h-screen grid place-items-center text-muted">{t('common.loading')}</div>
   {/if}
 {:else if activeStoreId}
   <!-- Vista de una tienda (routing por hash #/lista/<id>) -->
@@ -122,9 +117,9 @@
         <MenuButton />
         <div class="min-w-0">
         <h1 class="text-2xl font-bold">🛒 Tu Compra</h1>
-        <p class="text-sm text-muted truncate">Hola, {app.state.profile.username}</p>
+        <p class="text-sm text-muted truncate">{t('nav.greeting', { name: app.state.profile.username })}</p>
         <button onclick={() => (showDiag = true)}
-          title="Ver estado de sincronización"
+          title={t('sync.status')}
           class="mt-1 inline-flex items-center gap-1 text-xs rounded-full border px-2 py-1 hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">
           <span class="size-2 rounded-full"
@@ -136,18 +131,18 @@
                   ? 'background:#ef4444;'
                   : 'background:#94a3b8;'}></span>
           {syncStatus.enabled && syncStatus.connected
-            ? 'sync'
-            : syncStatus.enabled
-              ? 'sync…'
-              : syncStatus.inHA ? 'sync…' : 'local'}
+            ? t('sync.on')
+            : syncStatus.enabled || syncStatus.inHA
+              ? `${t('sync.on')}…`
+              : t('sync.local')}
         </button>
         </div>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        <button onclick={() => (showDefaults = true)} title="Tiendas por defecto (enrutado por voz)"
+        <button onclick={() => (showDefaults = true)} title={t('nav.defaultStores')}
           class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">🎯</button>
-        <button onclick={signOut} title="Cerrar sesión y borrar datos del navegador"
+        <button onclick={signOut} title={t('nav.signOut')}
           class="rounded-full border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">🚪</button>
         <ThemeToggle />

@@ -79,9 +79,33 @@
   let decodeMs = $state(0);
   let facing = $state('');
   let wasmInfo = $state('');
+  // Nº de lecturas hechas: distingue "el bucle no corre" de "corre pero no
+  // encuentra el código".
+  let ticks = $state(0);
 
   let stream: MediaStream | null = null;
   let track: MediaStreamTrack | null = null;
+  // Lienzo para el camino WASM: en Safari, pasar el <video> directo al
+  // decodificador es problemático (createImageBitmap sobre vídeo falla o va
+  // fatal). Copiamos el fotograma a un canvas y le pasamos eso.
+  let canvasEl: HTMLCanvasElement | null = null;
+  let ctx: CanvasRenderingContext2D | null = null;
+
+  /** Fotograma a analizar: el vídeo tal cual con el motor nativo (más rápido),
+   *  un canvas con el WASM (más compatible). */
+  function frameFor(): CanvasImageSource | null {
+    if (!videoEl || !videoEl.videoWidth) return null;
+    if (hasNative) return videoEl;
+    if (!canvasEl) {
+      canvasEl = document.createElement('canvas');
+      ctx = canvasEl.getContext('2d', { willReadFrequently: true });
+    }
+    if (!ctx) return videoEl;
+    canvasEl.width = videoEl.videoWidth;
+    canvasEl.height = videoEl.videoHeight;
+    ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+    return canvasEl;
+  }
   let timer: ReturnType<typeof setTimeout> | null = null;
   let stopped = false;
   // Última lectura pendiente de confirmar (anti-falsos positivos).
@@ -144,9 +168,15 @@
       const tick = async () => {
         if (stopped || !videoEl) return;
         try {
+          const src = frameFor();
+          if (!src) {
+            timer = setTimeout(tick, 120);
+            return;
+          }
           const t0 = performance.now();
-          const codes = await detector.detect(videoEl);
+          const codes = await detector.detect(src);
           decodeMs = Math.round(performance.now() - t0);
+          ticks++;
           detectError = '';
           const hit = codes[0];
           if (hit?.rawValue) {
@@ -266,7 +296,7 @@
       <ul class="mt-1.5 text-[11px] space-y-0.5" style="color: var(--fg-muted);">
         <li>Motor: <strong>{engine || 'arrancando…'}</strong> {hasNative ? '(BarcodeDetector del navegador)' : '(decodificador WASM)'}</li>
         <li>Resolución: <strong>{videoRes || '—'}</strong> · cámara: <strong>{facing || '—'}</strong></li>
-        <li>Tiempo por lectura: <strong>{decodeMs} ms</strong></li>
+        <li>Tiempo por lectura: <strong>{decodeMs} ms</strong> · lecturas: <strong>{ticks}</strong></li>
         <li>Linterna: <strong>{torchAvailable ? 'ofrecida' : 'no disponible'}</strong></li>
         {#if wasmInfo}<li>WASM: <strong>{wasmInfo}</strong></li>{/if}
         <li class="break-all">Capacidades de la cámara: {capsList || '—'}</li>

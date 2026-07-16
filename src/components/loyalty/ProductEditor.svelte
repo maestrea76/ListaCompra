@@ -118,6 +118,13 @@
       </span>
     </label>
 
+    {#if product.barcode}
+      <p class="text-[11px] text-muted">
+        Código de barras: <span class="font-mono">{product.barcode}</span> — al
+        escanearlo se reconoce y va directo a la lista.
+      </p>
+    {/if}
+
     {#if inLists > 0}
       <p class="text-[11px] text-muted">En {inLists} lista(s) ahora mismo.</p>
     {/if}

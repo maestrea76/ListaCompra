@@ -69,6 +69,9 @@ export interface Product {
    *  en Mercadona, Eroski Basic…) y no aparece en las demás del mismo tipo.
    *  Sin este campo, el producto está disponible en todas las tiendas de su tipo. */
   storeId?: Store['id'];
+  /** Código de barras con el que se dio de alta. Es la clave para reconocerlo
+   *  al volver a escanearlo y NO duplicarlo. */
+  barcode?: string;
 }
 
 /** Una línea de la lista de la compra de una tienda concreta */

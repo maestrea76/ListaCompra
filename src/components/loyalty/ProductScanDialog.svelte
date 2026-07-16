@@ -10,14 +10,17 @@
   import type { Category } from '$lib/types';
   import BarcodeScanner from './BarcodeScanner.svelte';
 
-  let { categories, defaultCategoryId, storeId, storeName, onCreated, onClose }: {
+  let { categories, defaultCategoryId, storeId, storeName, onAdd, onClose }: {
     categories: Category[];
     defaultCategoryId?: string;
     storeId: string;
     storeName: string;
-    onCreated: (productId: string) => void;
+    /** Añade el producto a la lista de la tienda actual (sin cerrar el diálogo). */
+    onAdd: (productId: string) => void;
     onClose: () => void;
   } = $props();
+
+  let feedback = $state('');
 
   // Exclusivo de esta tienda (marcas propias). Por defecto NO: la mayoría de los
   // códigos son de marcas nacionales que se venden en cualquier súper.
@@ -68,7 +71,24 @@
     return null;
   }
 
+  let fbTimer: ReturnType<typeof setTimeout> | null = null;
+  function flash(msg: string) {
+    feedback = msg;
+    if (fbTimer) clearTimeout(fbTimer);
+    fbTimer = setTimeout(() => (feedback = ''), 2200);
+  }
+
   async function onDetected(code: string) {
+    // 1) ¿Ya conocemos este código? → directo a la lista, sin preguntar nada.
+    //    Así re-escanear no duplica el catálogo ni la fila de la lista.
+    const known = app.findByBarcode(code);
+    if (known) {
+      onAdd(known.id);
+      flash(`✅ ${known.name}`);
+      return; // modo continuo: seguimos escaneando
+    }
+
+    // 2) No existe → paramos y lo damos de alta con sus datos.
     barcode = code;
     step = 'form';
     busy = true;
@@ -88,19 +108,29 @@
   // producto, así que sigue viéndose sin conexión.
   const usePhoto = $derived(!!lookup?.image);
 
+  /** Da de alta el producto en el catálogo (con su código) y lo mete en la lista.
+   *  Volvemos a escanear: así se pueden encadenar varios en casa. */
   function create() {
     const clean = name.trim();
     if (clean.length < 2 || !categoryId) return;
     const p = app.createCustomProduct(clean, categoryId, {
       storeId: onlyHere ? storeId : undefined,
       icon: usePhoto ? { kind: 'image', value: lookup!.image! } : undefined,
+      barcode,   // clave: la próxima vez se reconoce y no se duplica
     });
-    onCreated(p.id);
+    onAdd(p.id);
+    flash(`✅ ${p.name}`);
+    // Reset para el siguiente.
+    name = '';
+    lookup = null;
+    barcode = '';
+    onlyHere = false;
+    step = 'scan';
   }
 </script>
 
 {#if step === 'scan'}
-  <BarcodeScanner onDetected={(code) => onDetected(code)} {onClose} />
+  <BarcodeScanner onDetected={(code) => onDetected(code)} {onClose} continuous {feedback} />
 {:else}
   <div class="fixed inset-0 z-[60] grid place-items-center p-4"
     style="background: rgba(0,0,0,.5)" onclick={onClose} role="presentation">

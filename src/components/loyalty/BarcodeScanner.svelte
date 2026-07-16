@@ -13,8 +13,15 @@
   import { onDestroy } from 'svelte';
   import type { LoyaltyFormat } from '$lib/types';
 
-  let { onDetected, onClose }:
-    { onDetected: (code: string, format: LoyaltyFormat) => void; onClose: () => void } = $props();
+  let { onDetected, onClose, continuous = false, feedback = '' }: {
+    onDetected: (code: string, format: LoyaltyFormat) => void;
+    onClose: () => void;
+    /** Si es true, no se cierra al leer: sigue escaneando (para encadenar
+     *  productos en casa). El mismo código no se repite durante unos segundos. */
+    continuous?: boolean;
+    /** Mensaje que muestra el padre tras cada lectura ("✅ X añadido"). */
+    feedback?: string;
+  } = $props();
 
   const FROM_NATIVE: Record<string, LoyaltyFormat> = {
     qr_code: 'qr', ean_13: 'ean13', ean_8: 'ean8',
@@ -35,6 +42,10 @@
   let stopped = false;
   // Última lectura pendiente de confirmar (anti-falsos positivos).
   let lastSeen = '';
+  // En modo continuo: evita re-leer el mismo código una y otra vez.
+  let lastAccepted = '';
+  let lastAcceptedAt = 0;
+  const COOLDOWN_MS = 2500;
 
   async function start() {
     if (!supported || !videoEl) return;
@@ -77,13 +88,23 @@
           const hit = codes[0];
           if (hit?.rawValue) {
             const value = String(hit.rawValue);
-            if (value === lastSeen) {
+            const now = Date.now();
+            const onCooldown = value === lastAccepted && now - lastAcceptedAt < COOLDOWN_MS;
+            if (onCooldown) {
+              // Mismo producto todavía delante de la cámara: no repetir.
+            } else if (value === lastSeen) {
               // Segunda lectura idéntica → la damos por buena.
-              stop();
+              lastAccepted = value;
+              lastAcceptedAt = now;
+              lastSeen = '';
               onDetected(value, FROM_NATIVE[hit.format] ?? 'code128');
-              return;
+              if (!continuous) {
+                stop();
+                return;
+              }
+            } else {
+              lastSeen = value;
             }
-            lastSeen = value;
           }
         } catch {}
         // ~8 lecturas/seg: suficiente y deja respirar al decodificador con
@@ -165,10 +186,15 @@
             {torchOn ? '🔦 Apagar' : '🔦 Linterna'}
           </button>
         {/if}
+        {#if feedback}
+          <div class="absolute top-2 left-1/2 -translate-x-1/2 rounded-full px-3 py-1.5 text-sm font-medium"
+            style="background: rgba(34,197,94,.95); color: white;">{feedback}</div>
+        {/if}
       </div>
       <p class="text-xs text-muted text-center">
         Encuadra el código dentro del recuadro y <strong>acércate</strong> hasta
         que ocupe casi todo el ancho. Se lee solo.
+        {#if continuous}<br />Puedes encadenar varios productos seguidos.{/if}
       </p>
     {/if}
 

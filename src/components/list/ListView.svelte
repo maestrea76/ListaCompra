@@ -483,7 +483,7 @@
     <ProductScanDialog
       {categories} {storeId} storeName={store.name}
       defaultCategoryId={activeCat !== 'all' ? activeCat : undefined}
-      onCreated={(id) => { showScanProduct = false; addProduct(id); }}
+      onAdd={(id) => app.addOrBumpItem(storeId, id)}
       onClose={() => (showScanProduct = false)} />
   {/if}
 {/if}

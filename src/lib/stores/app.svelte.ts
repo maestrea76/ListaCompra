@@ -178,7 +178,7 @@ class AppStore {
   createCustomProduct(
     name: string,
     categoryId: string,
-    opts: { emoji?: string; storeId?: string; icon?: IconRef } = {},
+    opts: { emoji?: string; storeId?: string; icon?: IconRef; barcode?: string } = {},
   ): Product {
     const product: Product = {
       id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -187,6 +187,7 @@ class AppStore {
       icon: opts.icon ?? { kind: 'emoji', value: opts.emoji ?? '🏷️' },
       defaultUnit: 'unidad',
       ...(opts.storeId ? { storeId: opts.storeId } : {}),
+      ...(opts.barcode ? { barcode: opts.barcode } : {}),
     };
     this.state.products.push(product);
     this.persist();
@@ -215,6 +216,27 @@ class AppStore {
       for (const usage of Object.values(this.state.usage)) delete usage[id];
     }
     this.persist();
+  }
+
+  /** Busca un producto por su código de barras. Es lo que evita duplicar el
+   *  catálogo cada vez que se escanea el mismo producto. */
+  findByBarcode(barcode: string): Product | undefined {
+    const code = barcode.trim();
+    if (!code) return undefined;
+    return this.state.products.find((p) => p.barcode === code);
+  }
+
+  /** Añade un producto a la lista o, si ya está pendiente, suma 1 a su cantidad.
+   *  Lo usa el escaneo: volver a pasar el mismo producto no debe crear otra fila. */
+  addOrBumpItem(storeId: string, productId: string): void {
+    const list = this.getList(storeId);
+    const existing = list.items.find((i) => i.productId === productId && !i.done);
+    if (existing) {
+      this.setItemQty(storeId, existing.id, existing.qty + 1);
+      return;
+    }
+    const p = this.state.products.find((x) => x.id === productId);
+    this.addItem(storeId, { productId, qty: 1, unit: p?.defaultUnit ?? 'unidad' });
   }
 
   /** Cuántas veces aparece un producto en las listas (para avisar al borrar). */

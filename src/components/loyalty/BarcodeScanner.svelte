@@ -187,7 +187,7 @@
       await listCameras();
       if (track) {
         const caps = (track.getCapabilities?.() ?? {}) as Record<string, unknown>;
-        capsList = Object.keys(caps).join(', ') || '(no expone capacidades)';
+        capsList = Object.keys(caps).join(', ') || t('scan.noCaps');
         facing = String((track.getSettings?.() as any)?.facingMode ?? '—');
         torchAvailable = 'torch' in caps || Object.keys(caps).length === 0;
         if (Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
@@ -330,7 +330,7 @@
           class="mt-1 w-full rounded-lg border px-2 py-1.5 text-xs bg-transparent"
           style="border-color: var(--border);">
           {#each devices as d, i (d.deviceId)}
-            <option value={d.deviceId}>{d.label || `Cámara ${i + 1}`}</option>
+            <option value={d.deviceId}>{d.label || t('scan.cameraN', { n: i + 1 })}</option>
           {/each}
         </select>
       </label>

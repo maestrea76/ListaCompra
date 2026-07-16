@@ -150,8 +150,10 @@
              fuera de HA también hay cultura activa, y ocultarla ahí hacía parecer
              que la demo no tenía idioma. -->
         <span title={syncStatus.inHA
-          ? `Idioma de Home Assistant: ${syncStatus.haLanguage || activeLocale}${syncStatus.haCountry ? '-' + syncStatus.haCountry : ''}`
-          : `Catálogo: ${LOCALE_LABEL[activeLocale]} (según el idioma del navegador)`}>
+          ? t('nav.haLanguage', {
+              lang: `${syncStatus.haLanguage || activeLocale}${syncStatus.haCountry ? '-' + syncStatus.haCountry : ''}`,
+            })
+          : t('nav.catalogHint', { label: LOCALE_LABEL[activeLocale] })}>
           <Flag locale={activeLocale} />
         </span>
       </div>

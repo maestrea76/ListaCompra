@@ -21,7 +21,7 @@
   let query = $state('');
 
   const catName = (id: string) =>
-    categories.find((c) => c.id === id)?.name ?? 'Sin sección';
+    categories.find((c) => c.id === id)?.name ?? t('product.noSection');
 
   const mine = $derived.by(() => {
     const catIds = new Set(categories.map((c) => c.id));
@@ -60,7 +60,7 @@
         style="border-color: var(--border);" />
 
       {#if mine.length === 0}
-        <p class="text-sm text-muted py-4 text-center">Ninguno coincide con "{query}".</p>
+        <p class="text-sm text-muted py-4 text-center">{t('product.noneMatch', { q: query })}</p>
       {:else}
         <ul class="divide-y" style="border-color: var(--border);">
           {#each mine as p (p.id)}
@@ -70,7 +70,7 @@
                 <div class="font-medium text-sm truncate">{p.name}</div>
                 <div class="text-[11px] text-muted truncate">
                   {catName(p.categoryId)}
-                  {#if p.storeId === storeId} · solo aquí{/if}
+                  {#if p.storeId === storeId} · {t('product.onlyHereTag')}{/if}
                 </div>
               </div>
               <button onclick={() => (editing = p)}

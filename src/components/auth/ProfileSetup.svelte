@@ -16,7 +16,7 @@
   function submit() {
     error = '';
     if (!valid) {
-      error = 'Pon un nombre de al menos 2 caracteres.';
+      error = t('setup.errName');
       return;
     }
     app.setProfile({

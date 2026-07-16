@@ -111,9 +111,8 @@
       style="border-color: var(--border);">
       <input type="checkbox" bind:checked={onlyHere} class="mt-0.5" />
       <span class="text-xs">
-        <strong>Solo en {storeName}</strong>
-        <span class="block text-muted">Para marcas propias. Si lo desmarcas,
-          aparecerá en todas las tiendas de este tipo.</span>
+        <strong>{t('product.onlyIn', { store: storeName })}</strong>
+        <span class="block text-muted">{t('product.onlyHereNote')}</span>
       </span>
     </label>
 
@@ -125,7 +124,7 @@
     {/if}
 
     {#if inLists > 0}
-      <p class="text-[11px] text-muted">En {inLists} lista(s) ahora mismo.</p>
+      <p class="text-[11px] text-muted">{t('product.inListsNow', { n: inLists })}</p>
     {/if}
 
     <div class="flex gap-2 pt-1">

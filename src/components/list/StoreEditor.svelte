@@ -82,7 +82,7 @@
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
     if (file.size > 200_000) {
-      error = 'Imagen demasiado grande (máx. 200 KB).';
+      error = t('store.errImageBig');
       return;
     }
     iconImage = await new Promise<string>((res) => {
@@ -101,7 +101,7 @@
   function save() {
     error = '';
     const cleanName = name.trim();
-    if (cleanName.length < 2) { error = 'Nombre demasiado corto.'; return; }
+    if (cleanName.length < 2) { error = t('store.errNameShort'); return; }
 
     const finalStore: Store = {
       id: store?.id ?? `${slug(cleanName)}-${Date.now().toString(36)}`,
@@ -122,10 +122,7 @@
 
   function confirmDelete() {
     if (!store) return;
-    if (!confirm(
-      `¿Borrar la tienda "${store.name}" y su lista de la compra?\n\n` +
-      'Esta acción no se puede deshacer.'
-    )) return;
+    if (!confirm(t('store.confirmDelete', { name: store.name }))) return;
     app.removeStore(store.id);
     onClose();
   }
@@ -137,7 +134,7 @@
     onclick={(e) => e.stopPropagation()} role="presentation">
 
     <header class="flex items-start justify-between">
-        <h2 class="text-lg font-bold">{isEdit ? '✏️ Editar tienda' : '➕ Nueva tienda'}</h2>
+        <h2 class="text-lg font-bold">{isEdit ? `✏️ ${t('stores.editStore')}` : `➕ ${t('stores.new')}`}</h2>
         <button onclick={onClose} class="text-2xl leading-none text-muted hover:text-current">×</button>
       </header>
 
@@ -154,7 +151,7 @@
           {/if}
         </div>
         <div class="text-sm">
-          <div class="font-semibold">{name || 'Sin nombre'}</div>
+          <div class="font-semibold">{name || t('store.noName')}</div>
           <div class="text-xs text-muted">{t('store.preview')}</div>
         </div>
       </div>
@@ -202,7 +199,7 @@
           <input type="file" accept="image/*" onchange={handleImage}
             class="block w-full text-xs" />
           {#if iconImage}
-            <p class="text-[10px] text-muted">Imagen cargada ({Math.round(iconImage.length / 1024)} KB en base64)</p>
+            <p class="text-[10px] text-muted">{t('store.logoLoaded', { kb: Math.round(iconImage.length / 1024) })}</p>
           {/if}
         {/if}
       </fieldset>
@@ -212,11 +209,11 @@
         <div class="grid grid-cols-3 gap-2 items-center text-xs">
           <label class="flex items-center gap-1">
             <input type="color" bind:value={bg} class="size-8 rounded cursor-pointer" />
-            Fondo
+            {t('store.colorBg')}
           </label>
           <label class="flex items-center gap-1">
             <input type="color" bind:value={fg} class="size-8 rounded cursor-pointer" />
-            Texto
+            {t('store.colorText')}
           </label>
           <input type="text" bind:value={initials} maxlength="3" placeholder={t('store.initials')}
             class="rounded-lg border px-2 py-1 text-center bg-transparent"

@@ -73,7 +73,7 @@
       if (editingId) {
         await updateShare(editingId, { name: shareName.trim(), members });
       } else {
-        await createShare(shareName.trim() || 'Compartida', members);
+        await createShare(shareName.trim() || t('sync.defaultShareName'), members);
       }
       managing = false;
     } catch (e) {
@@ -84,7 +84,7 @@
   }
 
   async function removeShare(id: string) {
-    if (!confirm('¿Borrar esta lista compartida para todos sus miembros?')) return;
+    if (!confirm(t('sync.confirmRemoveShare'))) return;
     working = true;
     try {
       await deleteShare(id);
@@ -111,10 +111,7 @@
       <div class="rounded-xl bg-[var(--bg)] p-3 text-sm space-y-1.5"
         style="border: 1px solid var(--border);">
         <p>📴 <strong>{t('sync.localMode')}</strong></p>
-        <p class="text-muted">Esta app no se está ejecutando dentro del panel de
-          Home Assistant, así que tus listas solo se guardan en este dispositivo.
-          Abre "Tu Compra" desde la barra lateral de HA para sincronizar entre
-          dispositivos y usuarios.</p>
+        <p class="text-muted">{t('sync.notInHA')}</p>
       </div>
 
     {:else if managing}
@@ -190,7 +187,7 @@
         <dd class="font-medium">{activeShare?.name ?? '—'}</dd>
 
         <dt class="text-muted">{t('sync.lastSync')}</dt>
-        <dd>{ago === '—' ? '—' : `hace ${ago}`}</dd>
+        <dd>{ago === '—' ? '—' : t('sync.ago', { t: ago })}</dd>
 
         {#if syncStatus.lastError}
           <dt class="text-muted">{t('sync.warning')}</dt>
@@ -213,7 +210,7 @@
                 class="flex-1 text-left text-sm truncate hover:underline disabled:no-underline disabled:font-semibold">
                 {s.id === syncStatus.activeShareId ? '➤ ' : ''}{s.name}
                 {#if s.members.length > 1}
-                  <span class="text-xs text-muted">· {s.members.length} personas</span>
+                  <span class="text-xs text-muted">· {t('sync.people', { n: s.members.length })}</span>
                 {/if}
               </button>
               {#if syncStatus.isAdmin && !s.id.startsWith('personal:')}
@@ -242,9 +239,9 @@
       {#if error}<p class="text-sm text-red-500">{error}</p>{/if}
 
       <details class="rounded-xl border p-3" style="border-color: var(--border);">
-        <summary class="cursor-pointer text-sm font-medium">Log de eventos ({syncStatus.log.length})</summary>
+        <summary class="cursor-pointer text-sm font-medium">{t('sync.eventLog', { n: syncStatus.log.length })}</summary>
         <pre class="mt-2 text-[11px] font-mono overflow-x-auto whitespace-pre-wrap leading-tight"
-          style="color: var(--fg-muted)">{syncStatus.log.join('\n') || 'Sin eventos.'}</pre>
+          style="color: var(--fg-muted)">{syncStatus.log.join('\n') || t('sync.noEvents')}</pre>
       </details>
     {/if}
   </div>

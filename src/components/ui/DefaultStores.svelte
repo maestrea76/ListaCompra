@@ -86,8 +86,7 @@
         {/each}
       </ul>
       <p class="text-xs text-muted">
-        "Sin preferencia" deja los productos de ese tipo en una bandeja de
-        clasificación hasta que los coloques tú.
+        {t('defaults.noneNote')}
       </p>
     {/if}
   </div>

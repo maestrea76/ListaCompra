@@ -50,7 +50,7 @@
       });
     } catch (e) {
       // Típico: el código no cumple el formato (p. ej. EAN13 exige 12-13 dígitos).
-      error = `El código no es válido para el formato ${card.format.toUpperCase()}.`;
+      error = t('loyalty.invalidFormat', { fmt: card.format.toUpperCase() });
     }
   });
 </script>

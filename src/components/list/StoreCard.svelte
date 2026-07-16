@@ -53,7 +53,7 @@
     <div class="text-center w-full">
       <div class="font-semibold text-sm leading-tight truncate">{store.name}</div>
       {#if total > 0}
-        <div class="text-xs text-muted mt-0.5">{pending} pend / {total}</div>
+        <div class="text-xs text-muted mt-0.5">{t('stores.pending', { pending, total })}</div>
       {/if}
     </div>
 

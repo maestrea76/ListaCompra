@@ -165,8 +165,8 @@
             <img src={lookup.image} alt="" class="size-14 object-contain rounded-lg bg-white" />
           {/if}
           <p class="text-xs text-muted">
-            Encontrado{lookup.cached ? ' (en caché)' : ''}. Revísalo antes de añadirlo.
-            {#if usePhoto}<br />Se usará la foto como icono del producto.{/if}
+            {t('scan.found', { cached: lookup.cached ? t('scan.cached') : '' })}
+            {#if usePhoto}<br />{t('product.photoAsIcon')}{/if}
           </p>
         </div>
       {/if}

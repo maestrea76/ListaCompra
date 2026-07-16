@@ -356,7 +356,7 @@
         {#if filtered.length > 0}
           {#if showingHabituales}
             <p class="text-xs font-semibold uppercase tracking-wider text-muted">
-              ⭐ Tus habituales {activeCat !== 'all' ? 'de esta sección' : 'aquí'}
+              {t('list.usualHeader', { where: activeCat !== 'all' ? t('list.usualSection') : t('list.usualHere') })}
             </p>
           {/if}
           <div class="flex flex-wrap gap-2">
@@ -375,7 +375,7 @@
         {#if myProductCount > 0}
           <button onclick={() => (showMyProducts = true)}
             class="text-xs text-muted hover:underline">
-            🏷️ Mis productos ({myProductCount}) — editar o borrar
+            {t('list.myProductsLink', { n: myProductCount })}
           </button>
         {/if}
       </div>

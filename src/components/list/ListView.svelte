@@ -8,12 +8,13 @@
   import { onMount } from 'svelte';
   import { app } from '$lib/stores/app.svelte';
   import { base } from '$lib/base';
-  import type { Unit } from '$lib/types';
+  import type { Product, Unit } from '$lib/types';
   import MenuButton from '../ui/MenuButton.svelte';
   import LoyaltyCard from '../loyalty/LoyaltyCard.svelte';
   import ProductScanDialog from '../loyalty/ProductScanDialog.svelte';
   import ProductIcon from '../ui/ProductIcon.svelte';
   import CustomProducts from '../loyalty/CustomProducts.svelte';
+  import PhotoZoom from '../ui/PhotoZoom.svelte';
 
   let { storeId }: { storeId: string } = $props();
 
@@ -27,6 +28,8 @@
   let showScanProduct = $state(false);
   // Gestor de los productos creados por el usuario (editar / borrar).
   let showMyProducts = $state(false);
+  // Producto cuya foto se está viendo en grande.
+  let zoomProduct = $state<Product | null>(null);
 
   // Cuántos productos custom hay disponibles en esta tienda (para el enlace).
   const myProductCount = $derived(
@@ -414,7 +417,14 @@
                       : 'border-color: var(--border);'}>
                     {item.done ? '✓' : ''}
                   </button>
-                  <ProductIcon product={p} px={30} />
+                  {#if p?.icon.kind === 'image'}
+                    <button onclick={() => (zoomProduct = p!)} class="shrink-0"
+                      title="Ver la foto en grande">
+                      <ProductIcon product={p} px={30} />
+                    </button>
+                  {:else}
+                    <ProductIcon product={p} px={30} />
+                  {/if}
                   <div class="flex-1 min-w-0">
                     <div class="product-name font-medium truncate">{p?.name ?? '?'}</div>
                     <div class="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -477,6 +487,10 @@
   {#if showMyProducts}
     <CustomProducts {categories} {storeId} storeName={store.name}
       onClose={() => (showMyProducts = false)} />
+  {/if}
+
+  {#if zoomProduct}
+    <PhotoZoom product={zoomProduct} onClose={() => (zoomProduct = null)} />
   {/if}
 
   {#if showScanProduct}

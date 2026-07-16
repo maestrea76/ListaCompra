@@ -36,12 +36,17 @@ _LOGGER = logging.getLogger(__name__)
 # el usuario activa `product_lookup` en configuration.yaml (apagado por defecto):
 # la app es local por defecto y esta es la única petición saliente que existe.
 OFF_URL = "https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
-OFF_FIELDS = "product_name,product_name_es,brands,quantity,categories_tags,image_front_small_url"
+OFF_FIELDS = (
+    "product_name,product_name_es,brands,quantity,categories_tags,"
+    # display ≈400 px (se puede ampliar en pantalla sin verse borrosa);
+    # small ≈200 px como respaldo si no existe la anterior.
+    "image_front_display_url,image_front_small_url"
+)
 
 # La foto del producto se descarga DESDE HA y se incrusta como data URL, para
 # que el navegador no pida nada a terceros y para que el icono siga funcionando
-# sin conexión. Tope de tamaño: son miniaturas (~200 px), pero por si acaso.
-MAX_IMAGE_BYTES = 80_000
+# sin conexión. Tope de tamaño (la de ~400 px ronda los 30-50 KB).
+MAX_IMAGE_BYTES = 150_000
 
 
 async def _fetch_image_data_url(session, url: str) -> str:
@@ -152,7 +157,10 @@ class LookupView(HomeAssistantView):
                 "categories": product.get("categories_tags") or [],
                 # data URL: la descarga HA, no el navegador del usuario.
                 "image": await _fetch_image_data_url(
-                    session, product.get("image_front_small_url") or ""
+                    session,
+                    product.get("image_front_display_url")
+                    or product.get("image_front_small_url")
+                    or "",
                 ),
             }
 

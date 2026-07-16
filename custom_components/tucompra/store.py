@@ -19,7 +19,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from .const import STORAGE_KEY, STORAGE_VERSION
-from .routing import INBOX_STORE_ID, load_catalog, resolve
+from .routing import INBOX_STORE_ID, catalog_for, load_catalog, resolve
 
 
 def _now_ms() -> int:
@@ -50,8 +50,10 @@ class TuCompraStore:
     """Envuelve el helper Store de HA con la lógica de shares y membresías."""
 
     def __init__(self, hass: HomeAssistant) -> None:
+        self._hass = hass
         self._store: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
         self._data: dict[str, Any] = {"shares": {}}
+        # Catálogo de los 6 idiomas; se aplana al de HA en cada resolución.
         self.catalog = load_catalog(Path(__file__).parent / "catalog.json")
 
     async def async_load(self) -> dict[str, Any]:
@@ -206,7 +208,14 @@ class TuCompraStore:
             "lists": {}, "customProducts": [], "customStores": [],
             "defaultStores": {}, "updatedAt": 0,
         }
-        res = resolve(name, snap, self.catalog)
+        # El catálogo del idioma de HA: el mismo que el frontend ha sembrado, por
+        # lo que el producto que elijamos existe en la app del usuario.
+        cfg = self._hass.config
+        res = resolve(
+            name,
+            snap,
+            catalog_for(self.catalog, cfg.language, cfg.country),
+        )
         now = _now_ms()
 
         product = res["product"]

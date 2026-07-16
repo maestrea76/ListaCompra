@@ -14,13 +14,65 @@ from typing import Any
 
 INBOX_STORE_ID = "inbox"
 
+# Idioma de catálogo por defecto. DEBE coincidir con DEFAULT_LOCALE del frontend
+# (src/lib/i18n/locale.ts).
+DEFAULT_LOCALE = "en"
+
 
 def load_catalog(path: Path) -> dict[str, Any]:
     try:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
-        return {"products": [], "categories": [], "storeTypes": [], "stores": []}
+        return {"categories": [], "locales": {}}
+
+
+def resolve_locale(language: str | None, country: str | None) -> str:
+    """Idioma/país de HA → locale de catálogo.
+
+    Es un calco de resolveLocale() en src/lib/i18n/locale.ts y tiene que seguir
+    siéndolo: el frontend siembra las tiendas de UN locale y la voz añade
+    productos de OTRO si ambos no coinciden — el resultado sería un item cuyo
+    producto la app no conoce. Ambos leen el mismo hass.config, así que mientras
+    la regla sea la misma, coinciden.
+    """
+    lang = (language or "").lower().split("-")[0]
+    cc = (country or "").upper()
+    if lang == "de":
+        return "de"
+    if lang == "fr":
+        return "fr"
+    if lang == "pt":
+        return "br"
+    if lang == "en":
+        return "us" if cc == "US" else "en"
+    # Cooficiales de España: el catálogo español es el que les sirve.
+    if lang in ("es", "eu", "ca", "gl"):
+        return "es"
+    return DEFAULT_LOCALE
+
+
+def catalog_for(
+    catalog: dict[str, Any],
+    language: str | None = None,
+    country: str | None = None,
+) -> dict[str, Any]:
+    """Aplana el catálogo multi-idioma al locale de HA.
+
+    Devuelve la forma plana que espera resolve(): {products, categories, stores}.
+    """
+    locales = catalog.get("locales")
+    if not locales:
+        # Formato antiguo (plano, solo español). No debería darse: el JSON viaja
+        # en el mismo zip que este código.
+        return catalog
+    loc = resolve_locale(language, country)
+    data = locales.get(loc) or locales.get(DEFAULT_LOCALE) or {}
+    return {
+        "products": data.get("products", []),
+        "stores": data.get("stores", []),
+        "categories": catalog.get("categories", []),
+    }
 
 
 def _norm(s: str) -> str:

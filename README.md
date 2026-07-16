@@ -192,7 +192,9 @@ HA user who is currently logged in:
 The integration exposes a **`tucompra.add_item`** service that adds a product
 **by name** and **routes it to the correct store automatically**:
 
-1. It recognises the product with fuzzy search across the catalog.
+1. It recognises the product with fuzzy search across the catalog **of your Home
+   Assistant language** — say "nappies", "diapers", "couches" or "pañales"
+   depending on where you are, not the Spanish name.
 2. From the product it derives the **store type** (milk → supermarket, chops →
    butcher, ibuprofen → pharmacy…).
 3. It puts the item in your **default store** for that type.

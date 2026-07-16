@@ -45,7 +45,9 @@
       // El .wasm se empaqueta con el panel y lo sirve TU Home Assistant. Por
       // defecto zxing-wasm lo pediría a un CDN: eso rompería el "sin peticiones
       // externas" y no funcionaría sin conexión.
-      import('zxing-wasm/dist/reader/zxing_reader.wasm?url'),
+      // Ojo: hay que usar el subpath EXPORTADO ('reader/…'), no la ruta interna
+      // del paquete ('dist/reader/…'), o el bundler no lo resuelve.
+      import('zxing-wasm/reader/zxing_reader.wasm?url'),
     ]);
     const wasmUrl = (wasm as { default: string }).default;
     setZXingModuleOverrides({

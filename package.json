@@ -1,7 +1,7 @@
 {
   "name": "tu-compra",
   "type": "module",
-  "version": "0.3.26",
+  "version": "0.3.27",
   "description": "Listas de la compra multi-tienda con integración Home Assistant",
   "scripts": {
     "dev": "astro dev",

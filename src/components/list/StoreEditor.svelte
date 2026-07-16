@@ -13,8 +13,11 @@
 
   // Tarjeta de fidelización (se guarda en la tienda → se sincroniza con la lista).
   let loyaltyCode = $state(store?.loyalty?.code ?? '');
-  let loyaltyFormat = $state<LoyaltyFormat>(store?.loyalty?.format ?? 'qr');
   let showScanner = $state(false);
+  let showFormatPicker = $state(false);
+  let detectedByCamera = $state(false);
+  // null ⇒ deducir el formato solo. Al editar respetamos el guardado.
+  let manualFormat = $state<LoyaltyFormat | null>(store?.loyalty?.format ?? null);
 
   const FORMATS: { id: LoyaltyFormat; label: string }[] = [
     { id: 'qr', label: 'QR' },
@@ -25,10 +28,38 @@
     { id: 'upca', label: 'UPC-A' },
   ];
 
+  /** Deduce el formato por la forma del código, para que el usuario no tenga
+   *  que saber qué es un EAN-13. La cámara lo dice exacto; escribiendo a mano
+   *  esto acierta en los casos habituales. */
+  function guessFormat(code: string): LoyaltyFormat {
+    const c = code.trim();
+    if (!c) return 'qr';
+    if (/^\d{13}$/.test(c)) return 'ean13';
+    if (/^\d{12}$/.test(c)) return 'upca';
+    if (/^\d{8}$/.test(c)) return 'ean8';
+    if (/^https?:\/\//i.test(c) || c.length > 20) return 'qr';
+    return 'code128';
+  }
+
+  const loyaltyFormat = $derived(manualFormat ?? guessFormat(loyaltyCode));
+  const formatLabel = $derived(
+    FORMATS.find((f) => f.id === loyaltyFormat)?.label ?? loyaltyFormat,
+  );
+
   function onScanned(code: string, format: LoyaltyFormat) {
     loyaltyCode = code;
-    loyaltyFormat = format;
+    manualFormat = format;      // la cámara sabe el formato exacto
+    detectedByCamera = true;
     showScanner = false;
+  }
+
+  function onCodeInput() {
+    // Si el usuario reescribe a mano, volvemos a deducir salvo que lo haya
+    // elegido él explícitamente en el selector.
+    if (detectedByCamera) {
+      detectedByCamera = false;
+      manualFormat = null;
+    }
   }
 
   let name = $state(store?.name ?? '');
@@ -195,29 +226,44 @@
       <fieldset class="rounded-xl border p-3 space-y-2" style="border-color: var(--border);">
         <legend class="text-sm font-medium px-2">🎟️ Tarjeta de fidelización</legend>
 
-        <div class="flex gap-2">
-          <input type="text" bind:value={loyaltyCode} placeholder="Número o código de la tarjeta"
-            class="flex-1 rounded-lg border px-3 py-2 text-sm bg-transparent"
-            style="border-color: var(--border);" />
-          <button type="button" onclick={() => (showScanner = true)}
-            title="Escanear con la cámara"
-            class="rounded-lg border px-3 py-2 text-sm hover:bg-[var(--bg)] transition"
-            style="border-color: var(--border);">📷</button>
-        </div>
+        <!-- Escanear es la vía recomendada: la cámara detecta el formato sola. -->
+        <button type="button" onclick={() => (showScanner = true)}
+          class="w-full rounded-xl py-2.5 font-semibold text-white transition"
+          style="background: var(--accent);">📷 Escanear tarjeta</button>
 
-        <div class="flex items-center gap-2">
-          <select bind:value={loyaltyFormat}
-            class="flex-1 rounded-lg border px-2 py-1.5 text-xs bg-transparent"
-            style="border-color: var(--border);">
-            {#each FORMATS as f}<option value={f.id}>{f.label}</option>{/each}
-          </select>
-          {#if loyaltyCode.trim()}
-            <button type="button" onclick={() => (loyaltyCode = '')}
-              class="text-xs text-muted hover:underline">quitar</button>
-          {/if}
-        </div>
+        <p class="text-[11px] text-muted text-center">o escribe el número que viene impreso:</p>
+
+        <input type="text" bind:value={loyaltyCode} oninput={onCodeInput}
+          placeholder="Número de la tarjeta"
+          class="w-full rounded-lg border px-3 py-2 text-sm bg-transparent"
+          style="border-color: var(--border);" />
 
         {#if loyaltyCode.trim()}
+          <div class="flex items-center justify-between gap-2 text-[11px]">
+            <span class="text-muted">
+              {#if detectedByCamera}
+                ✅ Formato detectado: <strong>{formatLabel}</strong>
+              {:else}
+                Formato: <strong>{formatLabel}</strong> (automático)
+              {/if}
+            </span>
+            <div class="flex gap-2 shrink-0">
+              <button type="button" onclick={() => (showFormatPicker = !showFormatPicker)}
+                class="text-muted hover:underline">cambiar</button>
+              <button type="button" onclick={() => { loyaltyCode = ''; manualFormat = null; detectedByCamera = false; }}
+                class="text-muted hover:underline">quitar</button>
+            </div>
+          </div>
+
+          {#if showFormatPicker}
+            <select value={loyaltyFormat}
+              onchange={(e) => { manualFormat = e.currentTarget.value as LoyaltyFormat; detectedByCamera = false; }}
+              class="w-full rounded-lg border px-2 py-1.5 text-xs bg-transparent"
+              style="border-color: var(--border);">
+              {#each FORMATS as f}<option value={f.id}>{f.label}</option>{/each}
+            </select>
+          {/if}
+
           <div class="flex justify-center pt-1">
             <LoyaltyCode card={{ code: loyaltyCode.trim(), format: loyaltyFormat }} />
           </div>

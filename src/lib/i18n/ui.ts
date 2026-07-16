@@ -18,12 +18,7 @@ const ES = {
   'nav.signOut': 'Cerrar sesión y borrar datos del navegador',
   'nav.menu': 'Menú de Home Assistant',
   'nav.menuAria': 'Abrir menú lateral',
-  'nav.signOutConfirm': '¿Borrar tus datos de este navegador?
-
-Se eliminan listas, productos personalizados y tiendas custom.
-Si la sincronización con Home Assistant está activa, los datos siguen en HA y se recuperan al recargar.
-
-Esta acción no se puede deshacer en este dispositivo.',
+  'nav.signOutConfirm': '¿Borrar tus datos de este navegador?\n\nSe eliminan listas, productos personalizados y tiendas custom.\nSi la sincronización con Home Assistant está activa, los datos siguen en HA y se recuperan al recargar.\n\nEsta acción no se puede deshacer en este dispositivo.',
   'nav.catalogHint': 'Catálogo: {label} (según el idioma del navegador)',
   'nav.haLanguage': 'Idioma de Home Assistant: {lang}',
 
@@ -81,6 +76,11 @@ Esta acción no se puede deshacer en este dispositivo.',
 
   // --- Editor de tienda ---
   'store.name': 'Nombre',
+  'store.namePlaceholder': 'p.ej. Eroski Centro',
+  'store.preview': 'Vista previa',
+  'store.initials': 'Inic.',
+  'store.change': 'cambiar',
+  'store.removeLower': 'quitar',
   'store.type': 'Tipo de establecimiento',
   'store.logo': 'Logotipo',
   'store.logoEmoji': 'Emoji',
@@ -130,6 +130,12 @@ Esta acción no se puede deshacer en este dispositivo.',
   'defaults.title': 'Tiendas por defecto',
   'defaults.hint': 'Cuando pidas algo por voz sin decir la tienda, irá a la que elijas aquí para cada tipo.',
   'defaults.none': 'Sin preferencia',
+  'defaults.noneAsk': '— Sin preferencia (preguntar)',
+  'defaults.adminOnly': '🔒 Solo un administrador de Home Assistant puede cambiar estas preferencias.',
+  'product.myProducts': 'Mis productos',
+  'product.filter': 'Filtrar…',
+  'product.edit': 'Editar',
+  'loyalty.qrError': 'No se pudo generar el QR.',
 
   // --- Varios ---
   'common.loading': 'Cargando…',
@@ -156,12 +162,7 @@ const EN: Dict = {
   'nav.signOut': 'Sign out and delete this browser’s data',
   'nav.menu': 'Home Assistant menu',
   'nav.menuAria': 'Open the sidebar',
-  'nav.signOutConfirm': 'Delete your data from this browser?
-
-Lists, custom products and custom shops will be removed.
-If Home Assistant sync is on, the data stays in HA and comes back on reload.
-
-This cannot be undone on this device.',
+  'nav.signOutConfirm': 'Delete your data from this browser?\n\nLists, custom products and custom shops will be removed.\nIf Home Assistant sync is on, the data stays in HA and comes back on reload.\n\nThis cannot be undone on this device.',
   'nav.catalogHint': 'Catalog: {label} (from your browser language)',
   'nav.haLanguage': 'Home Assistant language: {lang}',
 
@@ -215,6 +216,11 @@ This cannot be undone on this device.',
   'list.cancelLower': 'cancel',
 
   'store.name': 'Name',
+  'store.namePlaceholder': 'e.g. Tesco Express',
+  'store.preview': 'Preview',
+  'store.initials': 'Init.',
+  'store.change': 'change',
+  'store.removeLower': 'remove',
   'store.type': 'Kind of shop',
   'store.logo': 'Logo',
   'store.logoEmoji': 'Emoji',
@@ -261,6 +267,12 @@ This cannot be undone on this device.',
   'defaults.title': 'Default shops',
   'defaults.hint': 'When you ask by voice without naming a shop, it goes to the one you pick here for each kind.',
   'defaults.none': 'No preference',
+  'defaults.noneAsk': '— No preference (ask)',
+  'defaults.adminOnly': '🔒 Only a Home Assistant administrator can change these preferences.',
+  'product.myProducts': 'My products',
+  'product.filter': 'Filter…',
+  'product.edit': 'Edit',
+  'loyalty.qrError': 'The QR code could not be generated.',
 
   'common.loading': 'Loading…',
   'common.close': 'Close',
@@ -307,12 +319,7 @@ const FR: Dict = {
   'nav.signOut': 'Se déconnecter et effacer les données du navigateur',
   'nav.menu': 'Menu de Home Assistant',
   'nav.menuAria': 'Ouvrir le menu latéral',
-  'nav.signOutConfirm': 'Effacer vos données de ce navigateur ?
-
-Listes, produits personnalisés et magasins créés seront supprimés.
-Si la synchronisation Home Assistant est active, les données restent dans HA et reviennent au rechargement.
-
-C’est irréversible sur cet appareil.',
+  'nav.signOutConfirm': 'Effacer vos données de ce navigateur ?\n\nListes, produits personnalisés et magasins créés seront supprimés.\nSi la synchronisation Home Assistant est active, les données restent dans HA et reviennent au rechargement.\n\nC’est irréversible sur cet appareil.',
   'nav.catalogHint': 'Catalogue : {label} (selon la langue du navigateur)',
   'nav.haLanguage': 'Langue de Home Assistant : {lang}',
 
@@ -366,6 +373,11 @@ C’est irréversible sur cet appareil.',
   'list.cancelLower': 'annuler',
 
   'store.name': 'Nom',
+  'store.namePlaceholder': 'p.ex. Carrefour City',
+  'store.preview': 'Aperçu',
+  'store.initials': 'Init.',
+  'store.change': 'changer',
+  'store.removeLower': 'retirer',
   'store.type': 'Type de commerce',
   'store.logo': 'Logo',
   'store.logoEmoji': 'Émoji',
@@ -412,6 +424,12 @@ C’est irréversible sur cet appareil.',
   'defaults.title': 'Magasins par défaut',
   'defaults.hint': 'Quand vous demandez à la voix sans nommer le magasin, ça ira vers celui choisi ici pour chaque type.',
   'defaults.none': 'Sans préférence',
+  'defaults.noneAsk': '— Sans préférence (demander)',
+  'defaults.adminOnly': '🔒 Seul un administrateur de Home Assistant peut modifier ces préférences.',
+  'product.myProducts': 'Mes produits',
+  'product.filter': 'Filtrer…',
+  'product.edit': 'Modifier',
+  'loyalty.qrError': 'Impossible de générer le QR.',
 
   'common.loading': 'Chargement…',
   'common.close': 'Fermer',
@@ -434,12 +452,7 @@ const DE: Dict = {
   'nav.signOut': 'Abmelden und Browserdaten löschen',
   'nav.menu': 'Home-Assistant-Menü',
   'nav.menuAria': 'Seitenleiste öffnen',
-  'nav.signOutConfirm': 'Deine Daten aus diesem Browser löschen?
-
-Listen, eigene Produkte und eigene Läden werden entfernt.
-Wenn die Home-Assistant-Sync an ist, bleiben die Daten in HA und kommen beim Neuladen zurück.
-
-Auf diesem Gerät nicht rückgängig zu machen.',
+  'nav.signOutConfirm': 'Deine Daten aus diesem Browser löschen?\n\nListen, eigene Produkte und eigene Läden werden entfernt.\nWenn die Home-Assistant-Sync an ist, bleiben die Daten in HA und kommen beim Neuladen zurück.\n\nAuf diesem Gerät nicht rückgängig zu machen.',
   'nav.catalogHint': 'Katalog: {label} (nach der Browsersprache)',
   'nav.haLanguage': 'Home-Assistant-Sprache: {lang}',
 
@@ -493,6 +506,11 @@ Auf diesem Gerät nicht rückgängig zu machen.',
   'list.cancelLower': 'abbrechen',
 
   'store.name': 'Name',
+  'store.namePlaceholder': 'z.B. Rewe City',
+  'store.preview': 'Vorschau',
+  'store.initials': 'Init.',
+  'store.change': 'ändern',
+  'store.removeLower': 'entfernen',
   'store.type': 'Art des Ladens',
   'store.logo': 'Logo',
   'store.logoEmoji': 'Emoji',
@@ -539,6 +557,12 @@ Auf diesem Gerät nicht rückgängig zu machen.',
   'defaults.title': 'Standardläden',
   'defaults.hint': 'Wenn du per Sprache etwas ohne Laden verlangst, landet es beim hier gewählten Laden der jeweiligen Art.',
   'defaults.none': 'Keine Präferenz',
+  'defaults.noneAsk': '— Keine Präferenz (nachfragen)',
+  'defaults.adminOnly': '🔒 Nur ein Home-Assistant-Administrator kann diese Einstellungen ändern.',
+  'product.myProducts': 'Meine Produkte',
+  'product.filter': 'Filtern…',
+  'product.edit': 'Bearbeiten',
+  'loyalty.qrError': 'Der QR-Code konnte nicht erzeugt werden.',
 
   'common.loading': 'Lädt…',
   'common.close': 'Schließen',
@@ -561,12 +585,7 @@ const BR: Dict = {
   'nav.signOut': 'Sair e apagar os dados do navegador',
   'nav.menu': 'Menu do Home Assistant',
   'nav.menuAria': 'Abrir o menu lateral',
-  'nav.signOutConfirm': 'Apagar seus dados deste navegador?
-
-Listas, produtos personalizados e lojas próprias serão removidos.
-Se a sincronização com o Home Assistant estiver ligada, os dados ficam no HA e voltam ao recarregar.
-
-Não dá para desfazer neste dispositivo.',
+  'nav.signOutConfirm': 'Apagar seus dados deste navegador?\n\nListas, produtos personalizados e lojas próprias serão removidos.\nSe a sincronização com o Home Assistant estiver ligada, os dados ficam no HA e voltam ao recarregar.\n\nNão dá para desfazer neste dispositivo.',
   'nav.catalogHint': 'Catálogo: {label} (conforme o idioma do navegador)',
   'nav.haLanguage': 'Idioma do Home Assistant: {lang}',
 
@@ -620,6 +639,11 @@ Não dá para desfazer neste dispositivo.',
   'list.cancelLower': 'cancelar',
 
   'store.name': 'Nome',
+  'store.namePlaceholder': 'ex.: Pão de Açúcar',
+  'store.preview': 'Prévia',
+  'store.initials': 'Inic.',
+  'store.change': 'trocar',
+  'store.removeLower': 'tirar',
   'store.type': 'Tipo de estabelecimento',
   'store.logo': 'Logotipo',
   'store.logoEmoji': 'Emoji',
@@ -666,6 +690,12 @@ Não dá para desfazer neste dispositivo.',
   'defaults.title': 'Lojas padrão',
   'defaults.hint': 'Quando você pedir por voz sem dizer a loja, vai para a que escolher aqui em cada tipo.',
   'defaults.none': 'Sem preferência',
+  'defaults.noneAsk': '— Sem preferência (perguntar)',
+  'defaults.adminOnly': '🔒 Só um administrador do Home Assistant pode mudar estas preferências.',
+  'product.myProducts': 'Meus produtos',
+  'product.filter': 'Filtrar…',
+  'product.edit': 'Editar',
+  'loyalty.qrError': 'Não foi possível gerar o QR.',
 
   'common.loading': 'Carregando…',
   'common.close': 'Fechar',

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '$lib/i18n/ui.svelte';
   // Dibuja el código de una tarjeta de fidelización: QR (qrcode-generator) o
   // código de barras 1D (JsBarcode). No hay API nativa del navegador para
   // *generar* códigos, solo para leerlos, de ahí estas dos librerías (pequeñas).
@@ -61,7 +62,7 @@
       {@html qrSvg}
     </div>
   {:else}
-    <p class="text-sm text-red-500">No se pudo generar el QR.</p>
+    <p class="text-sm text-red-500">{t('loyalty.qrError')}</p>
   {/if}
 {:else}
   <div class="bg-white p-3 rounded-xl inline-block">

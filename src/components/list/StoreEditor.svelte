@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '$lib/i18n/ui.svelte';
   // Modal de creación/edición de tienda. En modo creación genera un id
   // basado en slug del nombre.
 
@@ -154,19 +155,19 @@
         </div>
         <div class="text-sm">
           <div class="font-semibold">{name || 'Sin nombre'}</div>
-          <div class="text-xs text-muted">Vista previa</div>
+          <div class="text-xs text-muted">{t('store.preview')}</div>
         </div>
       </div>
 
       <label class="block">
-        <span class="text-sm font-medium">Nombre</span>
-        <input type="text" bind:value={name} placeholder="p.ej. Eroski Centro"
+        <span class="text-sm font-medium">{t('store.name')}</span>
+        <input type="text" bind:value={name} placeholder={t('store.namePlaceholder')}
           class="mt-1 w-full rounded-xl border px-4 py-2 bg-transparent"
           style="border-color: var(--border);" />
       </label>
 
       <label class="block">
-        <span class="text-sm font-medium">Tipo de establecimiento</span>
+        <span class="text-sm font-medium">{t('store.type')}</span>
         <select bind:value={typeId}
           class="mt-1 w-full rounded-xl border px-4 py-2 bg-transparent"
           style="border-color: var(--border);">
@@ -179,18 +180,18 @@
       </label>
 
       <fieldset class="rounded-xl border p-3 space-y-2" style="border-color: var(--border);">
-        <legend class="text-sm font-medium px-2">Logotipo</legend>
+        <legend class="text-sm font-medium px-2">{t('store.logo')}</legend>
         <div class="flex gap-2 text-xs">
           <button type="button" onclick={() => (iconKind = 'emoji')}
             class="flex-1 rounded-lg border py-1.5"
             style={iconKind === 'emoji'
               ? 'background: var(--accent); color: white; border-color: var(--accent);'
-              : 'border-color: var(--border);'}>Emoji</button>
+              : 'border-color: var(--border);'}>{t('store.logoEmoji')}</button>
           <button type="button" onclick={() => (iconKind = 'image')}
             class="flex-1 rounded-lg border py-1.5"
             style={iconKind === 'image'
               ? 'background: var(--accent); color: white; border-color: var(--accent);'
-              : 'border-color: var(--border);'}>Imagen</button>
+              : 'border-color: var(--border);'}>{t('store.logoImage')}</button>
         </div>
 
         {#if iconKind === 'emoji'}
@@ -207,7 +208,7 @@
       </fieldset>
 
       <fieldset class="rounded-xl border p-3 space-y-2" style="border-color: var(--border);">
-        <legend class="text-sm font-medium px-2">Colores de marca</legend>
+        <legend class="text-sm font-medium px-2">{t('store.brandColors')}</legend>
         <div class="grid grid-cols-3 gap-2 items-center text-xs">
           <label class="flex items-center gap-1">
             <input type="color" bind:value={bg} class="size-8 rounded cursor-pointer" />
@@ -217,24 +218,24 @@
             <input type="color" bind:value={fg} class="size-8 rounded cursor-pointer" />
             Texto
           </label>
-          <input type="text" bind:value={initials} maxlength="3" placeholder="Inic."
+          <input type="text" bind:value={initials} maxlength="3" placeholder={t('store.initials')}
             class="rounded-lg border px-2 py-1 text-center bg-transparent"
             style="border-color: var(--border);" />
         </div>
       </fieldset>
 
       <fieldset class="rounded-xl border p-3 space-y-2" style="border-color: var(--border);">
-        <legend class="text-sm font-medium px-2">🎟️ Tarjeta de fidelización</legend>
+        <legend class="text-sm font-medium px-2">🎟️ {t('store.loyalty')}</legend>
 
         <!-- Escanear es la vía recomendada: la cámara detecta el formato sola. -->
         <button type="button" onclick={() => (showScanner = true)}
           class="w-full rounded-xl py-2.5 font-semibold text-white transition"
-          style="background: var(--accent);">📷 Escanear tarjeta</button>
+          style="background: var(--accent);">📷 {t('store.loyaltyScan')}</button>
 
-        <p class="text-[11px] text-muted text-center">o escribe el número que viene impreso:</p>
+        <p class="text-[11px] text-muted text-center">{t('store.loyaltyManual')}</p>
 
         <input type="text" bind:value={loyaltyCode} oninput={onCodeInput}
-          placeholder="Número de la tarjeta"
+          placeholder={t('store.loyaltyPlaceholder')}
           class="w-full rounded-lg border px-3 py-2 text-sm bg-transparent"
           style="border-color: var(--border);" />
 
@@ -249,9 +250,9 @@
             </span>
             <div class="flex gap-2 shrink-0">
               <button type="button" onclick={() => (showFormatPicker = !showFormatPicker)}
-                class="text-muted hover:underline">cambiar</button>
+                class="text-muted hover:underline">{t('store.change')}</button>
               <button type="button" onclick={() => { loyaltyCode = ''; manualFormat = null; detectedByCamera = false; }}
-                class="text-muted hover:underline">quitar</button>
+                class="text-muted hover:underline">{t('store.removeLower')}</button>
             </div>
           </div>
 
@@ -281,7 +282,7 @@
         {#if isEdit}
           <button onclick={confirmDelete}
             class="rounded-xl border px-4 py-2.5 text-sm font-medium"
-            style="border-color: #dc2626; color: #dc2626;">🗑️ Borrar</button>
+            style="border-color: #dc2626; color: #dc2626;">🗑️ {t('store.delete')}</button>
         {/if}
         <button onclick={save}
           class="flex-1 rounded-xl py-2.5 font-semibold text-white"

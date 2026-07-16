@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '$lib/i18n/ui.svelte';
   // Muestra la tarjeta de fidelización a pantalla completa para pasarla por el
   // lector de la caja: fondo blanco, código grande y recordatorio de subir el
   // brillo (los lectores necesitan contraste).
@@ -15,7 +16,7 @@
 
     <button onclick={onClose}
       class="absolute top-4 right-4 text-3xl leading-none"
-      style="color:#666;" aria-label="Cerrar">×</button>
+      style="color:#666;" aria-label={t('common.close')}>×</button>
 
     <p class="text-sm font-semibold" style="color:#111;">{store.name}</p>
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '$lib/i18n/ui.svelte';
   // Lista los productos que ha creado el usuario (escaneados o con Enter) que
   // están disponibles en esta tienda, para editarlos o borrarlos.
   // Los del catálogo de fábrica no salen: no son editables (refreshSeed los
@@ -40,7 +41,7 @@
     onclick={(e) => e.stopPropagation()} role="presentation">
 
     <header class="flex items-start justify-between">
-      <h2 class="text-lg font-bold">🏷️ Mis productos</h2>
+      <h2 class="text-lg font-bold">🏷️ {t('product.myProducts')}</h2>
       <button onclick={onClose} class="text-2xl leading-none text-muted hover:text-current">×</button>
     </header>
 
@@ -55,7 +56,7 @@
         Escanea uno con 📷 o escribe su nombre y pulsa Enter.
       </p>
     {:else}
-      <input type="text" bind:value={query} placeholder="Filtrar…"
+      <input type="text" bind:value={query} placeholder={t('product.filter')}
         class="w-full rounded-xl border px-4 py-2 text-sm bg-transparent"
         style="border-color: var(--border);" />
 
@@ -75,7 +76,7 @@
               </div>
               <button onclick={() => (editing = p)}
                 class="text-muted hover:text-current text-lg shrink-0"
-                title="Editar">✏️</button>
+                title={t('product.edit')}>✏️</button>
             </li>
           {/each}
         </ul>

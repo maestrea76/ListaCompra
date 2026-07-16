@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '$lib/i18n/ui.svelte';
   // Ajuste: tienda por defecto de cada tipo (para el enrutado por voz).
   // Cuando entra un producto por voz (Assist → add_item), su categoría implica
   // un TipoTienda; si hay varias tiendas de ese tipo, aquí se decide a cuál va.
@@ -42,7 +43,7 @@
     onclick={(e) => e.stopPropagation()} role="presentation">
 
     <header class="flex items-start justify-between">
-      <h2 class="text-lg font-bold">🎯 Tiendas por defecto</h2>
+      <h2 class="text-lg font-bold">🎯 {t('defaults.title')}</h2>
       <button onclick={onClose} class="text-2xl leading-none text-muted hover:text-current">×</button>
     </header>
 
@@ -78,7 +79,7 @@
                 onchange={(e) => choose(type.id, e.currentTarget.value)}
                 class="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm bg-transparent disabled:opacity-60"
                 style="border-color: var(--border);">
-                <option value="">— Sin preferencia (preguntar)</option>
+                <option value="">{t('defaults.noneAsk')}</option>
                 {#each stores as s (s.id)}
                   <option value={s.id}>{s.name}</option>
                 {/each}

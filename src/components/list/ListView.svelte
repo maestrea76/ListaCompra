@@ -8,6 +8,7 @@
   import { onMount } from 'svelte';
   import { app } from '$lib/stores/app.svelte';
   import { base } from '$lib/base';
+  import { t } from '$lib/i18n/ui.svelte';
   import type { Product, Unit } from '$lib/types';
   import MenuButton from '../ui/MenuButton.svelte';
   import LoyaltyCard from '../loyalty/LoyaltyCard.svelte';
@@ -226,22 +227,22 @@
 
   function clearDone() {
     if (doneCount === 0) {
-      alert('No hay productos marcados como comprados.');
+      alert(t('list.noneDone'));
       return;
     }
-    if (!confirm(`¿Eliminar los ${doneCount} producto(s) marcados como comprados?`)) return;
+    if (!confirm(t('list.confirmClearDone', { n: doneCount }))) return;
     app.clearDone(storeId);
   }
 
   function clearAll() {
     if (list.items.length === 0) return;
-    if (!confirm(`¿Vaciar la lista entera (${list.items.length} producto(s))? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(t('list.confirmEmpty', { n: list.items.length }))) return;
     for (const it of [...list.items]) app.removeItem(storeId, it.id);
   }
 </script>
 
 {#if !store}
-  <p>Tienda no encontrada.</p>
+  <p>{t('list.storeNotFound')}</p>
 {:else}
   <div class="space-y-4">
     <!-- Sticky COMPACTO: controles (volver/limpiar) SIEMPRE visibles + buscador.
@@ -252,7 +253,7 @@
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2 min-w-0">
           <MenuButton />
-          <a href="#/" class="text-sm text-muted hover:underline shrink-0">← Tiendas</a>
+          <a href="#/" class="text-sm text-muted hover:underline shrink-0">← {t('nav.stores')}</a>
           <span class="font-semibold flex items-center gap-1 min-w-0">
             {#if store.icon.kind === 'image'}
               <img src={store.icon.value.startsWith('data:') ? store.icon.value : base(store.icon.value)}
@@ -266,7 +267,7 @@
         <div class="flex gap-1 shrink-0">
           {#if store.loyalty}
             <button onclick={() => (showLoyalty = true)}
-              title="Mostrar tarjeta de fidelización"
+              title={t('list.showLoyalty')}
               class="text-xs rounded-full border px-2.5 py-1.5 hover:bg-[var(--bg)] transition"
               style="border-color: var(--border);">🎟️</button>
           {/if}
@@ -274,14 +275,14 @@
             disabled={doneCount === 0}
             class="text-xs rounded-full border px-2.5 py-1.5 hover:bg-[var(--bg)] transition disabled:opacity-40"
             style="border-color: var(--border);"
-            title="Borrar productos marcados como comprados">
-            🧹<span class="hidden sm:inline"> Limpiar comprados</span> {doneCount > 0 ? `(${doneCount})` : ''}
+            title={t('list.clearDoneTitle')}>
+            🧹<span class="hidden sm:inline"> {t('list.clearDone')}</span> {doneCount > 0 ? `(${doneCount})` : ''}
           </button>
           <button onclick={clearAll}
             disabled={list.items.length === 0}
             class="text-xs rounded-full border px-2.5 py-1.5 hover:bg-[var(--bg)] transition disabled:opacity-40"
             style="border-color: var(--border); color: #dc2626;"
-            title="Vaciar la lista entera">
+            title={t('list.emptyList')}>
             🗑️
           </button>
         </div>
@@ -289,13 +290,13 @@
 
       <div class="flex gap-2">
         <input
-          type="text" bind:value={query} placeholder="Buscar o crear producto (Enter)…"
+          type="text" bind:value={query} placeholder={t('list.search')}
           onkeydown={handleQueryKeydown}
           class="flex-1 rounded-xl border px-4 py-2.5 bg-transparent"
           style="border-color: var(--border);"
         />
         <button onclick={() => (showScanProduct = true)}
-          title="Escanear el código de barras de un producto"
+          title={t('list.scan')}
           class="shrink-0 rounded-xl border px-3 hover:bg-[var(--bg)] transition"
           style="border-color: var(--border);">📷</button>
       </div>
@@ -314,8 +315,8 @@
           </div>
         {:else}
           <p class="text-xs text-muted">
-            Sin resultados. Pulsa <kbd class="rounded border px-1.5 py-0.5 text-xs"
-              style="border-color: var(--border);">Enter</kbd> para crear "<strong>{query}</strong>".
+            {t('list.noMatches')} <kbd class="rounded border px-1.5 py-0.5 text-xs"
+              style="border-color: var(--border);">Enter</kbd> {t('list.pressEnter')} "<strong>{query}</strong>".
           </p>
         {/if}
       {/if}
@@ -326,10 +327,10 @@
       <div class="card-elev p-4 space-y-3">
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <span class="text-xs font-semibold uppercase tracking-wider text-muted">Sección</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-muted">{t('list.section')}</span>
             {#if activeCat !== 'all'}
               <button onclick={() => (activeCat = 'all')}
-                class="text-xs text-muted hover:underline">limpiar</button>
+                class="text-xs text-muted hover:underline">{t('list.clearSection')}</button>
             {/if}
           </div>
           <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scroll-smooth">
@@ -338,7 +339,7 @@
               class:cat-active={activeCat === 'all'}
               style="border-color: var(--border);">
               <span class="text-2xl">🗂️</span>
-              <span class="text-[11px] font-medium leading-tight text-center">Todas</span>
+              <span class="text-[11px] font-medium leading-tight text-center">{t('list.allSections')}</span>
             </button>
             {#each categories as c (c.id)}
               <button onclick={() => (activeCat = c.id)}
@@ -386,8 +387,7 @@
       <div class="card-elev p-3 text-sm flex items-start gap-2"
         style="border-left: 3px solid var(--accent);">
         <span class="text-lg leading-none">📥</span>
-        <span>Productos añadidos por voz que no se pudieron clasificar solos.
-          Toca <strong>↪</strong> en cada uno para enviarlo a su tienda.</span>
+        <span>{t('list.inboxHint')} {t('list.moveHint')}</span>
       </div>
     {/if}
 
@@ -419,7 +419,7 @@
                   </button>
                   {#if p?.icon.kind === 'image'}
                     <button onclick={() => (zoomProduct = p!)} class="shrink-0"
-                      title="Ver la foto en grande">
+                      title={t('list.zoomPhoto')}>
                       <ProductIcon product={p} px={30} />
                     </button>
                   {:else}
@@ -448,27 +448,27 @@
                   </div>
                   <button onclick={() => (movingItemId = movingItemId === item.id ? null : item.id)}
                     class="text-muted hover:text-current text-lg shrink-0"
-                    title="Mover a otra tienda">↪</button>
+                    title={t('list.move')}>↪</button>
                   <button onclick={() => app.removeItem(storeId, item.id)}
-                    class="text-muted hover:text-red-500 text-2xl shrink-0" title="Quitar">×</button>
+                    class="text-muted hover:text-red-500 text-2xl shrink-0" title={t('list.remove')}>×</button>
 
                   {#if movingItemId === item.id}
                     <div class="basis-full mt-2 flex items-center gap-2 flex-wrap pl-12">
-                      <span class="text-xs text-muted">Mover a:</span>
+                      <span class="text-xs text-muted">{t('list.moveTo')}</span>
                       {#if sug}
                         <button onclick={() => moveTo(item.id, sug.id)}
                           class="rounded-full px-3 py-1 text-xs font-medium text-white"
                           style="background: var(--accent);"
-                          title="Tienda sugerida">⭐ {sug.name}</button>
+                          title={t('list.suggestedStore')}>⭐ {sug.name}</button>
                       {/if}
                       <select onchange={(e) => moveTo(item.id, e.currentTarget.value)}
                         class="text-xs rounded-md border px-2 py-1 bg-transparent"
                         style="border-color: var(--border);">
-                        <option value="">Elegir tienda…</option>
+                        <option value="">{t('list.chooseStore')}</option>
                         {#each moveTargets as s (s.id)}<option value={s.id}>{s.name}</option>{/each}
                       </select>
                       <button onclick={() => (movingItemId = null)}
-                        class="text-xs text-muted hover:underline">cancelar</button>
+                        class="text-xs text-muted hover:underline">{t('list.cancelLower')}</button>
                     </div>
                   {/if}
                 </li>

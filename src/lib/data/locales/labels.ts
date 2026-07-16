@@ -1,8 +1,9 @@
 import type { Locale } from '../../i18n/locale';
 
-// Traducción de los nombres visibles de TipoTienda y de las categorías de
-// supermercado. Los IDs son universales; aquí solo cambia el texto. Lo no
-// traducido mantiene el nombre por defecto (español).
+// Traducción de los nombres visibles de TipoTienda y de las categorías. Los IDs
+// son universales (y en español, por herencia del seed original); aquí solo
+// cambia el texto que ve el usuario. Lo que no esté traducido cae al nombre del
+// seed, que está en español.
 
 export const TYPE_NAMES: Partial<Record<Locale, Record<string, string>>> = {
   en: {
@@ -42,6 +43,8 @@ export const TYPE_NAMES: Partial<Record<Locale, Record<string, string>>> = {
   },
 };
 
+// Categorías de supermercado (16). Se separan del resto porque 'us' solo
+// diverge del inglés británico en unas pocas.
 const EN_SUP: Record<string, string> = {
   'sup-fruteria': 'Fruit & Veg', 'sup-carniceria': 'Meat', 'sup-pescaderia': 'Fish',
   'sup-lacteos': 'Dairy & Eggs', 'sup-panaderia': 'Bakery', 'sup-charcuteria': 'Deli',
@@ -50,15 +53,66 @@ const EN_SUP: Record<string, string> = {
   'sup-higiene': 'Toiletries', 'sup-bebe': 'Baby', 'sup-mascotas': 'Pets', 'sup-otros': 'Other',
 };
 
+// Categorías de las tiendas especializadas (59). Antes no estaban traducidas y
+// aparecían en español aunque el catálogo fuese de otro país (p.ej. Boots
+// mostrando "Medicación" y "Cuidado personal").
+const EN_REST: Record<string, string> = {
+  'car-vacuno': 'Beef', 'car-cerdo': 'Pork', 'car-cordero': 'Lamb', 'car-aves': 'Poultry',
+  'car-embutidos': 'Cured meats', 'car-preparados': 'Ready to cook', 'car-otros': 'Other',
+  'pes-pescado': 'Fresh fish', 'pes-marisco': 'Shellfish',
+  'pes-conserva': 'Tinned & smoked', 'pes-otros': 'Other',
+  'pan-pan': 'Bread', 'pan-bolleria': 'Pastries', 'pan-tartas': 'Cakes & desserts', 'pan-otros': 'Other',
+  'far-medicacion': 'Medicines', 'far-cuidado': 'Personal care', 'far-bebe': 'Baby', 'far-otros': 'Other',
+  'per-fragancias': 'Fragrance', 'per-maquillaje': 'Make-up', 'per-cuidado': 'Skincare',
+  'per-cabello': 'Haircare', 'per-otros': 'Other',
+  'fer-herramientas': 'Tools', 'fer-tornilleria': 'Screws & fixings', 'fer-electricidad': 'Electrical',
+  'fer-fontaneria': 'Plumbing', 'fer-pintura': 'Paint', 'fer-jardin': 'Garden', 'fer-otros': 'Other',
+  'rop-mujer': 'Women', 'rop-hombre': 'Men', 'rop-nino': 'Kids', 'rop-calzado': 'Shoes',
+  'rop-accesorios': 'Accessories', 'rop-otros': 'Other',
+  'cc-tecnologia': 'Tech', 'cc-hogar': 'Home', 'cc-juguetes': 'Toys', 'cc-otros': 'Other',
+  'hog-cocina': 'Kitchen', 'hog-bano': 'Bathroom', 'hog-decoracion': 'Decor',
+  'hog-textil': 'Home textiles', 'hog-otros': 'Other',
+  'del-quesos': 'Cheese', 'del-vinos': 'Wine & spirits', 'del-conservas': 'Fine preserves', 'del-otros': 'Other',
+  'her-infusiones': 'Teas & infusions', 'her-suplementos': 'Supplements',
+  'her-cosmetica': 'Natural cosmetics', 'her-otros': 'Other',
+  'loc-recargas': 'Top-ups', 'loc-envios': 'Post & parcels', 'loc-otros': 'Other',
+  'otr-varios': 'Miscellaneous', 'otr-otros': 'Other',
+};
+
 export const CATEGORY_NAMES: Partial<Record<Locale, Record<string, string>>> = {
-  en: EN_SUP,
-  us: { ...EN_SUP, 'sup-fruteria': 'Produce', 'sup-snacks': 'Snacks & Candy', 'sup-higiene': 'Personal care' },
+  en: { ...EN_SUP, ...EN_REST },
+  us: {
+    ...EN_SUP, ...EN_REST,
+    'sup-fruteria': 'Produce', 'sup-snacks': 'Snacks & Candy', 'sup-higiene': 'Personal care',
+    'per-maquillaje': 'Makeup', 'rop-calzado': 'Footwear', 'loc-envios': 'Shipping',
+    'fer-tornilleria': 'Fasteners', 'car-preparados': 'Ready to cook',
+  },
   fr: {
     'sup-fruteria': 'Fruits & Légumes', 'sup-carniceria': 'Viande', 'sup-pescaderia': 'Poisson',
     'sup-lacteos': 'Crémerie & Œufs', 'sup-panaderia': 'Boulangerie', 'sup-charcuteria': 'Charcuterie',
     'sup-despensa': 'Épicerie', 'sup-congelados': 'Surgelés', 'sup-bebidas': 'Boissons',
     'sup-snacks': 'Snacks & Sucré', 'sup-desayuno': 'Petit-déjeuner', 'sup-limpieza': 'Entretien',
     'sup-higiene': 'Hygiène', 'sup-bebe': 'Bébé', 'sup-mascotas': 'Animaux', 'sup-otros': 'Autres',
+    'car-vacuno': 'Bœuf', 'car-cerdo': 'Porc', 'car-cordero': 'Agneau', 'car-aves': 'Volaille',
+    'car-embutidos': 'Charcuterie', 'car-preparados': 'Préparations', 'car-otros': 'Autres',
+    'pes-pescado': 'Poisson frais', 'pes-marisco': 'Fruits de mer',
+    'pes-conserva': 'Conserves & fumés', 'pes-otros': 'Autres',
+    'pan-pan': 'Pain', 'pan-bolleria': 'Viennoiseries', 'pan-tartas': 'Gâteaux & desserts', 'pan-otros': 'Autres',
+    'far-medicacion': 'Médicaments', 'far-cuidado': 'Soins', 'far-bebe': 'Bébé', 'far-otros': 'Autres',
+    'per-fragancias': 'Parfums', 'per-maquillaje': 'Maquillage', 'per-cuidado': 'Soins du visage',
+    'per-cabello': 'Cheveux', 'per-otros': 'Autres',
+    'fer-herramientas': 'Outillage', 'fer-tornilleria': 'Visserie', 'fer-electricidad': 'Électricité',
+    'fer-fontaneria': 'Plomberie', 'fer-pintura': 'Peinture', 'fer-jardin': 'Jardin', 'fer-otros': 'Autres',
+    'rop-mujer': 'Femme', 'rop-hombre': 'Homme', 'rop-nino': 'Enfant', 'rop-calzado': 'Chaussures',
+    'rop-accesorios': 'Accessoires', 'rop-otros': 'Autres',
+    'cc-tecnologia': 'High-tech', 'cc-hogar': 'Maison', 'cc-juguetes': 'Jouets', 'cc-otros': 'Autres',
+    'hog-cocina': 'Cuisine', 'hog-bano': 'Salle de bain', 'hog-decoracion': 'Décoration',
+    'hog-textil': 'Linge de maison', 'hog-otros': 'Autres',
+    'del-quesos': 'Fromages', 'del-vinos': 'Vins & spiritueux', 'del-conservas': 'Conserves fines', 'del-otros': 'Autres',
+    'her-infusiones': 'Infusions', 'her-suplementos': 'Compléments',
+    'her-cosmetica': 'Cosmétique naturelle', 'her-otros': 'Autres',
+    'loc-recargas': 'Recharges', 'loc-envios': 'Envois / Colis', 'loc-otros': 'Autres',
+    'otr-varios': 'Divers', 'otr-otros': 'Autres',
   },
   de: {
     'sup-fruteria': 'Obst & Gemüse', 'sup-carniceria': 'Fleisch', 'sup-pescaderia': 'Fisch',
@@ -66,6 +120,26 @@ export const CATEGORY_NAMES: Partial<Record<Locale, Record<string, string>>> = {
     'sup-despensa': 'Vorratskammer', 'sup-congelados': 'Tiefkühl', 'sup-bebidas': 'Getränke',
     'sup-snacks': 'Snacks & Süßes', 'sup-desayuno': 'Frühstück', 'sup-limpieza': 'Reinigung',
     'sup-higiene': 'Körperpflege', 'sup-bebe': 'Baby', 'sup-mascotas': 'Haustiere', 'sup-otros': 'Andere',
+    'car-vacuno': 'Rind', 'car-cerdo': 'Schwein', 'car-cordero': 'Lamm', 'car-aves': 'Geflügel',
+    'car-embutidos': 'Wurstwaren', 'car-preparados': 'Grillfertig', 'car-otros': 'Andere',
+    'pes-pescado': 'Frischer Fisch', 'pes-marisco': 'Meeresfrüchte',
+    'pes-conserva': 'Konserven & Räucherfisch', 'pes-otros': 'Andere',
+    'pan-pan': 'Brot', 'pan-bolleria': 'Gebäck', 'pan-tartas': 'Kuchen & Desserts', 'pan-otros': 'Andere',
+    'far-medicacion': 'Medikamente', 'far-cuidado': 'Körperpflege', 'far-bebe': 'Baby', 'far-otros': 'Andere',
+    'per-fragancias': 'Düfte', 'per-maquillaje': 'Make-up', 'per-cuidado': 'Gesichtspflege',
+    'per-cabello': 'Haarpflege', 'per-otros': 'Andere',
+    'fer-herramientas': 'Werkzeug', 'fer-tornilleria': 'Schrauben', 'fer-electricidad': 'Elektro',
+    'fer-fontaneria': 'Sanitär', 'fer-pintura': 'Farben', 'fer-jardin': 'Garten', 'fer-otros': 'Andere',
+    'rop-mujer': 'Damen', 'rop-hombre': 'Herren', 'rop-nino': 'Kinder', 'rop-calzado': 'Schuhe',
+    'rop-accesorios': 'Accessoires', 'rop-otros': 'Andere',
+    'cc-tecnologia': 'Technik', 'cc-hogar': 'Haushalt', 'cc-juguetes': 'Spielzeug', 'cc-otros': 'Andere',
+    'hog-cocina': 'Küche', 'hog-bano': 'Bad', 'hog-decoracion': 'Deko',
+    'hog-textil': 'Heimtextilien', 'hog-otros': 'Andere',
+    'del-quesos': 'Käse', 'del-vinos': 'Wein & Spirituosen', 'del-conservas': 'Feinkost-Konserven', 'del-otros': 'Andere',
+    'her-infusiones': 'Tees & Aufgüsse', 'her-suplementos': 'Nahrungsergänzung',
+    'her-cosmetica': 'Naturkosmetik', 'her-otros': 'Andere',
+    'loc-recargas': 'Guthaben', 'loc-envios': 'Post & Pakete', 'loc-otros': 'Andere',
+    'otr-varios': 'Verschiedenes', 'otr-otros': 'Andere',
   },
   br: {
     'sup-fruteria': 'Hortifruti', 'sup-carniceria': 'Carnes', 'sup-pescaderia': 'Peixes',
@@ -73,5 +147,25 @@ export const CATEGORY_NAMES: Partial<Record<Locale, Record<string, string>>> = {
     'sup-despensa': 'Mercearia', 'sup-congelados': 'Congelados', 'sup-bebidas': 'Bebidas',
     'sup-snacks': 'Salgadinhos e Doces', 'sup-desayuno': 'Café da manhã', 'sup-limpieza': 'Limpeza',
     'sup-higiene': 'Higiene', 'sup-bebe': 'Bebê', 'sup-mascotas': 'Pets', 'sup-otros': 'Outros',
+    'car-vacuno': 'Bovinos', 'car-cerdo': 'Suínos', 'car-cordero': 'Cordeiro', 'car-aves': 'Aves',
+    'car-embutidos': 'Embutidos', 'car-preparados': 'Preparados', 'car-otros': 'Outros',
+    'pes-pescado': 'Peixe fresco', 'pes-marisco': 'Frutos do mar',
+    'pes-conserva': 'Conservas e defumados', 'pes-otros': 'Outros',
+    'pan-pan': 'Pães', 'pan-bolleria': 'Doces de padaria', 'pan-tartas': 'Bolos e sobremesas', 'pan-otros': 'Outros',
+    'far-medicacion': 'Medicamentos', 'far-cuidado': 'Cuidados pessoais', 'far-bebe': 'Bebê', 'far-otros': 'Outros',
+    'per-fragancias': 'Perfumes', 'per-maquillaje': 'Maquiagem', 'per-cuidado': 'Cuidados faciais',
+    'per-cabello': 'Cabelos', 'per-otros': 'Outros',
+    'fer-herramientas': 'Ferramentas', 'fer-tornilleria': 'Parafusos', 'fer-electricidad': 'Elétrica',
+    'fer-fontaneria': 'Hidráulica', 'fer-pintura': 'Tintas', 'fer-jardin': 'Jardim', 'fer-otros': 'Outros',
+    'rop-mujer': 'Feminino', 'rop-hombre': 'Masculino', 'rop-nino': 'Infantil', 'rop-calzado': 'Calçados',
+    'rop-accesorios': 'Acessórios', 'rop-otros': 'Outros',
+    'cc-tecnologia': 'Tecnologia', 'cc-hogar': 'Casa', 'cc-juguetes': 'Brinquedos', 'cc-otros': 'Outros',
+    'hog-cocina': 'Cozinha', 'hog-bano': 'Banheiro', 'hog-decoracion': 'Decoração',
+    'hog-textil': 'Cama, mesa e banho', 'hog-otros': 'Outros',
+    'del-quesos': 'Queijos', 'del-vinos': 'Vinhos e destilados', 'del-conservas': 'Conservas premium', 'del-otros': 'Outros',
+    'her-infusiones': 'Chás e infusões', 'her-suplementos': 'Suplementos',
+    'her-cosmetica': 'Cosméticos naturais', 'her-otros': 'Outros',
+    'loc-recargas': 'Recargas', 'loc-envios': 'Envios / Encomendas', 'loc-otros': 'Outros',
+    'otr-varios': 'Diversos', 'otr-otros': 'Outros',
   },
 };

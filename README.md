@@ -47,6 +47,14 @@ across several shops. Tu Compra is built around the way people really shop:
 - 🔍 **Fuzzy search.** Accent-insensitive and typo-tolerant: "platano" finds
   "Plátano", "detrgente" finds "Detergente". If a product doesn't exist, press
   **Enter** to create it on the fly.
+- 📷 **Scan product barcodes.** Scan an item (or the empty carton in your
+  kitchen) and it goes straight on the list. Optionally the name is filled in
+  for you (see [product lookup](#optional-product-lookup-by-barcode)). Own-brand
+  products can be marked **"only in this store"**, so Hacendado doesn't show up
+  in your Tesco list.
+- 🎟️ **Loyalty cards.** Store each shop's card (QR or barcode) and show it
+  full-screen at the till. Scan it with the camera or type the number — the
+  format is detected automatically.
 - 🗣️ **Voice input via Assist.** Say what you need and it lands in the right
   store's list automatically (see [Voice](#voice-input-with-assist)).
 - 👥 **Personal and shared lists.** Keep your own list, or share a household
@@ -76,23 +84,37 @@ key, no passphrase.
 
 ### Optional: product lookup by barcode
 
-By default Tu Compra makes **zero outbound requests**. If you want to add
-products by **scanning their barcode** and have the name filled in for you,
-enable the lookup explicitly:
+Scanning barcodes **works out of the box** — you scan, and you type the product
+name yourself. What is **optional** is having that name **filled in
+automatically**, because that is the only thing in the whole app that needs an
+internet request.
+
+By default Tu Compra makes **zero outbound requests**. To enable the lookup, add
+`product_lookup` under `tucompra:` in your `configuration.yaml`:
 
 ```yaml
 tucompra:
   product_lookup: true
 ```
 
-When enabled, scanning a barcode asks **Open Food Facts** (a free, open,
-collaborative food database — no API key) for the product name. The request is
-made **by Home Assistant, not by your browser**, and every result is **cached**
-locally, so each product is looked up only once. Only the barcode is sent.
+Then restart Home Assistant.
 
-You always confirm the name and the section before anything is added. Coverage
-is mostly **food** and strongest in Europe; if a product isn't found, just type
-the name.
+When enabled, scanning a barcode asks **Open Food Facts** (a free, open,
+collaborative food database — no API key, no account) for the product name. The
+request is made **by Home Assistant, not by your browser**, and every result is
+**cached** locally, so each product is looked up only once. **Only the barcode is
+sent** — nothing that identifies you.
+
+You always confirm the name and the section before anything is added, and you can
+tick **"Only in this store"** for own-brand products (Hacendado, Eroski Basic,
+Tesco Everyday Value…) so they don't show up in your other supermarkets.
+
+Coverage is mostly **food** and strongest in Europe; if a product isn't found,
+just type the name.
+
+> **Note:** barcode scanning uses the browser's native `BarcodeDetector`, which
+> exists in **Chrome/Edge** (Android and desktop) but **not in Safari/iOS or
+> Firefox**. On those, type the number instead.
 
 > **Requirements:** Home Assistant **2024.7+**. For the integration icon to be
 > displayed, Home Assistant **2026.3+** is required (local brand images).
@@ -233,6 +255,9 @@ create" means nothing is ever blocked by a missing product.
 - [x] "To sort" tray with one-tap triage to the right store
 - [x] Integration icon bundled (shown on install)
 - [x] Button to open the HA sidebar from the panel
+- [x] Loyalty cards per store (scan, show full-screen at the till)
+- [x] Add products by scanning their barcode (optional Open Food Facts lookup)
+- [x] Own-brand products restricted to a single store
 - [ ] Config flow (set up from the HA UI, no `configuration.yaml`)
 - [ ] `todo.*` entities (native HA To-do card)
 - [ ] Visual editor for catalog products
@@ -262,6 +287,14 @@ del resto de España (jamón ibérico, fabes, turrón de Jijona…).
 - 🏪 **Editor visual de tiendas**: crear, editar, ocultar, borrar y foto propia.
 - 🔍 **Búsqueda difusa**: sin acentos y tolerante a erratas. Si no existe,
   **Enter** crea el producto.
+- 📷 **Escanear códigos de barras**: escanea un producto (o el envase vacío de la
+  cocina) y va directo a la lista. Opcionalmente el nombre se rellena solo (ver
+  [búsqueda por código](#opcional-buscar-productos-por-código-de-barras)). Las
+  marcas propias se pueden marcar **"solo en esta tienda"**, para que un
+  Hacendado no aparezca en tu lista de Eroski.
+- 🎟️ **Tarjetas de fidelización**: guarda la tarjeta de cada tienda (QR o código
+  de barras) y muéstrala a pantalla completa en caja. Escanéala con la cámara o
+  escribe el número — el formato se detecta solo.
 - 🗣️ **Voz con Assist**: `tucompra.add_item` reconoce el producto, deduce su tipo
   de tienda y lo coloca en la **tienda por defecto** (botón 🎯). Si duda, va a la
   bandeja **"📥 Por clasificar"** y lo recolocas con el botón ↪.
@@ -288,23 +321,35 @@ No hay nada más que configurar: ni cuenta, ni API key, ni passphrase.
 
 ### Opcional: buscar productos por código de barras
 
-Por defecto la app **no hace ninguna petición externa**. Si quieres añadir
-productos **escaneando su código de barras** y que el nombre se rellene solo,
-actívalo explícitamente:
+Escanear códigos **funciona de serie** — escaneas y escribes tú el nombre. Lo
+**opcional** es que ese nombre **se rellene solo**, porque es lo único de toda la
+app que necesita una petición a internet.
+
+Por defecto la app **no hace ninguna petición externa**. Para activar la
+búsqueda, añade `product_lookup` bajo `tucompra:` en tu `configuration.yaml`:
 
 ```yaml
 tucompra:
   product_lookup: true
 ```
 
-Con esto, al escanear se consulta **Open Food Facts** (base abierta y gratuita,
-sin API key). La petición la hace **Home Assistant, no tu navegador**, y el
-resultado se **cachea** en local: cada producto se consulta una sola vez. Solo se
-envía el código de barras.
+Y reinicia Home Assistant.
 
-Siempre confirmas el nombre y la sección antes de añadir nada. La cobertura es
-sobre todo de **alimentación** y mejor en Europa; si no lo encuentra, escribes el
-nombre.
+Con esto, al escanear se consulta **Open Food Facts** (base abierta y gratuita,
+sin API key ni cuenta). La petición la hace **Home Assistant, no tu navegador**, y
+el resultado se **cachea** en local: cada producto se consulta una sola vez. **Solo
+se envía el código de barras**, nada que te identifique.
+
+Siempre confirmas el nombre y la sección antes de añadir nada, y puedes marcar
+**"Solo en esta tienda"** para marcas propias (Hacendado, Eroski Basic…) y que no
+aparezcan en tus otros supermercados.
+
+La cobertura es sobre todo de **alimentación** y mejor en Europa; si no lo
+encuentra, escribes el nombre.
+
+> **Nota:** el escaneo usa `BarcodeDetector`, la API nativa del navegador, que
+> existe en **Chrome/Edge** (Android y escritorio) pero **no en Safari/iOS ni
+> Firefox**. Ahí se escribe el número a mano.
 
 > **Requisitos:** Home Assistant **2024.7+**. Para que se vea el icono de la
 > integración hace falta **2026.3+**.

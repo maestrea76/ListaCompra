@@ -1,14 +1,15 @@
 <script lang="ts">
-  // Escáner de códigos con la API nativa BarcodeDetector (sin librerías).
-  // Existe en Chrome/Edge (Android y escritorio); en Safari/iOS y Firefox no.
+  // Escáner de códigos con la cámara. Dos motores:
+  //  - Chrome/Edge: BarcodeDetector nativo (rápido, ~30 ms por lectura).
+  //  - Safari/iOS y Firefox: no existe esa API → zxing-wasm DIRECTAMENTE.
   //
-  // La tasa de acierto depende sobre todo de la IMAGEN que le damos al detector:
-  //  - Resolución: por defecto getUserMedia da ~640x480 y las barras finas de un
-  //    EAN se pierden. Pedimos 1920x1080 ideal.
-  //  - Enfoque: sin autofocus continuo el código sale borroso de cerca.
-  //  - Luz: linterna si el dispositivo la expone.
-  //  - Estabilidad: exigimos leer el MISMO valor dos veces seguidas antes de
-  //    darlo por bueno, para no colar una lectura dudosa.
+  // Antes usábamos el polyfill 'barcode-detector', pero envuelve los fallos en
+  // un "Barcode detection service unavailable" que oculta la causa real. Al
+  // llamar a zxing sin intermediarios podemos instanciar el módulo a propósito
+  // (getZXingModule) y enseñar el error de verdad si algo va mal.
+  //
+  // El .wasm se empaqueta con el panel y lo sirve tu HA: sin peticiones a
+  // terceros y funciona sin conexión.
 
   import { onDestroy } from 'svelte';
   import type { LoyaltyFormat } from '$lib/types';
@@ -16,107 +17,57 @@
   let { onDetected, onClose, continuous = false, feedback = '' }: {
     onDetected: (code: string, format: LoyaltyFormat) => void;
     onClose: () => void;
-    /** Si es true, no se cierra al leer: sigue escaneando (para encadenar
-     *  productos en casa). El mismo código no se repite durante unos segundos. */
     continuous?: boolean;
-    /** Mensaje que muestra el padre tras cada lectura ("✅ X añadido"). */
     feedback?: string;
   } = $props();
 
-  const FROM_NATIVE: Record<string, LoyaltyFormat> = {
+  type Hit = { value: string; format: LoyaltyFormat };
+
+  const hasNative = typeof window !== 'undefined' && 'BarcodeDetector' in window;
+
+  // Nombres de formato de cada motor → los nuestros.
+  const NATIVE_FMT: Record<string, LoyaltyFormat> = {
     qr_code: 'qr', ean_13: 'ean13', ean_8: 'ean8',
     code_128: 'code128', code_39: 'code39', upc_a: 'upca',
   };
-
-  // Chrome/Edge traen BarcodeDetector nativo. Safari/iOS y Firefox no, así que
-  // ahí cargamos un decodificador WASM (barcode-detector) SOLO en ese caso:
-  // el import es dinámico, los navegadores con soporte nativo no lo descargan.
-  const hasNative = typeof window !== 'undefined' && 'BarcodeDetector' in window;
-
-  const FORMATS = ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a'];
-
-  async function makeDetector(): Promise<any> {
-    if (hasNative) {
-      // @ts-expect-error — BarcodeDetector aún no está en los tipos del DOM.
-      return new window.BarcodeDetector({ formats: FORMATS });
-    }
-    const [{ BarcodeDetector, setZXingModuleOverrides }, wasm] = await Promise.all([
-      import('barcode-detector/pure'),
-      // El .wasm se empaqueta con el panel y lo sirve TU Home Assistant. Por
-      // defecto zxing-wasm lo pediría a un CDN: eso rompería el "sin peticiones
-      // externas" y no funcionaría sin conexión.
-      // Ojo: hay que usar el subpath EXPORTADO ('reader/…'), no la ruta interna
-      // del paquete ('dist/reader/…'), o el bundler no lo resuelve.
-      import('zxing-wasm/reader/zxing_reader.wasm?url'),
-    ]);
-    const wasmUrl = (wasm as { default: string }).default;
-    // Comprobación explícita: si el .wasm no se sirve como application/wasm,
-    // Safari se niega a instanciarlo y detect() falla con "service unavailable".
-    try {
-      const r = await fetch(wasmUrl, { method: 'HEAD' });
-      wasmInfo = `${r.status} ${r.headers.get('content-type') ?? '(sin tipo)'}`;
-    } catch (e) {
-      wasmInfo = `no accesible: ${String((e as Error)?.message ?? e).slice(0, 60)}`;
-    }
-    setZXingModuleOverrides({
-      locateFile: (path: string, prefix: string) =>
-        path.endsWith('.wasm') ? wasmUrl : prefix + path,
-    });
-    return new BarcodeDetector({ formats: FORMATS as any });
-  }
+  const ZXING_FMT: Record<string, LoyaltyFormat> = {
+    QRCode: 'qr', 'EAN-13': 'ean13', 'EAN-8': 'ean8',
+    Code128: 'code128', Code39: 'code39', 'UPC-A': 'upca',
+  };
+  const NATIVE_LIST = Object.keys(NATIVE_FMT);
+  const ZXING_LIST = Object.keys(ZXING_FMT);
 
   let videoEl: HTMLVideoElement | null = $state(null);
   let error = $state('');
   let torchOn = $state(false);
   let torchAvailable = $state(false);
-  let scanning = $state(false);
-  // Diagnóstico: sin esto, un fallo del decodificador es invisible (la cámara
-  // se ve pero no lee nunca) y no hay forma de saber por qué.
+
+  // Diagnóstico
   let engine = $state('');
   let videoRes = $state('');
+  let facing = $state('');
   let capsList = $state('');
+  let wasmInfo = $state('');
   let detectError = $state('');
   let decodeMs = $state(0);
-  let facing = $state('');
-  let wasmInfo = $state('');
-  // Nº de lecturas hechas: distingue "el bucle no corre" de "corre pero no
-  // encuentra el código".
   let ticks = $state(0);
 
   let stream: MediaStream | null = null;
   let track: MediaStreamTrack | null = null;
-  // Lienzo para el camino WASM: en Safari, pasar el <video> directo al
-  // decodificador es problemático (createImageBitmap sobre vídeo falla o va
-  // fatal). Copiamos el fotograma a un canvas y le pasamos eso.
-  let canvasEl: HTMLCanvasElement | null = null;
-  let ctx: CanvasRenderingContext2D | null = null;
-
-  /** Fotograma a analizar: el vídeo tal cual con el motor nativo (más rápido),
-   *  un canvas con el WASM (más compatible). */
-  function frameFor(): CanvasImageSource | null {
-    if (!videoEl || !videoEl.videoWidth) return null;
-    if (hasNative) return videoEl;
-    if (!canvasEl) {
-      canvasEl = document.createElement('canvas');
-      ctx = canvasEl.getContext('2d', { willReadFrequently: true });
-    }
-    if (!ctx) return videoEl;
-    canvasEl.width = videoEl.videoWidth;
-    canvasEl.height = videoEl.videoHeight;
-    ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
-    return canvasEl;
-  }
   let timer: ReturnType<typeof setTimeout> | null = null;
   let stopped = false;
-  // Última lectura pendiente de confirmar (anti-falsos positivos).
+  let readFrame: (() => Promise<Hit[]>) | null = null;
+
+  // Anti-falsos positivos y anti-repetición.
   let lastSeen = '';
-  // En modo continuo: evita re-leer el mismo código una y otra vez.
   let lastAccepted = '';
   let lastAcceptedAt = 0;
   const COOLDOWN_MS = 2500;
 
-  /** Abre la cámara trasera. Con `ideal` el navegador puede acabar dando la
-   *  frontal (sin linterna ni buen enfoque), así que primero la exigimos. */
+  let canvasEl: HTMLCanvasElement | null = null;
+  let ctx: CanvasRenderingContext2D | null = null;
+
+  /** Abre la cámara trasera. Con `ideal` el navegador puede dar la frontal. */
   async function openCamera(): Promise<MediaStream> {
     const hi = { width: { ideal: 1920 }, height: { ideal: 1080 } };
     const attempts: MediaStreamConstraints[] = [
@@ -127,13 +78,67 @@
     ];
     let last: unknown;
     for (const c of attempts) {
-      try {
-        return await navigator.mediaDevices.getUserMedia(c);
-      } catch (e) {
-        last = e;
-      }
+      try { return await navigator.mediaDevices.getUserMedia(c); } catch (e) { last = e; }
     }
     throw last ?? new Error('sin cámara');
+  }
+
+  /** Prepara el motor de lectura y devuelve la función que analiza un fotograma. */
+  async function setupEngine(): Promise<() => Promise<Hit[]>> {
+    if (hasNative) {
+      engine = 'nativo';
+      // @ts-expect-error — BarcodeDetector no está en los tipos del DOM.
+      const det = new window.BarcodeDetector({ formats: NATIVE_LIST });
+      return async () => {
+        const codes = await det.detect(videoEl!);
+        return codes
+          .filter((c: any) => c?.rawValue)
+          .map((c: any) => ({ value: String(c.rawValue), format: NATIVE_FMT[c.format] ?? 'code128' }));
+      };
+    }
+
+    engine = 'WASM';
+    const [zx, wasm] = await Promise.all([
+      import('zxing-wasm/reader'),
+      // Subpath EXPORTADO del paquete (no la ruta interna dist/…).
+      import('zxing-wasm/reader/zxing_reader.wasm?url'),
+    ]);
+    const wasmUrl = (wasm as { default: string }).default;
+
+    try {
+      const r = await fetch(wasmUrl, { method: 'HEAD' });
+      wasmInfo = `${r.status} ${r.headers.get('content-type') ?? '(sin tipo)'}`;
+    } catch (e) {
+      wasmInfo = `no accesible: ${String((e as Error)?.message ?? e).slice(0, 60)}`;
+    }
+
+    zx.setZXingModuleOverrides({
+      locateFile: (path: string, prefix: string) =>
+        path.endsWith('.wasm') ? wasmUrl : prefix + path,
+    });
+    // Instanciamos a propósito: así, si el WASM no arranca, vemos el motivo real
+    // en vez de un error genérico en cada fotograma.
+    await zx.getZXingModule();
+
+    return async () => {
+      if (!videoEl?.videoWidth) return [];
+      if (!canvasEl) {
+        canvasEl = document.createElement('canvas');
+        ctx = canvasEl.getContext('2d', { willReadFrequently: true });
+      }
+      if (!ctx) return [];
+      canvasEl.width = videoEl.videoWidth;
+      canvasEl.height = videoEl.videoHeight;
+      ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+      const img = ctx.getImageData(0, 0, canvasEl.width, canvasEl.height);
+      const res = await zx.readBarcodesFromImageData(img, {
+        tryHarder: true,
+        formats: ZXING_LIST as any,
+      });
+      return res
+        .filter((r: any) => r?.text)
+        .map((r: any) => ({ value: String(r.text), format: ZXING_FMT[r.format] ?? 'code128' }));
+    };
   }
 
   async function start() {
@@ -145,13 +150,10 @@
       videoRes = `${videoEl.videoWidth}×${videoEl.videoHeight}`;
 
       track = stream.getVideoTracks()[0] ?? null;
-      // Autofocus continuo y linterna, si el dispositivo los expone.
       if (track) {
         const caps = (track.getCapabilities?.() ?? {}) as Record<string, unknown>;
         capsList = Object.keys(caps).join(', ') || '(no expone capacidades)';
         facing = String((track.getSettings?.() as any)?.facingMode ?? '—');
-        // Si el navegador no informa de capacidades, ofrecemos la linterna igual
-        // y la ocultamos si al pulsarla falla: mejor eso que no ofrecerla nunca.
         torchAvailable = 'torch' in caps || Object.keys(caps).length === 0;
         if (Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
           try {
@@ -160,58 +162,54 @@
           } catch {}
         }
       }
-
-      const detector = await makeDetector();
-      engine = hasNative ? 'nativo' : 'WASM';
-
-      scanning = true;
-      const tick = async () => {
-        if (stopped || !videoEl) return;
-        try {
-          const src = frameFor();
-          if (!src) {
-            timer = setTimeout(tick, 120);
-            return;
-          }
-          const t0 = performance.now();
-          const codes = await detector.detect(src);
-          decodeMs = Math.round(performance.now() - t0);
-          ticks++;
-          detectError = '';
-          const hit = codes[0];
-          if (hit?.rawValue) {
-            const value = String(hit.rawValue);
-            const now = Date.now();
-            const onCooldown = value === lastAccepted && now - lastAcceptedAt < COOLDOWN_MS;
-            if (onCooldown) {
-              // Mismo producto todavía delante de la cámara: no repetir.
-            } else if (value === lastSeen) {
-              // Segunda lectura idéntica → la damos por buena.
-              lastAccepted = value;
-              lastAcceptedAt = now;
-              lastSeen = '';
-              onDetected(value, FROM_NATIVE[hit.format] ?? 'code128');
-              if (!continuous) {
-                stop();
-                return;
-              }
-            } else {
-              lastSeen = value;
-            }
-          }
-        } catch (e) {
-          // NO silenciar: si el decodificador falla en cada fotograma, sin esto
-          // la cámara se ve pero no lee nunca y no hay pista de por qué.
-          detectError = String((e as Error)?.message ?? e).slice(0, 140);
-        }
-        // ~8 lecturas/seg: suficiente y deja respirar al decodificador con
-        // fotogramas grandes.
-        timer = setTimeout(tick, 120);
-      };
-      tick();
     } catch (e) {
       error = 'No se pudo abrir la cámara. Revisa los permisos del navegador.';
+      detectError = String((e as Error)?.message ?? e).slice(0, 140);
+      return;
     }
+
+    try {
+      readFrame = await setupEngine();
+    } catch (e) {
+      // Fallo al preparar el decodificador: se dice, no se oculta.
+      error = 'No se pudo iniciar el lector de códigos.';
+      detectError = String((e as Error)?.message ?? e).slice(0, 200);
+      return;
+    }
+
+    tick();
+  }
+
+  async function tick() {
+    if (stopped || !readFrame) return;
+    try {
+      const t0 = performance.now();
+      const hits = await readFrame();
+      decodeMs = Math.round(performance.now() - t0);
+      ticks++;
+      detectError = '';
+
+      const hit = hits[0];
+      if (hit) {
+        const now = Date.now();
+        const onCooldown = hit.value === lastAccepted && now - lastAcceptedAt < COOLDOWN_MS;
+        if (!onCooldown) {
+          if (hit.value === lastSeen) {
+            // Segunda lectura idéntica → la damos por buena.
+            lastAccepted = hit.value;
+            lastAcceptedAt = now;
+            lastSeen = '';
+            onDetected(hit.value, hit.format);
+            if (!continuous) { stop(); return; }
+          } else {
+            lastSeen = hit.value;
+          }
+        }
+      }
+    } catch (e) {
+      detectError = String((e as Error)?.message ?? e).slice(0, 200);
+    }
+    timer = setTimeout(tick, 120);
   }
 
   async function toggleTorch() {
@@ -222,7 +220,6 @@
       await track.applyConstraints({ advanced: [{ torch: next }] });
       torchOn = next;
     } catch (e) {
-      // Este dispositivo/navegador no la soporta de verdad: la escondemos.
       torchOn = false;
       torchAvailable = false;
       detectError = `Linterna no soportada: ${String((e as Error)?.message ?? e).slice(0, 80)}`;
@@ -231,28 +228,21 @@
 
   function stop() {
     stopped = true;
-    scanning = false;
     if (timer) clearTimeout(timer);
     stream?.getTracks().forEach((t) => t.stop());
     stream = null;
     track = null;
   }
 
-  $effect(() => {
-    if (videoEl) start();
-  });
-
+  $effect(() => { if (videoEl) start(); });
   onDestroy(stop);
 
-  function close() {
-    stop();
-    onClose();
-  }
+  function close() { stop(); onClose(); }
 </script>
 
 <div class="fixed inset-0 z-[60] grid place-items-center p-4"
   style="background: rgba(0,0,0,.85)" onclick={close} role="presentation">
-  <div class="card-elev w-full max-w-lg p-5 space-y-3 pop-in"
+  <div class="card-elev w-full max-w-lg p-5 space-y-3 pop-in max-h-[95vh] overflow-y-auto"
     onclick={(e) => e.stopPropagation()} role="presentation">
 
     <header class="flex items-start justify-between">
@@ -263,23 +253,23 @@
     <div class="relative">
       <video bind:this={videoEl} muted playsinline
         class="w-full rounded-xl bg-black aspect-[4/3] object-cover"></video>
-        <!-- Guía de encuadre: ayuda a acercar y centrar el código. -->
-        <div class="pointer-events-none absolute inset-0 grid place-items-center">
-          <div class="w-4/5 h-1/3 rounded-lg"
-            style="border: 2px solid rgba(255,255,255,.9); box-shadow: 0 0 0 9999px rgba(0,0,0,.35);"></div>
-        </div>
-        {#if torchAvailable}
-          <button onclick={toggleTorch}
-            class="absolute bottom-2 right-2 rounded-full px-3 py-1.5 text-sm"
-            style="background: rgba(0,0,0,.6); color: white;">
-            {torchOn ? '🔦 Apagar' : '🔦 Linterna'}
-          </button>
-        {/if}
-        {#if feedback}
-          <div class="absolute top-2 left-1/2 -translate-x-1/2 rounded-full px-3 py-1.5 text-sm font-medium"
-            style="background: rgba(34,197,94,.95); color: white;">{feedback}</div>
-        {/if}
+      <div class="pointer-events-none absolute inset-0 grid place-items-center">
+        <div class="w-4/5 h-1/3 rounded-lg"
+          style="border: 2px solid rgba(255,255,255,.9); box-shadow: 0 0 0 9999px rgba(0,0,0,.35);"></div>
       </div>
+      {#if torchAvailable}
+        <button onclick={toggleTorch}
+          class="absolute bottom-2 right-2 rounded-full px-3 py-1.5 text-sm"
+          style="background: rgba(0,0,0,.6); color: white;">
+          {torchOn ? '🔦 Apagar' : '🔦 Linterna'}
+        </button>
+      {/if}
+      {#if feedback}
+        <div class="absolute top-2 left-1/2 -translate-x-1/2 rounded-full px-3 py-1.5 text-sm font-medium"
+          style="background: rgba(34,197,94,.95); color: white;">{feedback}</div>
+      {/if}
+    </div>
+
     <p class="text-xs text-muted text-center">
       Encuadra el código dentro del recuadro y <strong>acércate</strong> hasta
       que ocupe casi todo el ancho. Se lee solo.
@@ -288,21 +278,18 @@
 
     {#if error}<p class="text-sm text-red-500">{error}</p>{/if}
 
-    <!-- Diagnóstico: sirve para saber por qué un dispositivo no lee. -->
     <details class="rounded-xl border p-2" style="border-color: var(--border);">
       <summary class="cursor-pointer text-[11px] text-muted">
         Diagnóstico ({engine || '…'}{videoRes ? ` · ${videoRes}` : ''})
       </summary>
       <ul class="mt-1.5 text-[11px] space-y-0.5" style="color: var(--fg-muted);">
-        <li>Motor: <strong>{engine || 'arrancando…'}</strong> {hasNative ? '(BarcodeDetector del navegador)' : '(decodificador WASM)'}</li>
+        <li>Motor: <strong>{engine || 'arrancando…'}</strong></li>
         <li>Resolución: <strong>{videoRes || '—'}</strong> · cámara: <strong>{facing || '—'}</strong></li>
         <li>Tiempo por lectura: <strong>{decodeMs} ms</strong> · lecturas: <strong>{ticks}</strong></li>
         <li>Linterna: <strong>{torchAvailable ? 'ofrecida' : 'no disponible'}</strong></li>
         {#if wasmInfo}<li>WASM: <strong>{wasmInfo}</strong></li>{/if}
-        <li class="break-all">Capacidades de la cámara: {capsList || '—'}</li>
-        {#if detectError}
-          <li class="break-all" style="color:#dc2626;">Error: {detectError}</li>
-        {/if}
+        <li class="break-all">Capacidades: {capsList || '—'}</li>
+        {#if detectError}<li class="break-all" style="color:#dc2626;">Error: {detectError}</li>{/if}
       </ul>
     </details>
 

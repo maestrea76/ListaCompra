@@ -73,4 +73,9 @@ html, body {
   from { opacity: 0; transform: translateY(4px) scale(.98); }
   to   { opacity: 1; transform: none; }
 }
-.pop-in { animation: pop-in .2s ease-out both; }
+/* 'backwards' en vez de 'both': con 'both' el elemento conserva el estado final
+   de la animación, es decir un `transform` activo para siempre. En iOS, un
+   transform en un ancestro descuadra el posicionamiento del cursor dentro de los
+   inputs (no puedes clicar entre dos caracteres). Con 'backwards' solo se aplica
+   el estado inicial antes de arrancar y al terminar no queda transform. */
+.pop-in { animation: pop-in .2s ease-out backwards; }

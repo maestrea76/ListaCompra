@@ -52,6 +52,14 @@
   let decodeMs = $state(0);
   let ticks = $state(0);
 
+  // Selección de cámara: muchos móviles exponen varias traseras (principal,
+  // gran angular, macro). La principal a menudo NO enfoca de cerca, que es justo
+  // lo que hace falta para un código de barras. Adivinar cuál sirve no es
+  // fiable (las etiquetas varían por fabricante), así que se elige a mano.
+  let devices = $state<MediaDeviceInfo[]>([]);
+  let deviceId = $state('');
+  const DEVICE_KEY = 'tucompra:scanCamera';
+
   let stream: MediaStream | null = null;
   let track: MediaStreamTrack | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -67,20 +75,45 @@
   let canvasEl: HTMLCanvasElement | null = null;
   let ctx: CanvasRenderingContext2D | null = null;
 
-  /** Abre la cámara trasera. Con `ideal` el navegador puede dar la frontal. */
+  /** Abre la cámara: la elegida a mano si la hay, si no la trasera. Con `ideal`
+   *  el navegador puede dar la frontal, así que primero se exige. */
   async function openCamera(): Promise<MediaStream> {
     const hi = { width: { ideal: 1920 }, height: { ideal: 1080 } };
-    const attempts: MediaStreamConstraints[] = [
+    const attempts: MediaStreamConstraints[] = [];
+    if (deviceId) attempts.push({ video: { deviceId: { exact: deviceId }, ...hi } });
+    attempts.push(
       { video: { facingMode: { exact: 'environment' }, ...hi } },
       { video: { facingMode: { ideal: 'environment' }, ...hi } },
       { video: hi },
       { video: true },
-    ];
+    );
     let last: unknown;
     for (const c of attempts) {
       try { return await navigator.mediaDevices.getUserMedia(c); } catch (e) { last = e; }
     }
     throw last ?? new Error('sin cámara');
+  }
+
+  /** Lista las cámaras. Las etiquetas solo llegan con permiso concedido, por eso
+   *  se hace DESPUÉS de abrir el stream. */
+  async function listCameras() {
+    try {
+      const all = await navigator.mediaDevices.enumerateDevices();
+      devices = all.filter((d) => d.kind === 'videoinput');
+      if (!deviceId) {
+        deviceId = String((track?.getSettings?.() as any)?.deviceId ?? '');
+      }
+    } catch {}
+  }
+
+  async function switchCamera(id: string) {
+    deviceId = id;
+    try { localStorage.setItem(DEVICE_KEY, id); } catch {}
+    stop();
+    stopped = false;
+    ticks = 0;
+    detectError = '';
+    await start();
   }
 
   /** Prepara el motor de lectura y devuelve la función que analiza un fotograma. */
@@ -150,6 +183,7 @@
       videoRes = `${videoEl.videoWidth}×${videoEl.videoHeight}`;
 
       track = stream.getVideoTracks()[0] ?? null;
+      await listCameras();
       if (track) {
         const caps = (track.getCapabilities?.() ?? {}) as Record<string, unknown>;
         capsList = Object.keys(caps).join(', ') || '(no expone capacidades)';
@@ -234,7 +268,11 @@
     track = null;
   }
 
-  $effect(() => { if (videoEl) start(); });
+  $effect(() => {
+    if (!videoEl) return;
+    try { deviceId = localStorage.getItem(DEVICE_KEY) ?? ''; } catch {}
+    start();
+  });
   onDestroy(stop);
 
   function close() { stop(); onClose(); }
@@ -275,6 +313,23 @@
       que ocupe casi todo el ancho. Se lee solo.
       {#if continuous}<br />Puedes encadenar varios productos seguidos.{/if}
     </p>
+
+    {#if devices.length > 1}
+      <label class="block">
+        <span class="text-[11px] text-muted">
+          Cámara — si no enfoca de cerca, prueba otra (la principal suele tener
+          la distancia mínima más larga)
+        </span>
+        <select value={deviceId}
+          onchange={(e) => switchCamera(e.currentTarget.value)}
+          class="mt-1 w-full rounded-lg border px-2 py-1.5 text-xs bg-transparent"
+          style="border-color: var(--border);">
+          {#each devices as d, i (d.deviceId)}
+            <option value={d.deviceId}>{d.label || `Cámara ${i + 1}`}</option>
+          {/each}
+        </select>
+      </label>
+    {/if}
 
     {#if error}<p class="text-sm text-red-500">{error}</p>{/if}
 

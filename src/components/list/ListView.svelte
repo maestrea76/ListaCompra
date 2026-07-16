@@ -13,6 +13,7 @@
   import LoyaltyCard from '../loyalty/LoyaltyCard.svelte';
   import ProductScanDialog from '../loyalty/ProductScanDialog.svelte';
   import ProductIcon from '../ui/ProductIcon.svelte';
+  import CustomProducts from '../loyalty/CustomProducts.svelte';
 
   let { storeId }: { storeId: string } = $props();
 
@@ -24,6 +25,13 @@
   let showLoyalty = $state(false);
   // Alta de producto escaneando su código de barras.
   let showScanProduct = $state(false);
+  // Gestor de los productos creados por el usuario (editar / borrar).
+  let showMyProducts = $state(false);
+
+  // Cuántos productos custom hay disponibles en esta tienda (para el enlace).
+  const myProductCount = $derived(
+    productsForType.filter((p) => p.id.startsWith('custom-')).length,
+  );
 
   const INBOX_ID = 'inbox';
 
@@ -361,6 +369,13 @@
             Aún no has añadido productos aquí. Escribe en la búsqueda o elige una sección.
           </p>
         {/if}
+
+        {#if myProductCount > 0}
+          <button onclick={() => (showMyProducts = true)}
+            class="text-xs text-muted hover:underline">
+            🏷️ Mis productos ({myProductCount}) — editar o borrar
+          </button>
+        {/if}
       </div>
     {/if}
 
@@ -457,6 +472,11 @@
 
   {#if showLoyalty && store.loyalty}
     <LoyaltyCard {store} onClose={() => (showLoyalty = false)} />
+  {/if}
+
+  {#if showMyProducts}
+    <CustomProducts {categories} {storeId} storeName={store.name}
+      onClose={() => (showMyProducts = false)} />
   {/if}
 
   {#if showScanProduct}

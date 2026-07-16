@@ -193,6 +193,36 @@ class AppStore {
     return product;
   }
 
+  /** Actualiza un producto del catálogo (solo tiene sentido para los custom:
+   *  refreshSeed restauraría cualquier cambio en los del seed). */
+  updateProduct(product: Product): void {
+    const i = this.state.products.findIndex((p) => p.id === product.id);
+    if (i < 0) return;
+    this.state.products[i] = product;
+    this.persist();
+  }
+
+  /** Borra un producto del catálogo y lo quita de todas las listas, para no
+   *  dejar items huérfanos apuntando a un producto inexistente. */
+  removeProduct(id: string): void {
+    this.state.products = this.state.products.filter((p) => p.id !== id);
+    for (const list of Object.values(this.state.lists)) {
+      const before = list.items.length;
+      list.items = list.items.filter((i) => i.productId !== id);
+      if (list.items.length !== before) list.updatedAt = Date.now();
+    }
+    if (this.state.usage) {
+      for (const usage of Object.values(this.state.usage)) delete usage[id];
+    }
+    this.persist();
+  }
+
+  /** Cuántas veces aparece un producto en las listas (para avisar al borrar). */
+  countItemsOf(productId: string): number {
+    return Object.values(this.state.lists)
+      .reduce((n, l) => n + l.items.filter((i) => i.productId === productId).length, 0);
+  }
+
   // -------- Lista de la compra --------
   getList(storeId: string): ShoppingList {
     return (

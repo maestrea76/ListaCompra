@@ -148,3 +148,8 @@ tucompra.zip
 
 # Catálogo generado en build (viaja en el zip del release, no en git)
 custom_components/tucompra/catalog.json
+
+# Python (tests/)
+__pycache__/
+*.py[cod]
+.pytest_cache/

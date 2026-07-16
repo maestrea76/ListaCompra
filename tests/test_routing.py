@@ -142,6 +142,23 @@ def test_producto_desconocido_va_a_la_bandeja():
 
 # --- el catálogo exportado (si el build lo ha generado) -------------------
 
+def test_el_ejemplo_del_readme_existe_en_todos_los_idiomas():
+    """El README documenta `name: milk`. Que exista de verdad.
+
+    El ejemplo era "toilet paper" y NO estaba en el catálogo británico —ahí es
+    "toilet roll"—, siendo el británico justo el idioma por defecto. O sea que
+    el ejemplo documentado no funcionaba para quien lo copiara tal cual.
+    """
+    path = ROOT / "custom_components" / "tucompra" / "catalog.json"
+    if not path.exists():
+        return
+    cat = json.loads(path.read_text(encoding="utf-8"))
+    snap = {"lists": {}, "customProducts": [], "customStores": [], "defaultStores": {}}
+    for lang, cc, termino in [("en", "GB", "milk"), ("en", "US", "milk"), ("es", "ES", "leche")]:
+        res = routing.resolve(termino, snap, routing.catalog_for(cat, lang, cc))
+        assert res["product"] is not None, f"{termino!r} no existe en el catálogo {lang}-{cc}"
+
+
 def test_catalogo_exportado_tiene_los_seis_idiomas():
     path = ROOT / "custom_components" / "tucompra" / "catalog.json"
     if not path.exists():

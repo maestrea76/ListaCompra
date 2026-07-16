@@ -217,7 +217,7 @@ Home Assistant → **Developer tools → Actions**:
 ```yaml
 action: tucompra.add_item
 data:
-  name: toilet paper
+  name: milk
   quantity: 2
 ```
 
@@ -253,7 +253,11 @@ lists:
 
 Restart Home Assistant, then say or type in Assist:
 
-> *"add toilet paper to the shopping list"*
+> *"add milk to the shopping list"*
+
+Use the name as it is called **where you live**: the catalog follows your Home
+Assistant language, so a UK instance knows "toilet roll" and a US one "toilet
+paper".
 
 > ⚠️ **Custom sentences are only understood by the "Home Assistant" conversation
 > agent.** If you use an LLM agent (Gemini, ChatGPT…), either switch the agent to

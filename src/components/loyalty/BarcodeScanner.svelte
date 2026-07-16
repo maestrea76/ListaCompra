@@ -62,6 +62,13 @@
   let torchOn = $state(false);
   let torchAvailable = $state(false);
   let scanning = $state(false);
+  // Diagnóstico: sin esto, un fallo del decodificador es invisible (la cámara
+  // se ve pero no lee nunca) y no hay forma de saber por qué.
+  let engine = $state('');
+  let videoRes = $state('');
+  let capsList = $state('');
+  let detectError = $state('');
+  let decodeMs = $state(0);
 
   let stream: MediaStream | null = null;
   let track: MediaStreamTrack | null = null;
@@ -74,26 +81,43 @@
   let lastAcceptedAt = 0;
   const COOLDOWN_MS = 2500;
 
+  /** Abre la cámara trasera. Con `ideal` el navegador puede acabar dando la
+   *  frontal (sin linterna ni buen enfoque), así que primero la exigimos. */
+  async function openCamera(): Promise<MediaStream> {
+    const hi = { width: { ideal: 1920 }, height: { ideal: 1080 } };
+    const attempts: MediaStreamConstraints[] = [
+      { video: { facingMode: { exact: 'environment' }, ...hi } },
+      { video: { facingMode: { ideal: 'environment' }, ...hi } },
+      { video: hi },
+      { video: true },
+    ];
+    let last: unknown;
+    for (const c of attempts) {
+      try {
+        return await navigator.mediaDevices.getUserMedia(c);
+      } catch (e) {
+        last = e;
+      }
+    }
+    throw last ?? new Error('sin cámara');
+  }
+
   async function start() {
     if (!videoEl) return;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          // Clave para leer códigos: cuanta más resolución, más definición en
-          // las barras finas.
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-      });
+      stream = await openCamera();
       videoEl.srcObject = stream;
       await videoEl.play();
+      videoRes = `${videoEl.videoWidth}×${videoEl.videoHeight}`;
 
       track = stream.getVideoTracks()[0] ?? null;
       // Autofocus continuo y linterna, si el dispositivo los expone.
       if (track) {
         const caps = (track.getCapabilities?.() ?? {}) as Record<string, unknown>;
-        torchAvailable = 'torch' in caps;
+        capsList = Object.keys(caps).join(', ') || '(no expone capacidades)';
+        // Si el navegador no informa de capacidades, ofrecemos la linterna igual
+        // y la ocultamos si al pulsarla falla: mejor eso que no ofrecerla nunca.
+        torchAvailable = 'torch' in caps || Object.keys(caps).length === 0;
         if (Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
           try {
             // @ts-expect-error — focusMode no está en los tipos estándar.
@@ -103,12 +127,16 @@
       }
 
       const detector = await makeDetector();
+      engine = hasNative ? 'nativo' : 'WASM';
 
       scanning = true;
       const tick = async () => {
         if (stopped || !videoEl) return;
         try {
+          const t0 = performance.now();
           const codes = await detector.detect(videoEl);
+          decodeMs = Math.round(performance.now() - t0);
+          detectError = '';
           const hit = codes[0];
           if (hit?.rawValue) {
             const value = String(hit.rawValue);
@@ -130,7 +158,11 @@
               lastSeen = value;
             }
           }
-        } catch {}
+        } catch (e) {
+          // NO silenciar: si el decodificador falla en cada fotograma, sin esto
+          // la cámara se ve pero no lee nunca y no hay pista de por qué.
+          detectError = String((e as Error)?.message ?? e).slice(0, 140);
+        }
         // ~8 lecturas/seg: suficiente y deja respirar al decodificador con
         // fotogramas grandes.
         timer = setTimeout(tick, 120);
@@ -143,13 +175,16 @@
 
   async function toggleTorch() {
     if (!track) return;
+    const next = !torchOn;
     try {
-      torchOn = !torchOn;
       // @ts-expect-error — torch no está en los tipos estándar.
-      await track.applyConstraints({ advanced: [{ torch: torchOn }] });
-    } catch {
+      await track.applyConstraints({ advanced: [{ torch: next }] });
+      torchOn = next;
+    } catch (e) {
+      // Este dispositivo/navegador no la soporta de verdad: la escondemos.
       torchOn = false;
       torchAvailable = false;
+      detectError = `Linterna no soportada: ${String((e as Error)?.message ?? e).slice(0, 80)}`;
     }
   }
 
@@ -211,6 +246,23 @@
     </p>
 
     {#if error}<p class="text-sm text-red-500">{error}</p>{/if}
+
+    <!-- Diagnóstico: sirve para saber por qué un dispositivo no lee. -->
+    <details class="rounded-xl border p-2" style="border-color: var(--border);">
+      <summary class="cursor-pointer text-[11px] text-muted">
+        Diagnóstico ({engine || '…'}{videoRes ? ` · ${videoRes}` : ''})
+      </summary>
+      <ul class="mt-1.5 text-[11px] space-y-0.5" style="color: var(--fg-muted);">
+        <li>Motor: <strong>{engine || 'arrancando…'}</strong> {hasNative ? '(BarcodeDetector del navegador)' : '(decodificador WASM)'}</li>
+        <li>Resolución: <strong>{videoRes || '—'}</strong></li>
+        <li>Tiempo por lectura: <strong>{decodeMs} ms</strong></li>
+        <li>Linterna: <strong>{torchAvailable ? 'ofrecida' : 'no disponible'}</strong></li>
+        <li class="break-all">Capacidades de la cámara: {capsList || '—'}</li>
+        {#if detectError}
+          <li class="break-all" style="color:#dc2626;">Error: {detectError}</li>
+        {/if}
+      </ul>
+    </details>
 
     <button onclick={close}
       class="w-full rounded-xl border py-2.5 font-medium hover:bg-[var(--bg)] transition"

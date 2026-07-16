@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '$lib/i18n/ui.svelte';
   // Panel de sincronización con Home Assistant.
   //  - Muestra la identidad (usuario/person. de HA) y el estado de la sync.
   //  - Permite cambiar entre listas (shares) a las que perteneces.
@@ -101,7 +102,7 @@
     onclick={(e) => e.stopPropagation()} role="presentation">
 
     <header class="flex items-start justify-between">
-      <h2 class="text-lg font-bold">🏠 Sincronización (Home Assistant)</h2>
+      <h2 class="text-lg font-bold">🏠 {t('sync.title')}</h2>
       <button onclick={onClose} class="text-2xl leading-none text-muted hover:text-current">×</button>
     </header>
 
@@ -109,7 +110,7 @@
       <!-- Fuera de HA: modo local -->
       <div class="rounded-xl bg-[var(--bg)] p-3 text-sm space-y-1.5"
         style="border: 1px solid var(--border);">
-        <p>📴 <strong>Modo local</strong></p>
+        <p>📴 <strong>{t('sync.localMode')}</strong></p>
         <p class="text-muted">Esta app no se está ejecutando dentro del panel de
           Home Assistant, así que tus listas solo se guardan en este dispositivo.
           Abre "Tu Compra" desde la barra lateral de HA para sincronizar entre
@@ -120,13 +121,13 @@
       <!-- Gestor de listas compartidas (admin) -->
       <div class="space-y-3">
         <p class="text-sm font-semibold">
-          {editingId ? 'Editar lista compartida' : 'Nueva lista compartida'}
+          {editingId ? t('sync.editShare') : t('sync.newShare')}
         </p>
-        <input bind:value={shareName} placeholder="Nombre (p.ej. Hogar)"
+        <input bind:value={shareName} placeholder={t('sync.sharePlaceholder')}
           class="w-full rounded-xl border px-4 py-2.5 bg-transparent"
           style="border-color: var(--border);" />
 
-        <p class="text-xs font-semibold uppercase tracking-wider text-muted">Miembros</p>
+        <p class="text-xs font-semibold uppercase tracking-wider text-muted">{t('sync.members')}</p>
         <ul class="space-y-1 max-h-52 overflow-y-auto">
           {#each users as u (u.user_id)}
             <li>
@@ -142,7 +143,7 @@
                   </span>
                 {/if}
                 <span class="text-sm">{u.person?.name ?? u.name}</span>
-                {#if u.is_admin}<span class="text-[10px] text-muted ml-auto">admin</span>{/if}
+                {#if u.is_admin}<span class="text-[10px] text-muted ml-auto">{t('sync.admin')}</span>{/if}
               </label>
             </li>
           {/each}
@@ -154,45 +155,45 @@
           <button onclick={saveShare} disabled={working}
             class="flex-1 rounded-xl py-2.5 font-semibold text-white disabled:opacity-50 transition"
             style="background: var(--accent);">
-            {working ? '…' : 'Guardar'}
+            {working ? '…' : t('product.save')}
           </button>
           <button onclick={() => (managing = false)}
             class="rounded-xl border px-4 py-2.5 font-medium hover:bg-[var(--bg)] transition"
-            style="border-color: var(--border);">Cancelar</button>
+            style="border-color: var(--border);">{t('common.cancel')}</button>
         </div>
       </div>
 
     {:else}
       <!-- Estado + selección de lista -->
       <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-        <dt class="text-muted">Usuario</dt>
+        <dt class="text-muted">{t('sync.user')}</dt>
         <dd class="font-medium truncate flex items-center gap-2">
           {#if syncStatus.user?.person?.picture}
             <img src={syncStatus.user.person.picture} alt="" class="size-6 rounded-full object-cover" />
           {/if}
           {syncStatus.user?.person?.name ?? syncStatus.user?.name ?? '—'}
-          {#if syncStatus.isAdmin}<span class="text-[10px] text-muted">admin</span>{/if}
+          {#if syncStatus.isAdmin}<span class="text-[10px] text-muted">{t('sync.admin')}</span>{/if}
         </dd>
 
-        <dt class="text-muted">Estado</dt>
+        <dt class="text-muted">{t('sync.state')}</dt>
         <dd>
           {#if syncStatus.enabled && syncStatus.connected}
-            <span style="color:#22c55e">🟢 sincronizado</span>
+            <span style="color:#22c55e">🟢 {t('sync.synced')}</span>
           {:else if syncStatus.enabled}
-            <span style="color:#0ea5e9">🟡 conectando…</span>
+            <span style="color:#0ea5e9">🟡 {t('sync.connecting')}</span>
           {:else}
-            <span style="color:#f59e0b">⚠️ inactiva</span>
+            <span style="color:#f59e0b">⚠️ {t('sync.inactive')}</span>
           {/if}
         </dd>
 
-        <dt class="text-muted">Lista activa</dt>
+        <dt class="text-muted">{t('sync.activeList')}</dt>
         <dd class="font-medium">{activeShare?.name ?? '—'}</dd>
 
-        <dt class="text-muted">Última sync</dt>
+        <dt class="text-muted">{t('sync.lastSync')}</dt>
         <dd>{ago === '—' ? '—' : `hace ${ago}`}</dd>
 
         {#if syncStatus.lastError}
-          <dt class="text-muted">Aviso</dt>
+          <dt class="text-muted">{t('sync.warning')}</dt>
           <dd class="text-red-500 text-xs break-all">{syncStatus.lastError}</dd>
         {/if}
       </dl>
@@ -200,7 +201,7 @@
       <!-- Selector de listas -->
       <div class="space-y-1.5">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-muted">Tus listas</span>
+          <span class="text-xs font-semibold uppercase tracking-wider text-muted">{t('sync.yourLists')}</span>
           <button onclick={() => refreshShares()} class="text-xs text-muted hover:underline">↻</button>
         </div>
         <ul class="space-y-1">
@@ -217,9 +218,9 @@
               </button>
               {#if syncStatus.isAdmin && !s.id.startsWith('personal:')}
                 <button onclick={() => openManager(s.id)}
-                  class="text-muted hover:text-current text-sm" title="Editar">✏️</button>
+                  class="text-muted hover:text-current text-sm" title={t('product.edit')}>✏️</button>
                 <button onclick={() => removeShare(s.id)}
-                  class="text-muted hover:text-red-500 text-sm" title="Borrar">🗑️</button>
+                  class="text-muted hover:text-red-500 text-sm" title={t('store.delete')}>🗑️</button>
               {/if}
             </li>
           {/each}

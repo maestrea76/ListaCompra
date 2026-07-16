@@ -12,6 +12,7 @@
   import MenuButton from '../ui/MenuButton.svelte';
   import LoyaltyCard from '../loyalty/LoyaltyCard.svelte';
   import ProductScanDialog from '../loyalty/ProductScanDialog.svelte';
+  import ProductIcon from '../ui/ProductIcon.svelte';
 
   let { storeId }: { storeId: string } = $props();
 
@@ -294,9 +295,9 @@
           <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {#each filtered as p (p.id)}
               <button onclick={() => addProduct(p.id)}
-                class="shrink-0 rounded-full border px-3 py-1.5 text-sm hover:bg-[var(--accent)] hover:text-white transition"
+                class="shrink-0 rounded-full border px-3 py-1.5 text-sm hover:bg-[var(--accent)] hover:text-white transition inline-flex items-center gap-1.5"
                 style="border-color: var(--border);">
-                {p.icon.kind === 'emoji' ? p.icon.value : '🏷️'} {p.name}
+                <ProductIcon product={p} size="text-base" px={18} /> {p.name}
               </button>
             {/each}
           </div>
@@ -349,9 +350,9 @@
           <div class="flex flex-wrap gap-2">
             {#each filtered as p (p.id)}
               <button onclick={() => addProduct(p.id)}
-                class="rounded-full border px-3 py-1.5 text-sm hover:bg-[var(--accent)] hover:text-white transition"
+                class="rounded-full border px-3 py-1.5 text-sm hover:bg-[var(--accent)] hover:text-white transition inline-flex items-center gap-1.5"
                 style="border-color: var(--border);">
-                {p.icon.kind === 'emoji' ? p.icon.value : '🏷️'} {p.name}
+                <ProductIcon product={p} size="text-base" px={18} /> {p.name}
               </button>
             {/each}
           </div>
@@ -398,9 +399,7 @@
                       : 'border-color: var(--border);'}>
                     {item.done ? '✓' : ''}
                   </button>
-                  <span class="text-2xl shrink-0">
-                    {p?.icon.kind === 'emoji' ? p.icon.value : '🏷️'}
-                  </span>
+                  <ProductIcon product={p} px={30} />
                   <div class="flex-1 min-w-0">
                     <div class="product-name font-medium truncate">{p?.name ?? '?'}</div>
                     <div class="flex items-center gap-1.5 mt-1 flex-wrap">

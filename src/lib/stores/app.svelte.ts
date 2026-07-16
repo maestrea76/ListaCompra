@@ -1,7 +1,7 @@
 // Store global con Svelte 5 runes. Una única fuente de verdad para toda la app.
 // Se hidrata desde LocalStorage al iniciar y se autoguarda al cambiar.
 
-import type { AppState, ListItem, Product, ShoppingList, Store, UserProfile } from '../types';
+import type { AppState, IconRef, ListItem, Product, ShoppingList, Store, UserProfile } from '../types';
 import { createInitialState, loadState, saveState } from '../storage';
 import { getLocalizedSeed, LOCALIZED_STORES } from '../data/locales';
 import { LOCALES, type Locale } from '../i18n/locale';
@@ -178,13 +178,13 @@ class AppStore {
   createCustomProduct(
     name: string,
     categoryId: string,
-    opts: { emoji?: string; storeId?: string } = {},
+    opts: { emoji?: string; storeId?: string; icon?: IconRef } = {},
   ): Product {
     const product: Product = {
       id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       name: name.trim(),
       categoryId,
-      icon: { kind: 'emoji', value: opts.emoji ?? '🏷️' },
+      icon: opts.icon ?? { kind: 'emoji', value: opts.emoji ?? '🏷️' },
       defaultUnit: 'unidad',
       ...(opts.storeId ? { storeId: opts.storeId } : {}),
     };

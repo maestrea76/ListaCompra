@@ -83,11 +83,17 @@
     busy = false;
   }
 
+  // Si Open Food Facts trajo foto (ya incrustada por HA como data URL), la
+  // usamos como icono del producto en vez del 🏷️ genérico. Se guarda con el
+  // producto, así que sigue viéndose sin conexión.
+  const usePhoto = $derived(!!lookup?.image);
+
   function create() {
     const clean = name.trim();
     if (clean.length < 2 || !categoryId) return;
     const p = app.createCustomProduct(clean, categoryId, {
       storeId: onlyHere ? storeId : undefined,
+      icon: usePhoto ? { kind: 'image', value: lookup!.image! } : undefined,
     });
     onCreated(p.id);
   }
@@ -129,7 +135,10 @@
           {#if lookup.image}
             <img src={lookup.image} alt="" class="size-14 object-contain rounded-lg bg-white" />
           {/if}
-          <p class="text-xs text-muted">Encontrado{lookup.cached ? ' (en caché)' : ''}. Revísalo antes de añadirlo.</p>
+          <p class="text-xs text-muted">
+            Encontrado{lookup.cached ? ' (en caché)' : ''}. Revísalo antes de añadirlo.
+            {#if usePhoto}<br />Se usará la foto como icono del producto.{/if}
+          </p>
         </div>
       {/if}
 

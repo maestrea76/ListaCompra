@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import base64
 import logging
 
 import async_timeout
@@ -36,6 +37,31 @@ _LOGGER = logging.getLogger(__name__)
 # la app es local por defecto y esta es la única petición saliente que existe.
 OFF_URL = "https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
 OFF_FIELDS = "product_name,product_name_es,brands,quantity,categories_tags,image_front_small_url"
+
+# La foto del producto se descarga DESDE HA y se incrusta como data URL, para
+# que el navegador no pida nada a terceros y para que el icono siga funcionando
+# sin conexión. Tope de tamaño: son miniaturas (~200 px), pero por si acaso.
+MAX_IMAGE_BYTES = 80_000
+
+
+async def _fetch_image_data_url(session, url: str) -> str:
+    """Descarga la miniatura del producto y la devuelve como data URL ('' si falla)."""
+    if not url:
+        return ""
+    try:
+        async with async_timeout.timeout(10):
+            resp = await session.get(url)
+            if resp.status != 200:
+                return ""
+            ctype = (resp.headers.get("Content-Type") or "").split(";")[0].strip()
+            if not ctype.startswith("image/"):
+                return ""
+            raw = await resp.read()
+        if not raw or len(raw) > MAX_IMAGE_BYTES:
+            return ""
+        return f"data:{ctype};base64,{base64.b64encode(raw).decode('ascii')}"
+    except Exception:  # noqa: BLE001 — red/timeout: la foto es prescindible
+        return ""
 
 
 def _store(hass: HomeAssistant) -> TuCompraStore:
@@ -118,7 +144,10 @@ class LookupView(HomeAssistantView):
                 "brand": (product.get("brands") or "").split(",")[0].strip(),
                 "quantity": (product.get("quantity") or "").strip(),
                 "categories": product.get("categories_tags") or [],
-                "image": product.get("image_front_small_url") or "",
+                # data URL: la descarga HA, no el navegador del usuario.
+                "image": await _fetch_image_data_url(
+                    session, product.get("image_front_small_url") or ""
+                ),
             }
 
         await store.async_cache_lookup(barcode, result)

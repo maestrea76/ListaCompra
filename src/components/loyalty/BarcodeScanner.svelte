@@ -11,7 +11,7 @@
   // El .wasm se empaqueta con el panel y lo sirve tu HA: sin peticiones a
   // terceros y funciona sin conexión.
 
-  import { onDestroy } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import type { LoyaltyFormat } from '$lib/types';
 
   let { onDetected, onClose, continuous = false, feedback = '' }: {
@@ -268,10 +268,18 @@
     track = null;
   }
 
+  /** Arranque único. Va dentro de `untrack` porque `start()` lee `deviceId` y
+   *  `listCameras()` lo escribe: sin untrack el efecto se auto-invalida y vuelve
+   *  a abrir la cámara en bucle (parpadeo + "no se pudo abrir"). El guard cubre
+   *  el caso de que `videoEl` cambie de nodo. */
+  let booted = false;
   $effect(() => {
-    if (!videoEl) return;
-    try { deviceId = localStorage.getItem(DEVICE_KEY) ?? ''; } catch {}
-    start();
+    if (!videoEl || booted) return;
+    booted = true;
+    untrack(() => {
+      try { deviceId = localStorage.getItem(DEVICE_KEY) ?? ''; } catch {}
+      start();
+    });
   });
   onDestroy(stop);
 

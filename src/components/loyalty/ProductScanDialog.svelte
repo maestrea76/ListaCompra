@@ -10,12 +10,18 @@
   import type { Category } from '$lib/types';
   import BarcodeScanner from './BarcodeScanner.svelte';
 
-  let { categories, defaultCategoryId, onCreated, onClose }: {
+  let { categories, defaultCategoryId, storeId, storeName, onCreated, onClose }: {
     categories: Category[];
     defaultCategoryId?: string;
+    storeId: string;
+    storeName: string;
     onCreated: (productId: string) => void;
     onClose: () => void;
   } = $props();
+
+  // Exclusivo de esta tienda (marcas propias). Por defecto NO: la mayoría de los
+  // códigos son de marcas nacionales que se venden en cualquier súper.
+  let onlyHere = $state(false);
 
   type Step = 'scan' | 'form';
   let step = $state<Step>('scan');
@@ -80,7 +86,9 @@
   function create() {
     const clean = name.trim();
     if (clean.length < 2 || !categoryId) return;
-    const p = app.createCustomProduct(clean, categoryId);
+    const p = app.createCustomProduct(clean, categoryId, {
+      storeId: onlyHere ? storeId : undefined,
+    });
     onCreated(p.id);
   }
 </script>
@@ -141,6 +149,17 @@
             <option value={c.id}>{c.icon.kind === 'emoji' ? c.icon.value : '📁'} {c.name}</option>
           {/each}
         </select>
+      </label>
+
+      <label class="flex items-start gap-2 rounded-xl border p-3 cursor-pointer"
+        style="border-color: var(--border);">
+        <input type="checkbox" bind:checked={onlyHere} class="mt-0.5" />
+        <span class="text-xs">
+          <strong>Solo en {storeName}</strong>
+          <span class="block text-muted">Márcalo si es marca propia o exclusiva de
+            esta tienda: así no aparecerá en el resto. Déjalo sin marcar para las
+            marcas normales que se venden en cualquier sitio.</span>
+        </span>
       </label>
 
       <div class="flex gap-2 pt-1">

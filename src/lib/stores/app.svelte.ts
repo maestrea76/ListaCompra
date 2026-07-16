@@ -173,14 +173,20 @@ class AppStore {
   }
 
   /** Crea un producto personalizado en una categoría concreta. Lo usa el alta
-   *  por escaneo de código de barras, donde el usuario elige la sección. */
-  createCustomProduct(name: string, categoryId: string, emoji = '🏷️'): Product {
+   *  por escaneo de código de barras, donde el usuario elige la sección.
+   *  Con `storeId` el producto queda EXCLUSIVO de esa tienda (marca propia). */
+  createCustomProduct(
+    name: string,
+    categoryId: string,
+    opts: { emoji?: string; storeId?: string } = {},
+  ): Product {
     const product: Product = {
       id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       name: name.trim(),
       categoryId,
-      icon: { kind: 'emoji', value: emoji },
+      icon: { kind: 'emoji', value: opts.emoji ?? '🏷️' },
       defaultUnit: 'unidad',
+      ...(opts.storeId ? { storeId: opts.storeId } : {}),
     };
     this.state.products.push(product);
     this.persist();

@@ -65,6 +65,10 @@ export interface Product {
   defaultUnit: Unit;
   /** Imagen personalizada subida por el usuario (dataURL) */
   photo?: string;
+  /** Si está, el producto es EXCLUSIVO de esa tienda (marca propia: Hacendado
+   *  en Mercadona, Eroski Basic…) y no aparece en las demás del mismo tipo.
+   *  Sin este campo, el producto está disponible en todas las tiendas de su tipo. */
+  storeId?: Store['id'];
 }
 
 /** Una línea de la lista de la compra de una tienda concreta */

@@ -77,6 +77,12 @@ def resolve(name: str, snapshot: dict | None, catalog: dict) -> dict[str, Any]:
     type_id = cat_type.get(product.get("categoryId")) if product else None
 
     store_id: str | None = None
+
+    # Producto exclusivo de una tienda (marca propia): manda sobre el tipo.
+    exclusive = product.get("storeId") if product else None
+    if exclusive and exclusive in stores and stores[exclusive].get("enabled", True) is not False:
+        return {"product": product, "type_id": type_id, "store_id": exclusive}
+
     if type_id:
         explicit = default_stores.get(type_id)
         if explicit and explicit in stores and stores[explicit].get("enabled", True) is not False:

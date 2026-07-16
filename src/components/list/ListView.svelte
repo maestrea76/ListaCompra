@@ -81,10 +81,14 @@
       : [],
   );
 
+  // Productos disponibles en ESTA tienda: los de su tipo, excluyendo los que
+  // son exclusivos de otra tienda (marcas propias: Hacendado, Eroski Basic…).
   const productsForType = $derived.by(() => {
     if (!store) return [];
     const catIds = new Set(categories.map((c) => c.id));
-    return app.state.products.filter((p) => catIds.has(p.categoryId));
+    return app.state.products.filter(
+      (p) => catIds.has(p.categoryId) && (!p.storeId || p.storeId === storeId),
+    );
   });
 
   // Sugerencias bajo el buscador. Tres modos:
@@ -458,7 +462,7 @@
 
   {#if showScanProduct}
     <ProductScanDialog
-      {categories}
+      {categories} {storeId} storeName={store.name}
       defaultCategoryId={activeCat !== 'all' ? activeCat : undefined}
       onCreated={(id) => { showScanProduct = false; addProduct(id); }}
       onClose={() => (showScanProduct = false)} />

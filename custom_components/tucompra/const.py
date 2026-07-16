@@ -13,3 +13,7 @@ STATIC_PATH = "/tucompra_static"
 # Almacenamiento persistente en .storage/tucompra
 STORAGE_KEY = "tucompra"
 STORAGE_VERSION = 1
+
+# Clave en hass.data: ¿está activada la búsqueda de productos por código de
+# barras (Open Food Facts)? Apagada salvo que se ponga en configuration.yaml.
+LOOKUP_ENABLED = "tucompra_lookup_enabled"

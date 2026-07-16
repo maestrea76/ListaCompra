@@ -74,6 +74,26 @@ across several shops. Tu Compra is built around the way people really shop:
 That's the whole setup — there is nothing else to configure. No account, no API
 key, no passphrase.
 
+### Optional: product lookup by barcode
+
+By default Tu Compra makes **zero outbound requests**. If you want to add
+products by **scanning their barcode** and have the name filled in for you,
+enable the lookup explicitly:
+
+```yaml
+tucompra:
+  product_lookup: true
+```
+
+When enabled, scanning a barcode asks **Open Food Facts** (a free, open,
+collaborative food database — no API key) for the product name. The request is
+made **by Home Assistant, not by your browser**, and every result is **cached**
+locally, so each product is looked up only once. Only the barcode is sent.
+
+You always confirm the name and the section before anything is added. Coverage
+is mostly **food** and strongest in Europe; if a product isn't found, just type
+the name.
+
 > **Requirements:** Home Assistant **2024.7+**. For the integration icon to be
 > displayed, Home Assistant **2026.3+** is required (local brand images).
 
@@ -265,6 +285,26 @@ del resto de España (jamón ibérico, fabes, turrón de Jijona…).
 4. Reinicia otra vez. Aparecerá **Tu Compra** en la barra lateral.
 
 No hay nada más que configurar: ni cuenta, ni API key, ni passphrase.
+
+### Opcional: buscar productos por código de barras
+
+Por defecto la app **no hace ninguna petición externa**. Si quieres añadir
+productos **escaneando su código de barras** y que el nombre se rellene solo,
+actívalo explícitamente:
+
+```yaml
+tucompra:
+  product_lookup: true
+```
+
+Con esto, al escanear se consulta **Open Food Facts** (base abierta y gratuita,
+sin API key). La petición la hace **Home Assistant, no tu navegador**, y el
+resultado se **cachea** en local: cada producto se consulta una sola vez. Solo se
+envía el código de barras.
+
+Siempre confirmas el nombre y la sección antes de añadir nada. La cobertura es
+sobre todo de **alimentación** y mejor en Europa; si no lo encuentra, escribes el
+nombre.
 
 > **Requisitos:** Home Assistant **2024.7+**. Para que se vea el icono de la
 > integración hace falta **2026.3+**.

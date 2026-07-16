@@ -18,11 +18,24 @@ from __future__ import annotations
 
 from typing import Any
 
+import logging
+
+import async_timeout
+
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN
+from .const import DOMAIN, LOOKUP_ENABLED
 from .store import TuCompraStore
+
+_LOGGER = logging.getLogger(__name__)
+
+# Open Food Facts: base colaborativa y abierta, sin API key. Solo se consulta si
+# el usuario activa `product_lookup` en configuration.yaml (apagado por defecto):
+# la app es local por defecto y esta es la única petición saliente que existe.
+OFF_URL = "https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
+OFF_FIELDS = "product_name,product_name_es,brands,quantity,categories_tags,image_front_small_url"
 
 
 def _store(hass: HomeAssistant) -> TuCompraStore:
@@ -48,6 +61,68 @@ def async_register_views(hass: HomeAssistant) -> None:
     hass.http.register_view(ShareDetailView())
     hass.http.register_view(StateView())
     hass.http.register_view(UsersView())
+    hass.http.register_view(LookupView())
+
+
+class LookupView(HomeAssistantView):
+    """Traduce un código de barras a producto vía Open Food Facts.
+
+    Solo responde si `product_lookup` está activado. La petición sale desde HA
+    (no desde el navegador del usuario) y el resultado se cachea en .storage,
+    así que un mismo producto se consulta una única vez.
+    """
+
+    url = "/api/tucompra/lookup"
+    name = "api:tucompra:lookup"
+    requires_auth = True
+
+    async def get(self, request):
+        hass = request.app["hass"]
+        if not hass.data.get(LOOKUP_ENABLED):
+            return self.json({"enabled": False})
+
+        barcode = (request.query.get("barcode") or "").strip()
+        if not barcode.isdigit() or not 6 <= len(barcode) <= 14:
+            return self.json_message("Código de barras no válido.", status_code=400)
+
+        store = _store(hass)
+        cached = store.get_cached_lookup(barcode)
+        if cached is not None:
+            return self.json({"enabled": True, "cached": True, **cached})
+
+        session = async_get_clientsession(hass)
+        try:
+            async with async_timeout.timeout(10):
+                resp = await session.get(
+                    OFF_URL.format(barcode=barcode),
+                    params={"fields": OFF_FIELDS},
+                    headers={"User-Agent": "TuCompra/HA (github.com/maestrea76/ListaCompra)"},
+                )
+                data = await resp.json(content_type=None)
+        except Exception as err:  # noqa: BLE001 — red/timeout/JSON inválido
+            _LOGGER.warning("Tu Compra: fallo consultando el código %s (%s)", barcode, err)
+            return self.json({"enabled": True, "found": False, "error": "network"})
+
+        product = (data or {}).get("product") or {}
+        if (data or {}).get("status") != 1 or not product:
+            result = {"found": False}
+        else:
+            name = (
+                product.get("product_name_es")
+                or product.get("product_name")
+                or ""
+            ).strip()
+            result = {
+                "found": bool(name),
+                "name": name,
+                "brand": (product.get("brands") or "").split(",")[0].strip(),
+                "quantity": (product.get("quantity") or "").strip(),
+                "categories": product.get("categories_tags") or [],
+                "image": product.get("image_front_small_url") or "",
+            }
+
+        await store.async_cache_lookup(barcode, result)
+        return self.json({"enabled": True, "cached": False, **result})
 
 
 class MeView(HomeAssistantView):

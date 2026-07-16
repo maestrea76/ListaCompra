@@ -24,6 +24,7 @@ from homeassistant.helpers.typing import ConfigType
 from .api import async_register_views
 from .const import (
     DOMAIN,
+    LOOKUP_ENABLED,
     PANEL_ICON,
     PANEL_TITLE,
     PANEL_URL_PATH,
@@ -49,12 +50,33 @@ ADD_ITEM_SCHEMA = vol.Schema(
     }
 )
 
+# Config opcional. `tucompra:` a secas sigue valiendo y deja la app 100% local.
+# `product_lookup: true` es lo ÚNICO que permite una petición saliente (a Open
+# Food Facts, para traducir un código de barras a producto).
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Any(
+            None,
+            vol.Schema({vol.Optional("product_lookup", default=False): cv.boolean}),
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Arranque de la integración (config: solo la línea `tucompra:` en YAML)."""
     store = TuCompraStore(hass)
     await store.async_load()
     hass.data[DOMAIN] = store
+
+    conf = config.get(DOMAIN) or {}
+    hass.data[LOOKUP_ENABLED] = bool(conf.get("product_lookup", False))
+    if hass.data[LOOKUP_ENABLED]:
+        _LOGGER.info(
+            "Tu Compra: búsqueda de productos por código de barras ACTIVADA "
+            "(consulta Open Food Facts; es la única petición saliente)"
+        )
 
     # Sirve el wrapper (tucompra-panel.js) y el build de la SPA (panel/app).
     panel_dir = Path(__file__).parent / "panel"

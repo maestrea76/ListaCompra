@@ -348,6 +348,30 @@ export function syncWasEnabled(): boolean {
   return true;
 }
 
+export interface LookupResult {
+  enabled: boolean;
+  cached?: boolean;
+  found?: boolean;
+  name?: string;
+  brand?: string;
+  quantity?: string;
+  categories?: string[];
+  image?: string;
+  error?: string;
+}
+
+/** Traduce un código de barras a producto (Open Food Facts, vía la integración).
+ *  Devuelve { enabled: false } si el usuario no ha activado `product_lookup`. */
+export async function lookupBarcode(barcode: string): Promise<LookupResult> {
+  if (!syncStatus.inHA) return { enabled: false };
+  try {
+    return await api<LookupResult>(`/api/tucompra/lookup?barcode=${encodeURIComponent(barcode)}`);
+  } catch (e) {
+    log(`⚠️ Lookup: ${(e as Error).message}`);
+    return { enabled: true, found: false, error: 'network' };
+  }
+}
+
 /** Pide al wrapper que abra/cierre la barra lateral de Home Assistant. */
 export function toggleHaSidebar(): void {
   if (typeof window === 'undefined' || window.parent === window) return;

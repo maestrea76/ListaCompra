@@ -172,6 +172,21 @@ class AppStore {
     return product;
   }
 
+  /** Crea un producto personalizado en una categoría concreta. Lo usa el alta
+   *  por escaneo de código de barras, donde el usuario elige la sección. */
+  createCustomProduct(name: string, categoryId: string, emoji = '🏷️'): Product {
+    const product: Product = {
+      id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: name.trim(),
+      categoryId,
+      icon: { kind: 'emoji', value: emoji },
+      defaultUnit: 'unidad',
+    };
+    this.state.products.push(product);
+    this.persist();
+    return product;
+  }
+
   // -------- Lista de la compra --------
   getList(storeId: string): ShoppingList {
     return (

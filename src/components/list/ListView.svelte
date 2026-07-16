@@ -11,6 +11,7 @@
   import type { Unit } from '$lib/types';
   import MenuButton from '../ui/MenuButton.svelte';
   import LoyaltyCard from '../loyalty/LoyaltyCard.svelte';
+  import ProductScanDialog from '../loyalty/ProductScanDialog.svelte';
 
   let { storeId }: { storeId: string } = $props();
 
@@ -20,6 +21,8 @@
   let movingItemId = $state<string | null>(null);
   // Tarjeta de fidelización a pantalla completa (para pasarla por caja).
   let showLoyalty = $state(false);
+  // Alta de producto escaneando su código de barras.
+  let showScanProduct = $state(false);
 
   const INBOX_ID = 'inbox';
 
@@ -268,12 +271,18 @@
         </div>
       </div>
 
-      <input
-        type="text" bind:value={query} placeholder="Buscar o crear producto (Enter)…"
-        onkeydown={handleQueryKeydown}
-        class="w-full rounded-xl border px-4 py-2.5 bg-transparent"
-        style="border-color: var(--border);"
-      />
+      <div class="flex gap-2">
+        <input
+          type="text" bind:value={query} placeholder="Buscar o crear producto (Enter)…"
+          onkeydown={handleQueryKeydown}
+          class="flex-1 rounded-xl border px-4 py-2.5 bg-transparent"
+          style="border-color: var(--border);"
+        />
+        <button onclick={() => (showScanProduct = true)}
+          title="Escanear el código de barras de un producto"
+          class="shrink-0 rounded-xl border px-3 hover:bg-[var(--bg)] transition"
+          style="border-color: var(--border);">📷</button>
+      </div>
 
       <!-- Resultados de búsqueda: una fila con scroll horizontal (compacta). -->
       {#if query.trim()}
@@ -445,6 +454,14 @@
 
   {#if showLoyalty && store.loyalty}
     <LoyaltyCard {store} onClose={() => (showLoyalty = false)} />
+  {/if}
+
+  {#if showScanProduct}
+    <ProductScanDialog
+      {categories}
+      defaultCategoryId={activeCat !== 'all' ? activeCat : undefined}
+      onCreated={(id) => { showScanProduct = false; addProduct(id); }}
+      onClose={() => (showScanProduct = false)} />
   {/if}
 {/if}
 

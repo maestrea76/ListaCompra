@@ -59,7 +59,21 @@ class TuCompraStore:
         if isinstance(data, dict):
             self._data = data
         self._data.setdefault("shares", {})
+        self._data.setdefault("lookup_cache", {})
         return self._data
+
+    # ── Caché de búsquedas por código de barras ─────────────────────────
+    # Evita repetir peticiones a Open Food Facts para el mismo producto.
+    @property
+    def lookup_cache(self) -> dict[str, Any]:
+        return self._data.setdefault("lookup_cache", {})
+
+    def get_cached_lookup(self, barcode: str) -> dict[str, Any] | None:
+        return self.lookup_cache.get(barcode)
+
+    async def async_cache_lookup(self, barcode: str, result: dict[str, Any]) -> None:
+        self.lookup_cache[barcode] = result
+        await self._async_save()
 
     async def _async_save(self) -> None:
         await self._store.async_save(self._data)

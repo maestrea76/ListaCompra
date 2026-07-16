@@ -40,7 +40,18 @@
       // @ts-expect-error — BarcodeDetector aún no está en los tipos del DOM.
       return new window.BarcodeDetector({ formats: FORMATS });
     }
-    const { BarcodeDetector } = await import('barcode-detector/pure');
+    const [{ BarcodeDetector, setZXingModuleOverrides }, wasm] = await Promise.all([
+      import('barcode-detector/pure'),
+      // El .wasm se empaqueta con el panel y lo sirve TU Home Assistant. Por
+      // defecto zxing-wasm lo pediría a un CDN: eso rompería el "sin peticiones
+      // externas" y no funcionaría sin conexión.
+      import('zxing-wasm/dist/reader/zxing_reader.wasm?url'),
+    ]);
+    const wasmUrl = (wasm as { default: string }).default;
+    setZXingModuleOverrides({
+      locateFile: (path: string, prefix: string) =>
+        path.endsWith('.wasm') ? wasmUrl : prefix + path,
+    });
     return new BarcodeDetector({ formats: FORMATS as any });
   }
 

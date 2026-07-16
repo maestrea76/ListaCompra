@@ -1,7 +1,7 @@
 {
   "name": "tu-compra",
   "type": "module",
-  "version": "0.3.35",
+  "version": "0.3.36",
   "description": "Listas de la compra multi-tienda con integración Home Assistant",
   "scripts": {
     "dev": "astro dev",
@@ -20,7 +20,8 @@
     "jsbarcode": "^3.11.6",
     "lucide-svelte": "^0.469.0",
     "qrcode-generator": "^1.4.4",
-    "svelte": "^5.16.0"
+    "svelte": "^5.16.0",
+    "zxing-wasm": "1.2.14"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",

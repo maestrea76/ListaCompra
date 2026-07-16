@@ -13,6 +13,42 @@ supermarket.
 
 ---
 
+## Screenshots
+
+<!-- Absolute raw.githubusercontent URLs on purpose: HACS renders this README in
+     its own frontend, outside the repository, where relative paths do not resolve. -->
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/maestrea76/ListaCompra/main/docs/images/sidebar.png" width="820" alt="Tu Compra running as a Home Assistant panel, with the store grid">
+</p>
+
+<p align="center"><em>It lives in your Home Assistant sidebar — no separate app, no login.</em></p>
+
+<table>
+  <tr>
+    <td width="25%" align="center">
+      <img src="https://raw.githubusercontent.com/maestrea76/ListaCompra/main/docs/images/stores.png" width="100%" alt="Store grid with pending counters">
+    </td>
+    <td width="25%" align="center">
+      <img src="https://raw.githubusercontent.com/maestrea76/ListaCompra/main/docs/images/list.png" width="100%" alt="A store list grouped by section, with quantities and units">
+    </td>
+    <td width="25%" align="center">
+      <img src="https://raw.githubusercontent.com/maestrea76/ListaCompra/main/docs/images/scan.png" width="100%" alt="Barcode scanner recognising a product">
+    </td>
+    <td width="25%" align="center">
+      <img src="https://raw.githubusercontent.com/maestrea76/ListaCompra/main/docs/images/loyalty.png" width="100%" alt="Per-store settings, including its loyalty card">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><b>One list per store</b><br>Sorted by what's still pending</td>
+    <td align="center"><b>Grouped by section</b><br>With quantities and units</td>
+    <td align="center"><b>Scan a barcode</b><br>Straight onto the list</td>
+    <td align="center"><b>Loyalty cards</b><br>Stored per store, offline</td>
+  </tr>
+</table>
+
+---
+
 ## Why this instead of a plain to-do list?
 
 A single flat shopping list breaks down the moment your shopping is spread
@@ -278,6 +314,31 @@ El catálogo se **adapta a la cultura** según el idioma de HA (🇪🇸🇬🇧
 El seed español es el más completo (~1.300 productos), con fuerte sabor de
 **Euskadi / País Vasco** (txuleta, kokotxas, txakoli, idiazabal, perretxikos…) y
 del resto de España (jamón ibérico, fabes, turrón de Jijona…).
+
+## Capturas
+
+<table>
+  <tr>
+    <td width="25%" align="center">
+      <img src="https://raw.githubusercontent.com/maestrea76/ListaCompra/main/docs/images/stores.png" width="100%" alt="Rejilla de tiendas con contador de pendientes">
+    </td>
+    <td width="25%" align="center">
+      <img src="https://raw.githubusercontent.com/maestrea76/ListaCompra/main/docs/images/list.png" width="100%" alt="Lista de una tienda agrupada por secciones, con cantidades y unidades">
+    </td>
+    <td width="25%" align="center">
+      <img src="https://raw.githubusercontent.com/maestrea76/ListaCompra/main/docs/images/scan.png" width="100%" alt="El escáner reconociendo un producto por su código de barras">
+    </td>
+    <td width="25%" align="center">
+      <img src="https://raw.githubusercontent.com/maestrea76/ListaCompra/main/docs/images/loyalty.png" width="100%" alt="Ajustes de una tienda, con su tarjeta de fidelización">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><b>Una lista por tienda</b><br>Ordenadas por lo que falta</td>
+    <td align="center"><b>Agrupada por secciones</b><br>Con cantidades y unidades</td>
+    <td align="center"><b>Escanea el código</b><br>Directo a la lista</td>
+    <td align="center"><b>Tarjetas de fidelización</b><br>Por tienda y sin nube</td>
+  </tr>
+</table>
 
 ## Características principales
 

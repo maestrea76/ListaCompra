@@ -1,10 +1,14 @@
 <script lang="ts">
-  // Escáner de tarjetas con la cámara usando la API nativa BarcodeDetector.
-  // Sin librerías: existe en Chrome/Edge (Android y escritorio). En Safari/iOS y
-  // Firefox NO existe → avisamos y el usuario mete el número a mano.
+  // Escáner de códigos con la API nativa BarcodeDetector (sin librerías).
+  // Existe en Chrome/Edge (Android y escritorio); en Safari/iOS y Firefox no.
   //
-  // Requiere contexto seguro (HTTPS) y permiso de cámara; el iframe del panel ya
-  // se registra con allow="camera".
+  // La tasa de acierto depende sobre todo de la IMAGEN que le damos al detector:
+  //  - Resolución: por defecto getUserMedia da ~640x480 y las barras finas de un
+  //    EAN se pierden. Pedimos 1920x1080 ideal.
+  //  - Enfoque: sin autofocus continuo el código sale borroso de cerca.
+  //  - Luz: linterna si el dispositivo la expone.
+  //  - Estabilidad: exigimos leer el MISMO valor dos veces seguidas antes de
+  //    darlo por bueno, para no colar una lectura dudosa.
 
   import { onDestroy } from 'svelte';
   import type { LoyaltyFormat } from '$lib/types';
@@ -12,7 +16,6 @@
   let { onDetected, onClose }:
     { onDetected: (code: string, format: LoyaltyFormat) => void; onClose: () => void } = $props();
 
-  // Formato que devuelve BarcodeDetector → el nuestro.
   const FROM_NATIVE: Record<string, LoyaltyFormat> = {
     qr_code: 'qr', ean_13: 'ean13', ean_8: 'ean8',
     code_128: 'code128', code_39: 'code39', upc_a: 'upca',
@@ -22,47 +25,96 @@
 
   let videoEl: HTMLVideoElement | null = $state(null);
   let error = $state('');
+  let torchOn = $state(false);
+  let torchAvailable = $state(false);
+  let scanning = $state(false);
+
   let stream: MediaStream | null = null;
-  let raf = 0;
+  let track: MediaStreamTrack | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
   let stopped = false;
+  // Última lectura pendiente de confirmar (anti-falsos positivos).
+  let lastSeen = '';
 
   async function start() {
     if (!supported || !videoEl) return;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: {
+          facingMode: { ideal: 'environment' },
+          // Clave para leer códigos: cuanta más resolución, más definición en
+          // las barras finas.
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
       });
       videoEl.srcObject = stream;
       await videoEl.play();
+
+      track = stream.getVideoTracks()[0] ?? null;
+      // Autofocus continuo y linterna, si el dispositivo los expone.
+      if (track) {
+        const caps = (track.getCapabilities?.() ?? {}) as Record<string, unknown>;
+        torchAvailable = 'torch' in caps;
+        if (Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
+          try {
+            // @ts-expect-error — focusMode no está en los tipos estándar.
+            await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+          } catch {}
+        }
+      }
+
       // @ts-expect-error — BarcodeDetector aún no está en los tipos del DOM.
       const detector = new window.BarcodeDetector({
         formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a'],
       });
+
+      scanning = true;
       const tick = async () => {
         if (stopped || !videoEl) return;
         try {
           const codes = await detector.detect(videoEl);
-          if (codes.length > 0) {
-            const hit = codes[0];
-            const fmt = FROM_NATIVE[hit.format] ?? 'code128';
-            stop();
-            onDetected(String(hit.rawValue), fmt);
-            return;
+          const hit = codes[0];
+          if (hit?.rawValue) {
+            const value = String(hit.rawValue);
+            if (value === lastSeen) {
+              // Segunda lectura idéntica → la damos por buena.
+              stop();
+              onDetected(value, FROM_NATIVE[hit.format] ?? 'code128');
+              return;
+            }
+            lastSeen = value;
           }
         } catch {}
-        raf = requestAnimationFrame(tick);
+        // ~8 lecturas/seg: suficiente y deja respirar al decodificador con
+        // fotogramas grandes.
+        timer = setTimeout(tick, 120);
       };
-      raf = requestAnimationFrame(tick);
+      tick();
     } catch (e) {
       error = 'No se pudo abrir la cámara. Revisa los permisos del navegador.';
     }
   }
 
+  async function toggleTorch() {
+    if (!track) return;
+    try {
+      torchOn = !torchOn;
+      // @ts-expect-error — torch no está en los tipos estándar.
+      await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+    } catch {
+      torchOn = false;
+      torchAvailable = false;
+    }
+  }
+
   function stop() {
     stopped = true;
-    if (raf) cancelAnimationFrame(raf);
+    scanning = false;
+    if (timer) clearTimeout(timer);
     stream?.getTracks().forEach((t) => t.stop());
     stream = null;
+    track = null;
   }
 
   $effect(() => {
@@ -78,12 +130,12 @@
 </script>
 
 <div class="fixed inset-0 z-[60] grid place-items-center p-4"
-  style="background: rgba(0,0,0,.8)" onclick={close} role="presentation">
-  <div class="card-elev w-full max-w-md p-5 space-y-3 pop-in"
+  style="background: rgba(0,0,0,.85)" onclick={close} role="presentation">
+  <div class="card-elev w-full max-w-lg p-5 space-y-3 pop-in"
     onclick={(e) => e.stopPropagation()} role="presentation">
 
     <header class="flex items-start justify-between">
-      <h2 class="text-lg font-bold">📷 Escanear tarjeta</h2>
+      <h2 class="text-lg font-bold">📷 Escanear código</h2>
       <button onclick={close} class="text-2xl leading-none text-muted hover:text-current">×</button>
     </header>
 
@@ -95,13 +147,28 @@
           disponible en Chrome/Edge (Android y escritorio). En iPhone/Safari y
           Firefox no existe todavía.</p>
         <p class="text-muted">Cierra esta ventana y <strong>escribe el número</strong>
-          de la tarjeta a mano: suele venir impreso junto al código.</p>
+          a mano: suele venir impreso junto al código.</p>
       </div>
     {:else}
-      <video bind:this={videoEl} muted playsinline
-        class="w-full rounded-xl bg-black aspect-[4/3] object-cover"></video>
-      <p class="text-xs text-muted">
-        Enfoca el código de la tarjeta. Se detecta solo y se cierra al leerlo.
+      <div class="relative">
+        <video bind:this={videoEl} muted playsinline
+          class="w-full rounded-xl bg-black aspect-[4/3] object-cover"></video>
+        <!-- Guía de encuadre: ayuda a acercar y centrar el código. -->
+        <div class="pointer-events-none absolute inset-0 grid place-items-center">
+          <div class="w-4/5 h-1/3 rounded-lg"
+            style="border: 2px solid rgba(255,255,255,.9); box-shadow: 0 0 0 9999px rgba(0,0,0,.35);"></div>
+        </div>
+        {#if torchAvailable}
+          <button onclick={toggleTorch}
+            class="absolute bottom-2 right-2 rounded-full px-3 py-1.5 text-sm"
+            style="background: rgba(0,0,0,.6); color: white;">
+            {torchOn ? '🔦 Apagar' : '🔦 Linterna'}
+          </button>
+        {/if}
+      </div>
+      <p class="text-xs text-muted text-center">
+        Encuadra el código dentro del recuadro y <strong>acércate</strong> hasta
+        que ocupe casi todo el ancho. Se lee solo.
       </p>
     {/if}
 

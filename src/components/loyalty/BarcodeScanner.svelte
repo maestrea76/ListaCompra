@@ -28,7 +28,21 @@
     code_128: 'code128', code_39: 'code39', upc_a: 'upca',
   };
 
-  const supported = typeof window !== 'undefined' && 'BarcodeDetector' in window;
+  // Chrome/Edge traen BarcodeDetector nativo. Safari/iOS y Firefox no, así que
+  // ahí cargamos un decodificador WASM (barcode-detector) SOLO en ese caso:
+  // el import es dinámico, los navegadores con soporte nativo no lo descargan.
+  const hasNative = typeof window !== 'undefined' && 'BarcodeDetector' in window;
+
+  const FORMATS = ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a'];
+
+  async function makeDetector(): Promise<any> {
+    if (hasNative) {
+      // @ts-expect-error — BarcodeDetector aún no está en los tipos del DOM.
+      return new window.BarcodeDetector({ formats: FORMATS });
+    }
+    const { BarcodeDetector } = await import('barcode-detector/pure');
+    return new BarcodeDetector({ formats: FORMATS as any });
+  }
 
   let videoEl: HTMLVideoElement | null = $state(null);
   let error = $state('');
@@ -48,7 +62,7 @@
   const COOLDOWN_MS = 2500;
 
   async function start() {
-    if (!supported || !videoEl) return;
+    if (!videoEl) return;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -75,10 +89,7 @@
         }
       }
 
-      // @ts-expect-error — BarcodeDetector aún no está en los tipos del DOM.
-      const detector = new window.BarcodeDetector({
-        formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a'],
-      });
+      const detector = await makeDetector();
 
       scanning = true;
       const tick = async () => {
@@ -139,7 +150,7 @@
   }
 
   $effect(() => {
-    if (videoEl && supported) start();
+    if (videoEl) start();
   });
 
   onDestroy(stop);
@@ -160,20 +171,9 @@
       <button onclick={close} class="text-2xl leading-none text-muted hover:text-current">×</button>
     </header>
 
-    {#if !supported}
-      <div class="rounded-xl bg-[var(--bg)] p-3 text-sm space-y-1.5"
-        style="border: 1px solid var(--border);">
-        <p>⚠️ <strong>Este navegador no puede escanear.</strong></p>
-        <p class="text-muted">La lectura de códigos con la cámara solo está
-          disponible en Chrome/Edge (Android y escritorio). En iPhone/Safari y
-          Firefox no existe todavía.</p>
-        <p class="text-muted">Cierra esta ventana y <strong>escribe el número</strong>
-          a mano: suele venir impreso junto al código.</p>
-      </div>
-    {:else}
-      <div class="relative">
-        <video bind:this={videoEl} muted playsinline
-          class="w-full rounded-xl bg-black aspect-[4/3] object-cover"></video>
+    <div class="relative">
+      <video bind:this={videoEl} muted playsinline
+        class="w-full rounded-xl bg-black aspect-[4/3] object-cover"></video>
         <!-- Guía de encuadre: ayuda a acercar y centrar el código. -->
         <div class="pointer-events-none absolute inset-0 grid place-items-center">
           <div class="w-4/5 h-1/3 rounded-lg"
@@ -191,12 +191,11 @@
             style="background: rgba(34,197,94,.95); color: white;">{feedback}</div>
         {/if}
       </div>
-      <p class="text-xs text-muted text-center">
-        Encuadra el código dentro del recuadro y <strong>acércate</strong> hasta
-        que ocupe casi todo el ancho. Se lee solo.
-        {#if continuous}<br />Puedes encadenar varios productos seguidos.{/if}
-      </p>
-    {/if}
+    <p class="text-xs text-muted text-center">
+      Encuadra el código dentro del recuadro y <strong>acércate</strong> hasta
+      que ocupe casi todo el ancho. Se lee solo.
+      {#if continuous}<br />Puedes encadenar varios productos seguidos.{/if}
+    </p>
 
     {#if error}<p class="text-sm text-red-500">{error}</p>{/if}
 

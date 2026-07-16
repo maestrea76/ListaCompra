@@ -113,6 +113,12 @@ class LookupView(HomeAssistantView):
 
         store = _store(hass)
         cached = store.get_cached_lookup(barcode)
+        # Las entradas guardadas antes de incrustar la foto contienen la URL
+        # remota en 'image'. Se descartan para volver a consultarla y cachear el
+        # data URL: si no, un producto escaneado entonces arrastraría la imagen
+        # rota para siempre.
+        if cached is not None and str(cached.get("image", "")).startswith("http"):
+            cached = None
         if cached is not None:
             return self.json({"enabled": True, "cached": True, **cached})
 

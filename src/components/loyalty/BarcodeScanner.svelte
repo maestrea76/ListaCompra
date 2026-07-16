@@ -308,7 +308,7 @@
         <button onclick={toggleTorch}
           class="absolute bottom-2 right-2 rounded-full px-3 py-1.5 text-sm"
           style="background: rgba(0,0,0,.6); color: white;">
-          {torchOn ? '🔦 Apagar' : '🔦 Linterna'}
+          {torchOn ? `🔦 ${t('scan.torchOff')}` : `🔦 ${t('scan.torch')}`}
         </button>
       {/if}
       {#if feedback}

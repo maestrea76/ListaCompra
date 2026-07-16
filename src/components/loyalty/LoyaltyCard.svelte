@@ -25,8 +25,8 @@
     </div>
 
     <p class="text-xs text-center max-w-xs" style="color:#666;">
-      Sube el brillo de la pantalla si el lector no lo coge.<br />
-      Toca fuera del código para cerrar.
+      {t('loyalty.brightness')}<br />
+      {t('loyalty.tapOutside')}
     </p>
   </div>
 {/if}

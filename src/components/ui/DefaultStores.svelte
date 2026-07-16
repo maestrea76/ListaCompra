@@ -48,8 +48,7 @@
     </header>
 
     <p class="text-xs text-muted">
-      Cuando añadas productos por voz, cada uno va al tipo de tienda que le
-      corresponde. Si tienes varias de un mismo tipo, elige aquí a cuál van.
+      {t('defaults.intro')}
     </p>
 
     {#if !canEdit}
@@ -60,8 +59,7 @@
 
     {#if typesWithChoice.length === 0}
       <p class="text-sm text-muted">
-        No tienes varias tiendas de ningún tipo, así que no hace falta elegir:
-        cada producto irá a la única tienda de su tipo.
+        {t('defaults.notNeeded')}
       </p>
     {:else}
       <ul class="space-y-3">

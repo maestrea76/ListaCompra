@@ -231,11 +231,11 @@
         <button onclick={() => openManager(null)} disabled={working}
           class="w-full rounded-xl py-2.5 font-semibold text-white disabled:opacity-50 transition"
           style="background: var(--accent);">
-          {working ? '…' : '➕ Nueva lista compartida'}
+          {working ? '…' : t('sync.newShareBtn')}
         </button>
       {:else}
         <p class="text-xs text-muted">
-          Las listas compartidas las crea un administrador de Home Assistant.
+          {t('sync.sharesAdminNote')}
         </p>
       {/if}
 

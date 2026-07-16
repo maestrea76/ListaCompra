@@ -369,9 +369,7 @@
             {/each}
           </div>
         {:else}
-          <p class="text-sm text-muted">
-            Aún no has añadido productos aquí. Escribe en la búsqueda o elige una sección.
-          </p>
+          <p class="text-sm text-muted">{t('list.emptySection')}</p>
         {/if}
 
         {#if myProductCount > 0}
@@ -394,7 +392,7 @@
     <!-- Lista agrupada -->
     {#if list.items.length === 0}
       <p class="text-center text-muted py-12">
-        {isInbox ? 'Bandeja vacía 🎉 Todo clasificado.' : 'Lista vacía. Añade productos arriba ⬆️'}
+        {isInbox ? t('list.inboxEmpty') : t('list.emptyAll')}
       </p>
     {:else}
       <div class="space-y-4">
@@ -402,7 +400,7 @@
           <section class="card-elev p-4">
             <h3 class="font-semibold mb-3 flex items-center gap-2">
               <span>{group.category?.icon.kind === 'emoji' ? group.category.icon.value : '📁'}</span>
-              {group.category?.name ?? 'Sin categoría'}
+              {group.category?.name ?? t('list.noCategory')}
               <span class="text-xs text-muted ml-auto">{group.items.length}</span>
             </h3>
             <ul class="divide-y" style="border-color: var(--border);">

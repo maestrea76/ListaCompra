@@ -243,9 +243,9 @@
           <div class="flex items-center justify-between gap-2 text-[11px]">
             <span class="text-muted">
               {#if detectedByCamera}
-                ✅ Formato detectado: <strong>{formatLabel}</strong>
+                {t('store.formatDetected')} <strong>{formatLabel}</strong>
               {:else}
-                Formato: <strong>{formatLabel}</strong> (automático)
+                {t('store.format')} <strong>{formatLabel}</strong> {t('store.formatAuto')}
               {/if}
             </span>
             <div class="flex gap-2 shrink-0">
@@ -271,8 +271,7 @@
         {/if}
 
         <p class="text-[10px] text-muted">
-          Se guarda en esta tienda: si la lista es compartida, la verán sus miembros.
-          Entra en los backups de Home Assistant.
+          {t('store.loyaltyNote')}
         </p>
       </fieldset>
 
@@ -287,7 +286,7 @@
         <button onclick={save}
           class="flex-1 rounded-xl py-2.5 font-semibold text-white"
           style="background: var(--accent);">
-          {isEdit ? 'Guardar cambios' : 'Crear tienda'}
+          {isEdit ? t('store.save') : t('store.create')}
         </button>
       </div>
   </div>

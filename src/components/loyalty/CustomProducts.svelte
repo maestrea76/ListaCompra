@@ -46,14 +46,13 @@
     </header>
 
     <p class="text-xs text-muted">
-      Los que has escaneado o creado tú y están disponibles en {storeName}. El
-      catálogo de fábrica no se puede editar.
+      {t('product.customIntro', { store: storeName })}
     </p>
 
     {#if mine.length === 0 && !query}
       <p class="text-sm text-muted py-6 text-center">
-        Todavía no has creado ninguno aquí.<br />
-        Escanea uno con 📷 o escribe su nombre y pulsa Enter.
+        {t('product.customEmptyHere')}<br />
+        {t('product.customScanHint')}
       </p>
     {:else}
       <input type="text" bind:value={query} placeholder={t('product.filter')}

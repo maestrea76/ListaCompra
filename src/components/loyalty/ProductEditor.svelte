@@ -119,8 +119,8 @@
 
     {#if product.barcode}
       <p class="text-[11px] text-muted">
-        Código de barras: <span class="font-mono">{product.barcode}</span> — al
-        escanearlo se reconoce y va directo a la lista.
+        {t('product.barcodeLabel')} <span class="font-mono">{product.barcode}</span>
+        — {t('product.barcodeNote')}
       </p>
     {/if}
 

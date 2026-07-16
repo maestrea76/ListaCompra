@@ -50,6 +50,14 @@
       import('zxing-wasm/reader/zxing_reader.wasm?url'),
     ]);
     const wasmUrl = (wasm as { default: string }).default;
+    // Comprobación explícita: si el .wasm no se sirve como application/wasm,
+    // Safari se niega a instanciarlo y detect() falla con "service unavailable".
+    try {
+      const r = await fetch(wasmUrl, { method: 'HEAD' });
+      wasmInfo = `${r.status} ${r.headers.get('content-type') ?? '(sin tipo)'}`;
+    } catch (e) {
+      wasmInfo = `no accesible: ${String((e as Error)?.message ?? e).slice(0, 60)}`;
+    }
     setZXingModuleOverrides({
       locateFile: (path: string, prefix: string) =>
         path.endsWith('.wasm') ? wasmUrl : prefix + path,
@@ -69,6 +77,8 @@
   let capsList = $state('');
   let detectError = $state('');
   let decodeMs = $state(0);
+  let facing = $state('');
+  let wasmInfo = $state('');
 
   let stream: MediaStream | null = null;
   let track: MediaStreamTrack | null = null;
@@ -115,6 +125,7 @@
       if (track) {
         const caps = (track.getCapabilities?.() ?? {}) as Record<string, unknown>;
         capsList = Object.keys(caps).join(', ') || '(no expone capacidades)';
+        facing = String((track.getSettings?.() as any)?.facingMode ?? '—');
         // Si el navegador no informa de capacidades, ofrecemos la linterna igual
         // y la ocultamos si al pulsarla falla: mejor eso que no ofrecerla nunca.
         torchAvailable = 'torch' in caps || Object.keys(caps).length === 0;
@@ -254,9 +265,10 @@
       </summary>
       <ul class="mt-1.5 text-[11px] space-y-0.5" style="color: var(--fg-muted);">
         <li>Motor: <strong>{engine || 'arrancando…'}</strong> {hasNative ? '(BarcodeDetector del navegador)' : '(decodificador WASM)'}</li>
-        <li>Resolución: <strong>{videoRes || '—'}</strong></li>
+        <li>Resolución: <strong>{videoRes || '—'}</strong> · cámara: <strong>{facing || '—'}</strong></li>
         <li>Tiempo por lectura: <strong>{decodeMs} ms</strong></li>
         <li>Linterna: <strong>{torchAvailable ? 'ofrecida' : 'no disponible'}</strong></li>
+        {#if wasmInfo}<li>WASM: <strong>{wasmInfo}</strong></li>{/if}
         <li class="break-all">Capacidades de la cámara: {capsList || '—'}</li>
         {#if detectError}
           <li class="break-all" style="color:#dc2626;">Error: {detectError}</li>

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import mimetypes
 from pathlib import Path
 
 import voluptuous as vol
@@ -77,6 +78,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             "Tu Compra: búsqueda de productos por código de barras ACTIVADA "
             "(consulta Open Food Facts; es la única petición saliente)"
         )
+
+    # El escáner de iOS usa un decodificador WebAssembly, y Safari EXIGE que el
+    # .wasm se sirva como application/wasm o se niega a instanciarlo. Python no
+    # siempre trae esa extensión en su tabla de tipos, así que la registramos.
+    mimetypes.add_type("application/wasm", ".wasm")
 
     # Sirve el wrapper (tucompra-panel.js) y el build de la SPA (panel/app).
     panel_dir = Path(__file__).parent / "panel"

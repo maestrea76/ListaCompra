@@ -8,6 +8,7 @@
   import type { Store, IconRef, LoyaltyFormat } from '$lib/types';
   import BarcodeScanner from '../loyalty/BarcodeScanner.svelte';
   import LoyaltyCode from '../loyalty/LoyaltyCode.svelte';
+  import PhotoCapture from '../ui/PhotoCapture.svelte';
 
   let { store, onClose }: { store?: Store; onClose: () => void } = $props();
 
@@ -73,6 +74,7 @@
   let fg = $state(store?.brand?.fg ?? '#FFFFFF');
   let initials = $state(store?.brand?.initials ?? '');
   let error = $state('');
+  let capturing = $state(false);
 
   function slug(s: string) {
     return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -199,11 +201,8 @@
             style="border-color: var(--border);" />
         {:else}
           <div class="flex flex-wrap gap-x-3 gap-y-1">
-            <label class="text-xs cursor-pointer" style="color: var(--accent);">
-              📷 {t('product.takePhoto')}
-              <input type="file" accept="image/*" capture="environment"
-                class="hidden" onchange={handleImage} />
-            </label>
+            <button type="button" onclick={() => (capturing = true)}
+              class="text-xs" style="color: var(--accent);">📷 {t('product.takePhoto')}</button>
             <label class="text-xs cursor-pointer" style="color: var(--accent);">
               🖼️ {t('product.useImage')}
               <input type="file" accept="image/*" class="hidden" onchange={handleImage} />
@@ -302,4 +301,10 @@
 
 {#if showScanner}
   <BarcodeScanner onDetected={onScanned} onClose={() => (showScanner = false)} />
+{/if}
+
+{#if capturing}
+  <PhotoCapture
+    onCapture={(url) => { iconImage = url; iconKind = 'image'; error = ''; }}
+    onClose={() => (capturing = false)} />
 {/if}

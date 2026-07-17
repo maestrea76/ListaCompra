@@ -4,11 +4,21 @@
 //
 // Sin esto, "hacer una foto" fallaría siempre por tamaño.
 
-const MAX_SIDE = 512; // px del lado mayor: de sobra para un icono de producto
-const TARGET_BYTES = 150_000;
+const MAX_SIDE = 1024; // px del lado mayor. A 512 el icono se veía justo al
+                       // ampliarlo; con más margen de bytes (abajo) se sube.
+const TARGET_BYTES = 512_000; // presupuesto por imagen en el estado (se sincroniza con HA)
 
 /** Un dataURL base64 pesa ~4/3 de los bytes reales. */
 const approxBytes = (dataUrl: string) => Math.ceil((dataUrl.length - dataUrl.indexOf(',') - 1) * 3 / 4);
+
+/** Reduce un canvas a JPEG por debajo de TARGET_BYTES bajando la calidad. */
+export function canvasToStorableDataUrl(canvas: HTMLCanvasElement): string {
+  for (const q of [0.9, 0.8, 0.7, 0.55, 0.4]) {
+    const out = canvas.toDataURL('image/jpeg', q);
+    if (approxBytes(out) <= TARGET_BYTES) return out;
+  }
+  return canvas.toDataURL('image/jpeg', 0.4);
+}
 
 async function loadImage(file: File): Promise<HTMLImageElement> {
   const url = URL.createObjectURL(file);
@@ -39,13 +49,5 @@ export async function fileToStorableDataUrl(file: File): Promise<string> {
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('canvas no disponible');
   ctx.drawImage(img, 0, 0, w, h);
-
-  // Baja la calidad hasta caber. El primer intento (0.82) ya sirve para casi
-  // todo a 512px; los pasos siguientes cubren fotos muy "ruidosas".
-  for (const q of [0.82, 0.7, 0.55, 0.4]) {
-    const out = canvas.toDataURL('image/jpeg', q);
-    if (approxBytes(out) <= TARGET_BYTES) return out;
-  }
-  // Último recurso: lo que salga a 0.4. A 512px es rarísimo llegar aquí.
-  return canvas.toDataURL('image/jpeg', 0.4);
+  return canvasToStorableDataUrl(canvas);
 }

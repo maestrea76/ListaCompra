@@ -9,12 +9,15 @@
   import { app } from '$lib/stores/app.svelte';
   import { base } from '$lib/base';
   import { t } from '$lib/i18n/ui.svelte';
+  import { norm, rankMatches } from '$lib/search';
   import type { Product, Unit } from '$lib/types';
   import MenuButton from '../ui/MenuButton.svelte';
   import LoyaltyCard from '../loyalty/LoyaltyCard.svelte';
   import ProductScanDialog from '../loyalty/ProductScanDialog.svelte';
   import ProductIcon from '../ui/ProductIcon.svelte';
   import CustomProducts from '../loyalty/CustomProducts.svelte';
+  import ProductEditor from '../loyalty/ProductEditor.svelte';
+  import HoldButton from '../ui/HoldButton.svelte';
   import PhotoZoom from '../ui/PhotoZoom.svelte';
 
   let { storeId }: { storeId: string } = $props();
@@ -31,6 +34,8 @@
   let showMyProducts = $state(false);
   // Producto cuya foto se está viendo en grande.
   let zoomProduct = $state<Product | null>(null);
+  // Producto que se está editando desde su fila de la lista (✏️).
+  let editingProduct = $state<Product | null>(null);
 
   // Cuántos productos custom hay disponibles en esta tienda (para el enlace).
   // Todos los de esta tienda: desde ahí se le pone imagen a cualquiera, no solo
@@ -51,33 +56,6 @@
 
   // Cuántos productos "habituales" mostramos cuando no hay búsqueda.
   const HABITUALES_LIMIT = 20;
-
-  // Normaliza texto para búsquedas tolerantes: minúsculas + sin acentos/diacríticos.
-  const norm = (s: string) =>
-    s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-
-  // ¿Aparecen los caracteres de `needle` en orden dentro de `hay`?
-  // (coincidencia por subsecuencia → tolera letras intercaladas y typos leves).
-  const isSubsequence = (needle: string, hay: string) => {
-    let i = 0;
-    for (let j = 0; j < hay.length && i < needle.length; j++) {
-      if (hay[j] === needle[i]) i++;
-    }
-    return i === needle.length;
-  };
-
-  // Puntúa cómo de bien casa `name` con la consulta `q` (ya normalizados).
-  // Mayor = mejor. -1 = no casa. Criterios, de más a menos fuerte:
-  //  4 nombre empieza por la consulta · 3 contiene la consulta entera ·
-  //  2 todas las palabras de la consulta aparecen · 1 subsecuencia difusa.
-  const scoreMatch = (name: string, q: string): number => {
-    if (name.startsWith(q)) return 4;
-    if (name.includes(q)) return 3;
-    const words = q.split(/\s+/).filter(Boolean);
-    if (words.length > 1 && words.every((w) => name.includes(w))) return 2;
-    if (isSubsequence(q.replace(/\s+/g, ''), name)) return 1;
-    return -1;
-  };
 
   onMount(() => app.hydrate());
 
@@ -115,16 +93,10 @@
     let pool = productsForType;
     if (activeCat !== 'all') pool = pool.filter((p) => p.categoryId === activeCat);
 
-    const q = norm(query.trim());
-    if (q) {
-      // Búsqueda tolerante: puntuamos cada producto y nos quedamos con los
-      // que casan (score >= 0), ordenados por relevancia y luego alfabético.
-      return pool
-        .map((p) => ({ p, score: scoreMatch(norm(p.name), q) }))
-        .filter((x) => x.score >= 0)
-        .sort((a, b) => b.score - a.score || byName(a.p, b.p))
-        .slice(0, 60)
-        .map((x) => x.p);
+    if (query.trim()) {
+      // Búsqueda tolerante, la misma que usa la voz (src/lib/search.ts): así
+      // buscar "pan" aquí y pedirlo por voz dan el mismo producto.
+      return rankMatches(pool, query).slice(0, 60);
     }
 
     // Sin texto: ordenamos por uso descendente y cogemos los top.
@@ -444,6 +416,14 @@
                       </select>
                     </div>
                   </div>
+                  <!-- Editar el producto desde donde se está viendo: es la vía
+                       corta para ponerle imagen sin buscarlo en otra pantalla.
+                       Va con mantener pulsado porque los botones de la fila están
+                       muy juntos y abrir el editor sin querer molesta. -->
+                  {#if p}
+                    <HoldButton title={t('product.holdToEdit')}
+                      onHold={() => (editingProduct = p)}>✏️</HoldButton>
+                  {/if}
                   <button onclick={() => (movingItemId = movingItemId === item.id ? null : item.id)}
                     class="text-muted hover:text-current text-lg shrink-0"
                     title={t('list.move')}>↪</button>
@@ -489,6 +469,11 @@
 
   {#if zoomProduct}
     <PhotoZoom product={zoomProduct} onClose={() => (zoomProduct = null)} />
+  {/if}
+
+  {#if editingProduct}
+    <ProductEditor product={editingProduct} {categories} {storeId} storeName={store.name}
+      onClose={() => (editingProduct = null)} />
   {/if}
 
   {#if showScanProduct}

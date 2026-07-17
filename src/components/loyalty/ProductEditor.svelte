@@ -71,11 +71,8 @@
       ? ({ kind: 'image', value: photo } as const)
       : ({ kind: 'emoji', value: emoji || '🏷️' } as const);
 
-    // El icono va SIEMPRE a la capa de overrides, también en los custom: así
-    // "volver al original" recupera la foto que trajo Open Food Facts en vez de
-    // haberla machacado.
-    app.setProductIcon(product.id, icon);
-
+    // updateProduct PRIMERO: reemplaza el producto conservando su icono original
+    // (la foto de Open Food Facts o el emoji del seed) en state.products.
     if (isCustom) {
       const clean = name.trim();
       if (clean.length < 2) return;
@@ -87,6 +84,13 @@
         ...(onlyHere ? { storeId } : { storeId: undefined }),
       });
     }
+
+    // setProductIcon AL FINAL: su refreshSeed aplica el icono elegido ENCIMA del
+    // producto ya actualizado. Si fuese antes, updateProduct lo pisaría con el
+    // icono original y la foto no se vería hasta el siguiente arranque. El icono
+    // va SIEMPRE al override (también en los custom) para que "volver al
+    // original" recupere la foto de OFF en vez de haberla machacado.
+    app.setProductIcon(product.id, icon);
     onClose();
   }
 

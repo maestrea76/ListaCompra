@@ -314,7 +314,11 @@
 
 <div class="fixed inset-0 z-[60] grid place-items-center p-4"
   style="background: rgba(0,0,0,.85)" onclick={close} role="presentation">
-  <div class="card-elev w-full max-w-lg p-5 space-y-3 pop-in max-h-[95vh] overflow-y-auto"
+  <!-- scrollbar-gutter: stable reserva el hueco de la barra SIEMPRE. Sin esto,
+       al desplegar el diagnóstico el contenido pasa de 95vh, aparece la barra,
+       el ancho baja ~15px y el <video> (w-full + aspect-[4/3]) recalcula alto y
+       ancho: se ve como un parpadeo de la imagen. -->
+  <div class="card-elev w-full max-w-lg p-5 space-y-3 pop-in max-h-[95vh] overflow-y-auto [scrollbar-gutter:stable]"
     onclick={(e) => e.stopPropagation()} role="presentation">
 
     <header class="flex items-start justify-between">
@@ -370,7 +374,11 @@
       <summary class="cursor-pointer text-[11px] text-muted">
         {t('scan.diag')} ({engine || '…'}{videoRes ? ` · ${videoRes}` : ''})
       </summary>
-      <ul class="mt-1.5 text-[11px] space-y-0.5" style="color: var(--fg-muted);">
+      <!-- Alto acotado con scroll propio: la lista de capacidades es break-all y
+           no tiene límite (varía por cámara), así que el panel crecía de forma
+           impredecible y el modal, centrado, se recolocaba moviendo el vídeo. -->
+      <ul class="mt-1.5 text-[11px] space-y-0.5 max-h-40 overflow-y-auto [scrollbar-gutter:stable]"
+        style="color: var(--fg-muted);">
         <li>{t('scan.diagEngine')}: <strong>{engine || t('scan.diagStarting')}</strong></li>
         <li>{t('scan.diagResolution')}: <strong>{videoRes || '—'}</strong> · {t('scan.diagCamera')}: <strong>{facing || '—'}</strong></li>
         <li class="break-all">{t('scan.diagSaved')}: <strong>{savedLabel || '—'}</strong> {deviceId && devices.some((d) => d.deviceId === deviceId) ? '✅' : '⚠️'}</li>

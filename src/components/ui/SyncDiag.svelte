@@ -98,7 +98,7 @@
 
 <div class="fixed inset-0 z-50 grid place-items-center p-4"
   style="background: rgba(0,0,0,.5)" onclick={onClose} role="presentation">
-  <div class="card-elev w-full max-w-md p-6 space-y-4 pop-in max-h-[90vh] overflow-y-auto"
+  <div class="card-elev w-full max-w-md p-6 space-y-4 pop-in max-h-[90vh] overflow-y-auto [scrollbar-gutter:stable]"
     onclick={(e) => e.stopPropagation()} role="presentation">
 
     <header class="flex items-start justify-between">

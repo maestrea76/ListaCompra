@@ -8,6 +8,7 @@
 
   import { app } from '$lib/stores/app.svelte';
   import { lookupBarcode, type LookupResult } from '$lib/sync.svelte';
+  import { findSimilarProduct } from '$lib/search';
   import type { Category } from '$lib/types';
   import BarcodeScanner from './BarcodeScanner.svelte';
 
@@ -72,6 +73,16 @@
     return null;
   }
 
+  /** Categoría del producto del catálogo que más se parece al escaneado.
+   *
+   *  Va ANTES que las pistas de Open Food Facts: el catálogo es el del propio
+   *  usuario, así que si ya tiene "Maíz dulce" en Despensa, un "Maíz dulce
+   *  Hacendado" recién escaneado debe caer en Despensa y no donde diga OFF. */
+  function guessFromCatalog(rawName: string): string | null {
+    const avail = new Set(categories.map((c) => c.id));
+    return findSimilarProduct(rawName, app.state.products, avail)?.categoryId ?? null;
+  }
+
   let fbTimer: ReturnType<typeof setTimeout> | null = null;
   function flash(msg: string) {
     feedback = msg;
@@ -98,7 +109,11 @@
     if (res.found && res.name) {
       // Nombre sugerido: producto + marca + cantidad, editable por el usuario.
       name = [res.name, res.brand, res.quantity].filter(Boolean).join(' ').trim();
-      const guessed = guessCategory(res.categories ?? []);
+      // El catálogo del usuario manda sobre las pistas de OFF. Se busca por el
+      // nombre limpio (sin marca ni gramaje), que es lo que casa con el seed.
+      const guessed = guessFromCatalog(res.name ?? name)
+        ?? guessFromCatalog(name)
+        ?? guessCategory(res.categories ?? []);
       if (guessed) categoryId = guessed;
     }
     busy = false;

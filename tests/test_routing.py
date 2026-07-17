@@ -142,6 +142,65 @@ def test_producto_desconocido_va_a_la_bandeja():
 
 # --- el catálogo exportado (si el build lo ha generado) -------------------
 
+def test_exacto_gana_a_empieza_por():
+    """Pedir "pan" por voz daba "Panceta".
+
+    Ambos empiezan por "pan" (score 4) y ganaba el primero del catálogo. El
+    tramo exacto (5) es lo que lo arregla. Si alguien lo quita, esto salta.
+    """
+    assert routing._score("pan", "pan") == 5
+    assert routing._score("panceta", "pan") == 4
+    productos = [
+        {"id": "panceta", "name": "Panceta", "categoryId": "car-cerdo"},
+        {"id": "pan", "name": "Pan", "categoryId": "pan-pan"},
+    ]
+    assert routing.match_product("pan", productos)["id"] == "pan"
+    # Y con el catálogo al revés, para que no dependa del orden.
+    assert routing.match_product("pan", list(reversed(productos)))["id"] == "pan"
+
+
+def test_a_igual_puntuacion_gana_el_nombre_mas_corto():
+    productos = [
+        {"id": "largo", "name": "Leche condensada azucarada", "categoryId": "sup-lacteos"},
+        {"id": "corto", "name": "Leche entera", "categoryId": "sup-lacteos"},
+    ]
+    # Los dos empiezan por "leche": debe ganar el más corto, no el orden.
+    assert routing.match_product("leche", productos)["id"] == "corto"
+
+
+def test_resolve_devuelve_las_alternativas():
+    """El servicio las expone para que Assist pueda decirlas en voz alta."""
+    productos = [
+        {"id": "pan", "name": "Pan", "categoryId": "pan-pan"},
+        {"id": "panceta", "name": "Panceta", "categoryId": "pan-pan"},
+    ]
+    cat = {"categories": [{"id": "pan-pan", "typeId": "panaderia"}],
+           "locales": {"en": {"products": productos, "stores": []}}}
+    res = routing.resolve("pan", {}, routing.catalog_for(cat, "en", "GB"))
+    assert res["product"]["id"] == "pan"
+    assert "Panceta" in res["alternatives"]
+
+
+def test_el_pan_generico_existe_en_todos_los_idiomas():
+    """Había una docena de tipos de pan pero ninguno genérico, así que pedir
+    "pan" acababa en cualquier otra cosa."""
+    path = ROOT / "custom_components" / "tucompra" / "catalog.json"
+    if not path.exists():
+        return
+    cat = json.loads(path.read_text(encoding="utf-8"))
+    snap = {"lists": {}, "customProducts": [], "customStores": [], "defaultStores": {}}
+    for lang, cc, termino, esperado in [
+        ("es", "ES", "pan", "Pan"), ("en", "GB", "bread", "Bread"),
+        ("fr", "FR", "pain", "Pain"), ("de", "DE", "brot", "Brot"),
+        ("pt", "BR", "pão", "Pão"),
+    ]:
+        res = routing.resolve(termino, snap, routing.catalog_for(cat, lang, cc))
+        assert res["product"] is not None, f"{termino!r} no casa en {lang}"
+        assert res["product"]["name"] == esperado, (
+            f"{lang}: {termino!r} → {res['product']['name']!r}, se esperaba {esperado!r}"
+        )
+
+
 def test_el_ejemplo_del_readme_existe_en_todos_los_idiomas():
     """El README documenta `name: milk`. Que exista de verdad.
 

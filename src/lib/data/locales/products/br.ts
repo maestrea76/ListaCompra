@@ -354,6 +354,7 @@ export const BR: Product[] = [
   b('p-moqueca','Kit moqueca','pes-otros','🍲','unidad'),
 
   // ══ Padaria ══════════════════════════════════════════════════════════
+  b('k-pao','Pão','pan-pan','🍞','unidad'),
   b('k-pao-frances','Pão francês','pan-pan','🥖','kg'),
   b('k-pao-de-forma','Pão de forma','pan-pan','🍞','unidad'),
   b('k-pao-integral','Pão integral','pan-pan','🍞','unidad'),

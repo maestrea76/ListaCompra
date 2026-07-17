@@ -33,9 +33,9 @@
   let zoomProduct = $state<Product | null>(null);
 
   // Cuántos productos custom hay disponibles en esta tienda (para el enlace).
-  const myProductCount = $derived(
-    productsForType.filter((p) => p.id.startsWith('custom-')).length,
-  );
+  // Todos los de esta tienda: desde ahí se le pone imagen a cualquiera, no solo
+  // a los escaneados.
+  const myProductCount = $derived(productsForType.length);
 
   const INBOX_ID = 'inbox';
 

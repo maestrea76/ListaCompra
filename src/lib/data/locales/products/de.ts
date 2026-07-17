@@ -361,6 +361,7 @@ export const DE: Product[] = [
   d('p-fischfrikadellen','Fischfrikadellen','pes-otros','🐟','unidad'),
 
   // ══ Bäckerei ═════════════════════════════════════════════════════════
+  d('k-brot','Brot','pan-pan','🍞','unidad'),
   d('k-brotchen','Brötchen','pan-pan','🥐','unidad'),
   d('k-roggenbrot','Roggenbrot','pan-pan','🍞','unidad'),
   d('k-vollkornbrot','Vollkornbrot','pan-pan','🍞','unidad'),

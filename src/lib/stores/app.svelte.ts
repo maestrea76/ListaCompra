@@ -56,7 +56,31 @@ class AppStore {
     const customProducts = this.state.products.filter((p) => p.id.startsWith('custom-'));
     this.state.products = [...seed.products, ...customProducts];
 
+    // Iconos elegidos por el usuario: se aplican DESPUÉS de rehacer el seed,
+    // que es lo que les permite sobrevivir al arranque y al cambio de idioma.
+    const icons = this.state.productIcons;
+    if (icons && Object.keys(icons).length > 0) {
+      this.state.products = this.state.products.map((p) =>
+        icons[p.id] ? { ...p, icon: icons[p.id] } : p,
+      );
+    }
+
     this.state.storeTypes = seed.storeTypes;
+  }
+
+  /** Fija el icono de un producto (del seed o custom). `null` lo devuelve al
+   *  original: el emoji del seed, o la foto de Open Food Facts si se escaneó. */
+  setProductIcon(id: Product['id'], icon: IconRef | null): void {
+    this.state.productIcons ??= {};
+    if (icon) this.state.productIcons[id] = icon;
+    else delete this.state.productIcons[id];
+    this.refreshSeed();
+    this.persist();
+  }
+
+  /** ¿Tiene este producto un icono puesto por el usuario? */
+  hasCustomIcon(id: Product['id']): boolean {
+    return !!this.state.productIcons?.[id];
   }
 
   /** Cambia el locale (idioma/cultura del catálogo) y re-seedea. */

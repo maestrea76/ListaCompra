@@ -87,8 +87,15 @@ def _is_subsequence(needle: str, hay: str) -> bool:
 
 
 def _score(name_n: str, q: str) -> int:
-    """Igual que scoreMatch del frontend: 4 empieza · 3 contiene · 2 todas las
-    palabras · 1 subsecuencia · -1 no casa."""
+    """Igual que scoreMatch del frontend: 5 exacto · 4 empieza · 3 contiene ·
+    2 todas las palabras · 1 subsecuencia · -1 no casa.
+
+    El 5 (exacto) existe porque sin él "pan" empataba a 4 con "panceta" —ambos
+    empiezan por "pan"— y ganaba el primero del catálogo. Pedir "pan" por voz
+    acababa en panceta.
+    """
+    if name_n == q:
+        return 5
     if name_n.startswith(q):
         return 4
     if q in name_n:
@@ -102,23 +109,38 @@ def _score(name_n: str, q: str) -> int:
 
 
 def match_product(name: str, products: list[dict]) -> dict | None:
+    return (match_candidates(name, products) or [None])[0]
+
+
+def match_candidates(name: str, products: list[dict], limit: int = 5) -> list[dict]:
+    """Productos que casan, del mejor al peor.
+
+    A igual puntuación gana el nombre MÁS CORTO: es el más parecido a lo pedido.
+    Sin ese desempate, "leche" con dos productos que empiezan por "leche" se
+    decidía por el orden del catálogo, que es arbitrario.
+    """
     q = _norm(name).strip()
     if not q:
-        return None
-    best: dict | None = None
-    best_score = 0
+        return []
+    puntuados = []
     for p in products:
         sc = _score(_norm(p.get("name", "")), q)
-        if sc > best_score:
-            best_score, best = sc, p
-    return best
+        if sc > 0:
+            puntuados.append((sc, p))
+    puntuados.sort(key=lambda x: (-x[0], len(_norm(x[1].get("name", "")))))
+    return [p for _, p in puntuados[:limit]]
 
 
 def resolve(name: str, snapshot: dict | None, catalog: dict) -> dict[str, Any]:
     """Devuelve {product, type_id, store_id}. store_id None → va a inbox."""
     snapshot = snapshot or {}
     products = list(catalog.get("products", [])) + list(snapshot.get("customProducts", []))
-    product = match_product(name, products)
+    candidatos = match_candidates(name, products)
+    product = candidatos[0] if candidatos else None
+    # Otros nombres que también casaban. No sirven para decidir —ya se ha
+    # elegido— pero el servicio los devuelve para que Assist pueda decirlos y
+    # el usuario detecte al vuelo si acertó.
+    alternativas = [c["name"] for c in candidatos[1:]]
 
     cat_type = {c["id"]: c["typeId"] for c in catalog.get("categories", [])}
     stores = {s["id"]: s for s in catalog.get("stores", [])}
@@ -133,7 +155,8 @@ def resolve(name: str, snapshot: dict | None, catalog: dict) -> dict[str, Any]:
     # Producto exclusivo de una tienda (marca propia): manda sobre el tipo.
     exclusive = product.get("storeId") if product else None
     if exclusive and exclusive in stores and stores[exclusive].get("enabled", True) is not False:
-        return {"product": product, "type_id": type_id, "store_id": exclusive}
+        return {"product": product, "type_id": type_id, "store_id": exclusive,
+                "alternatives": alternativas}
 
     if type_id:
         explicit = default_stores.get(type_id)
@@ -147,4 +170,5 @@ def resolve(name: str, snapshot: dict | None, catalog: dict) -> dict[str, Any]:
             if len(of_type) == 1:
                 store_id = of_type[0]["id"]
 
-    return {"product": product, "type_id": type_id, "store_id": store_id}
+    return {"product": product, "type_id": type_id, "store_id": store_id,
+            "alternatives": alternativas}

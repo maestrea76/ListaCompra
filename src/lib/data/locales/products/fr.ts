@@ -366,6 +366,7 @@ export const FR: Product[] = [
   f('p-soupe-poisson','Soupe de poisson','pes-otros','🍲','unidad'),
 
   // ══ Boulangerie ══════════════════════════════════════════════════════
+  f('k-pain','Pain','pan-pan','🍞','unidad'),
   f('k-baguette','Baguette','pan-pan','🥖','unidad'),
   f('k-baguette-tradition','Baguette tradition','pan-pan','🥖','unidad'),
   f('k-pain-campagne','Pain de campagne','pan-pan','🍞','unidad'),

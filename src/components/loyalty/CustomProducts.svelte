@@ -23,11 +23,13 @@
   const catName = (id: string) =>
     categories.find((c) => c.id === id)?.name ?? t('product.noSection');
 
+  // Todos los productos de esta tienda, no solo los custom: de los del seed no
+  // se puede cambiar el nombre, pero sí ponerles una imagen, y este es el único
+  // sitio desde el que se llega al editor.
   const mine = $derived.by(() => {
     const catIds = new Set(categories.map((c) => c.id));
     const q = query.trim().toLowerCase();
     return app.state.products
-      .filter((p) => p.id.startsWith('custom-'))
       .filter((p) => catIds.has(p.categoryId) && (!p.storeId || p.storeId === storeId))
       .filter((p) => !q || p.name.toLowerCase().includes(q))
       .slice()

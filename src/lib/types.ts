@@ -123,4 +123,13 @@ export interface AppState {
    *  idioma/país de Home Assistant, o del navegador fuera de él. Si el idioma no
    *  es ninguno de los soportados, DEFAULT_LOCALE ('en'). */
   locale?: 'es' | 'en' | 'us' | 'fr' | 'de' | 'br';
+  /** Icono elegido por el usuario para un producto, incluidos los del seed.
+   *
+   *  Vive APARTE de `products` porque refreshSeed() reemplaza el seed entero en
+   *  cada arranque (`[...seed.products, ...customProducts]`): si el icono se
+   *  guardara en el Product, se perdería al recargar y al cambiar de idioma.
+   *  Como capa de overrides, el seed sigue mandando en nombre y categoría, solo
+   *  se pisa el icono, y borrar la entrada devuelve el original (el emoji del
+   *  seed, o la foto que trajo Open Food Facts al escanear). */
+  productIcons?: Record<Product['id'], IconRef>;
 }

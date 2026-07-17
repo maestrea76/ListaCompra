@@ -462,6 +462,7 @@ export const US: Product[] = [
   a('f-crab-cakes','Crab cakes','pes-otros','🦀','paquete'),
 
   // ══ Bakery ═══════════════════════════════════════════════════════════
+  a('k-bread','Bread','pan-pan','🍞','unidad'),
   a('k-sourdough','Sourdough loaf','pan-pan','🍞','unidad'),
   a('k-white-bread','White sandwich bread','pan-pan','🍞','unidad'),
   a('k-wheat-bread','Whole wheat bread','pan-pan','🍞','unidad'),

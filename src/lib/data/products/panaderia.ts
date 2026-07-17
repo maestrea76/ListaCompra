@@ -7,6 +7,10 @@ const p = (id: string, name: string, emoji: string, cat: string, unit: Unit = 'u
 
 export const PANADERIA: Product[] = [
   // Pan
+  // Genérico y primero a propósito: había una docena de tipos (barra, hogaza,
+  // payés, integral…) pero ningún "Pan" a secas, así que pedirlo por voz acababa
+  // en cualquier otra cosa.
+  p('pan',              'Pan',                     '🍞', 'pan-pan'),
   p('barra-cuarto',     'Barra de cuarto',         '🥖', 'pan-pan'),
   p('barra-pueblo',     'Barra de pueblo',         '🥖', 'pan-pan'),
   p('hogaza',           'Hogaza',                  '🍞', 'pan-pan'),

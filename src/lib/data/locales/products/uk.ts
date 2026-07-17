@@ -494,6 +494,7 @@ export const UK: Product[] = [
   u('f-fish-pie-mix','Fish pie mix','pes-otros','🥧','paquete'),
 
   // ══ Bakery ═══════════════════════════════════════════════════════════
+  u('k-bread','Bread','pan-pan','🍞','unidad'),
   u('k-sourdough','Sourdough loaf','pan-pan','🍞','unidad'),
   u('k-bloomer','White bloomer','pan-pan','🍞','unidad'),
   u('k-wholemeal','Wholemeal loaf','pan-pan','🍞','unidad'),

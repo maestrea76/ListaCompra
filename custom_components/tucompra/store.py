@@ -258,6 +258,7 @@ class TuCompraStore:
         share["snapshot"] = snap
         await self._async_save()
 
+        alternatives = res.get("alternatives") or []
         return {
             "ok": True,
             "share_id": share["id"],
@@ -265,4 +266,13 @@ class TuCompraStore:
             "product_id": product_id,
             "matched": product is not None,
             "classified": store_id != INBOX_STORE_ID,
+            # Nombre REAL del producto que casó, que puede no ser lo que se dijo
+            # ("pan" → "Pan integral"). Se devuelve para que el intent_script lo
+            # diga en voz alta y el usuario se entere en el momento de si acertó.
+            "product_name": product["name"] if product else _titlecase_es(name),
+            # Otros que también casaban, del más al menos probable. Assist no
+            # puede repreguntar y actuar sobre la respuesta (los intents propios
+            # no hacen diálogo de varios turnos), pero sí puede nombrarlos.
+            "alternatives": alternatives,
+            "ambiguous": bool(alternatives),
         }

@@ -112,8 +112,8 @@ def match_product(name: str, products: list[dict]) -> dict | None:
     return (match_candidates(name, products) or [None])[0]
 
 
-def match_candidates(name: str, products: list[dict], limit: int = 5) -> list[dict]:
-    """Productos que casan, del mejor al peor.
+def match_scored(name: str, products: list[dict]) -> list[tuple[int, dict]]:
+    """(puntuación, producto) de los que casan, del mejor al peor.
 
     A igual puntuación gana el nombre MÁS CORTO: es el más parecido a lo pedido.
     Sin ese desempate, "leche" con dos productos que empiezan por "leche" se
@@ -122,25 +122,53 @@ def match_candidates(name: str, products: list[dict], limit: int = 5) -> list[di
     q = _norm(name).strip()
     if not q:
         return []
-    puntuados = []
-    for p in products:
-        sc = _score(_norm(p.get("name", "")), q)
-        if sc > 0:
-            puntuados.append((sc, p))
+    puntuados = [
+        (sc, p)
+        for p in products
+        if (sc := _score(_norm(p.get("name", "")), q)) > 0
+    ]
     puntuados.sort(key=lambda x: (-x[0], len(_norm(x[1].get("name", "")))))
-    return [p for _, p in puntuados[:limit]]
+    return puntuados
+
+
+def match_candidates(name: str, products: list[dict], limit: int = 5) -> list[dict]:
+    return [p for _, p in match_scored(name, products)[:limit]]
+
+
+def tied_alternatives(scored: list[tuple[int, dict]], limit: int = 3) -> list[str]:
+    """Nombres que EMPATAN con el ganador, sin él y sin repetidos.
+
+    Solo el empate es ambigüedad de verdad. Si se devolviera cualquier otra
+    coincidencia, "leche" (exacta, 5) saldría como ambigua por "Chocolate con
+    leche" (3), y Assist recitaría alternativas en cada frase.
+    """
+    if not scored:
+        return []
+    mejor = scored[0][0]
+    fuera = {_norm(scored[0][1].get("name", ""))}
+    out: list[str] = []
+    for sc, p in scored[1:]:
+        if sc != mejor:
+            break                       # ya vienen ordenados: el resto puntúa menos
+        n = p.get("name", "")
+        if _norm(n) in fuera:
+            continue                    # mismo nombre en otra sección (p.ej. súper y panadería)
+        fuera.add(_norm(n))
+        out.append(n)
+        if len(out) >= limit:
+            break
+    return out
 
 
 def resolve(name: str, snapshot: dict | None, catalog: dict) -> dict[str, Any]:
     """Devuelve {product, type_id, store_id}. store_id None → va a inbox."""
     snapshot = snapshot or {}
     products = list(catalog.get("products", [])) + list(snapshot.get("customProducts", []))
-    candidatos = match_candidates(name, products)
-    product = candidatos[0] if candidatos else None
-    # Otros nombres que también casaban. No sirven para decidir —ya se ha
-    # elegido— pero el servicio los devuelve para que Assist pueda decirlos y
-    # el usuario detecte al vuelo si acertó.
-    alternativas = [c["name"] for c in candidatos[1:]]
+    puntuados = match_scored(name, products)
+    product = puntuados[0][1] if puntuados else None
+    # Solo los que EMPATAN con el ganador: esos sí son duda real. El servicio los
+    # devuelve para que Assist los diga y el usuario elija sin ir a la app.
+    alternativas = tied_alternatives(puntuados)
 
     cat_type = {c["id"]: c["typeId"] for c in catalog.get("categories", [])}
     stores = {s["id"]: s for s in catalog.get("stores", [])}

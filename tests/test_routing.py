@@ -168,17 +168,49 @@ def test_a_igual_puntuacion_gana_el_nombre_mas_corto():
     assert routing.match_product("leche", productos)["id"] == "corto"
 
 
-def test_resolve_devuelve_las_alternativas():
-    """El servicio las expone para que Assist pueda decirlas en voz alta."""
+def _cat(productos):
+    return {"categories": [{"id": "pan-pan", "typeId": "panaderia"}],
+            "locales": {"en": {"products": productos, "stores": []}}}
+
+
+def test_solo_es_ambiguo_si_hay_empate():
+    """Alternativas = las que EMPATAN con el ganador, no cualquier coincidencia.
+
+    Si valiera cualquiera, "leche" (exacta) saldría ambigua por "Chocolate con
+    leche" y Assist recitaría alternativas en cada frase. Comprobado con el
+    catálogo real: "milk" traía ['Milk chocolate bar', 'Oat milk'].
+    """
     productos = [
         {"id": "pan", "name": "Pan", "categoryId": "pan-pan"},
         {"id": "panceta", "name": "Panceta", "categoryId": "pan-pan"},
     ]
-    cat = {"categories": [{"id": "pan-pan", "typeId": "panaderia"}],
-           "locales": {"en": {"products": productos, "stores": []}}}
-    res = routing.resolve("pan", {}, routing.catalog_for(cat, "en", "GB"))
+    res = routing.resolve("pan", {}, routing.catalog_for(_cat(productos), "en", "GB"))
     assert res["product"]["id"] == "pan"
-    assert "Panceta" in res["alternatives"]
+    # "Pan" es exacto (5) y "Panceta" solo empieza por (4): no hay duda.
+    assert res["alternatives"] == []
+
+
+def test_alternativas_cuando_empatan_de_verdad():
+    productos = [
+        {"id": "entera", "name": "Leche entera", "categoryId": "pan-pan"},
+        {"id": "desnatada", "name": "Leche desnatada", "categoryId": "pan-pan"},
+    ]
+    res = routing.resolve("leche", {}, routing.catalog_for(_cat(productos), "en", "GB"))
+    # Ninguna es exacta y ambas empiezan por "leche" (4): duda real.
+    assert res["product"]["id"] == "entera"          # gana la más corta
+    assert res["alternatives"] == ["Leche desnatada"]
+
+
+def test_las_alternativas_no_repiten_nombre():
+    """El mismo nombre puede estar en dos secciones (súper y panadería). Assist
+    diciendo "también encontré Bread rolls, Bread rolls" queda a medio hacer."""
+    productos = [
+        {"id": "a", "name": "Bread rolls", "categoryId": "pan-pan"},
+        {"id": "b", "name": "Bread rolls", "categoryId": "pan-pan"},
+        {"id": "c", "name": "Bread sticks", "categoryId": "pan-pan"},
+    ]
+    res = routing.resolve("bread", {}, routing.catalog_for(_cat(productos), "en", "GB"))
+    assert res["alternatives"].count("Bread rolls") <= 1
 
 
 def test_el_pan_generico_existe_en_todos_los_idiomas():

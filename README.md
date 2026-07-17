@@ -232,9 +232,35 @@ intent_script:
       - action: tucompra.add_item
         data:
           name: "{{ item }}"
+        response_variable: result
     speech:
-      text: "Added {{ item }} to the list"
+      # `action_response` (not `result`) is the variable the speech template
+      # sees — that is how Home Assistant exposes what the action returned.
+      #
+      # Say back the product that ACTUALLY matched, not what you dictated. Ask
+      # for "bread" and the catalog may hold "Wholemeal bread": echoing your own
+      # words would hide the mismatch until you are at the shop.
+      text: >-
+        {% if action_response.ambiguous %}
+          Added {{ action_response.product_name }}. I also found {{ action_response.alternatives | join(', ') }}.
+        {% else %}
+          Added {{ action_response.product_name }} to the list.
+        {% endif %}
 ```
+
+`tucompra.add_item` returns:
+
+| Field | Meaning |
+|---|---|
+| `product_name` | The product that **actually matched**. May differ from what you said |
+| `alternatives` | Other products that also matched, best first |
+| `ambiguous` | `true` when there was more than one candidate |
+| `classified` | `false` when it went to the **📥 To sort** tray |
+
+Home Assistant's custom intents cannot hold a back-and-forth conversation (they
+answer once and finish), so Tu Compra cannot ask *"did you mean X or Y?"* and act
+on your reply. Saying the matched name out loud is the closest thing: you hear
+the mistake immediately instead of finding it at the till.
 
 And create `custom_sentences/en/tucompra.yaml` in your config folder:
 
@@ -432,9 +458,35 @@ intent_script:
       - action: tucompra.add_item
         data:
           name: "{{ item }}"
+        response_variable: result
     speech:
-      text: "Añadido {{ item }} a la lista"
+      # La variable que ve `speech` es `action_response`, no la de
+      # `response_variable`: así expone HA lo que devolvió la acción.
+      #
+      # Dice el producto que REALMENTE casó, no lo que dictaste. Si pides "pan"
+      # y el catálogo tiene varios, repetir tus palabras te ocultaría el fallo
+      # hasta que estuvieras en la tienda.
+      text: >-
+        {% if action_response.ambiguous %}
+          Añadido {{ action_response.product_name }}. También encontré {{ action_response.alternatives | join(', ') }}.
+        {% else %}
+          Añadido {{ action_response.product_name }} a la lista.
+        {% endif %}
 ```
+
+`tucompra.add_item` devuelve:
+
+| Campo | Qué es |
+|---|---|
+| `product_name` | El producto que **casó de verdad**. Puede no ser lo que dijiste |
+| `alternatives` | Otros que también casaban, del más probable al menos |
+| `ambiguous` | `true` si había más de un candidato |
+| `classified` | `false` si acabó en la bandeja **📥 Por clasificar** |
+
+Los intents propios de Home Assistant **no mantienen conversación** (responden una
+vez y terminan), así que Tu Compra no puede repreguntar *"¿querías X o Y?"* y
+actuar según contestes. Decir en voz alta el nombre que casó es lo más cerca que
+se puede estar: te enteras del error en el momento y no en la caja.
 
 Y en `custom_sentences/es/tucompra.yaml`:
 

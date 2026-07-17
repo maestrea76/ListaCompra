@@ -60,6 +60,12 @@
   let devices = $state<MediaDeviceInfo[]>([]);
   let deviceId = $state('');
   const DEVICE_KEY = 'tucompra:scanCamera';
+  // Se guarda también la etiqueta: Android rota los deviceId entre sesiones, y
+  // cuando el ID guardado ya no existe la restricción {exact} falla, cae al
+  // facingMode y vuelve a la principal sin decir nada. Con la etiqueta se
+  // recupera la cámara elegida aunque le hayan cambiado el ID.
+  const LABEL_KEY = 'tucompra:scanCameraLabel';
+  let savedLabel = '';
 
   let stream: MediaStream | null = null;
   let track: MediaStreamTrack | null = null;
@@ -101,15 +107,31 @@
     try {
       const all = await navigator.mediaDevices.enumerateDevices();
       devices = all.filter((d) => d.kind === 'videoinput');
-      if (!deviceId) {
-        deviceId = String((track?.getSettings?.() as any)?.deviceId ?? '');
+      const actual = String((track?.getSettings?.() as any)?.deviceId ?? '');
+
+      // ¿El ID guardado sigue existiendo? Si no (Android los rota), buscamos la
+      // cámara por su etiqueta y cambiamos a ella.
+      const idVive = !!deviceId && devices.some((d) => d.deviceId === deviceId);
+      if (!idVive && savedLabel) {
+        const porEtiqueta = devices.find((d) => d.label === savedLabel);
+        if (porEtiqueta && porEtiqueta.deviceId !== actual) {
+          await switchCamera(porEtiqueta.deviceId);
+          return;
+        }
       }
+      // Sin elección guardada (o irrecuperable): reflejamos la que se abrió, para
+      // que el desplegable muestre la real.
+      if (!idVive) deviceId = actual;
     } catch {}
   }
 
   async function switchCamera(id: string) {
     deviceId = id;
-    try { localStorage.setItem(DEVICE_KEY, id); } catch {}
+    savedLabel = devices.find((d) => d.deviceId === id)?.label ?? '';
+    try {
+      localStorage.setItem(DEVICE_KEY, id);
+      if (savedLabel) localStorage.setItem(LABEL_KEY, savedLabel);
+    } catch {}
     stop();
     stopped = false;
     ticks = 0;
@@ -278,7 +300,10 @@
     if (!videoEl || booted) return;
     booted = true;
     untrack(() => {
-      try { deviceId = localStorage.getItem(DEVICE_KEY) ?? ''; } catch {}
+      try {
+        deviceId = localStorage.getItem(DEVICE_KEY) ?? '';
+        savedLabel = localStorage.getItem(LABEL_KEY) ?? '';
+      } catch {}
       start();
     });
   });
@@ -325,7 +350,10 @@
     {#if devices.length > 1}
       <label class="block">
         <span class="text-[11px] text-muted">{t('scan.camera')}</span>
-        <select value={deviceId}
+        <!-- bind:value, no value=: con `value=` Svelte asigna el valor antes de
+             que existan los <option>, la asignación se pierde y el desplegable
+             muestra siempre la primera cámara aunque deviceId tenga otra. -->
+        <select bind:value={deviceId}
           onchange={(e) => switchCamera(e.currentTarget.value)}
           class="mt-1 w-full rounded-lg border px-2 py-1.5 text-xs bg-transparent"
           style="border-color: var(--border);">
@@ -345,6 +373,7 @@
       <ul class="mt-1.5 text-[11px] space-y-0.5" style="color: var(--fg-muted);">
         <li>{t('scan.diagEngine')}: <strong>{engine || t('scan.diagStarting')}</strong></li>
         <li>{t('scan.diagResolution')}: <strong>{videoRes || '—'}</strong> · {t('scan.diagCamera')}: <strong>{facing || '—'}</strong></li>
+        <li class="break-all">{t('scan.diagSaved')}: <strong>{savedLabel || '—'}</strong> {deviceId && devices.some((d) => d.deviceId === deviceId) ? '✅' : '⚠️'}</li>
         <li>{t('scan.diagPerRead')}: <strong>{decodeMs} ms</strong> · {t('scan.diagReads')}: <strong>{ticks}</strong></li>
         <li>{t('scan.torch')}: <strong>{torchAvailable ? t('scan.diagTorchYes') : t('scan.diagTorchNo')}</strong></li>
         {#if wasmInfo}<li>WASM: <strong>{wasmInfo}</strong></li>{/if}

@@ -4,6 +4,7 @@
   // basado en slug del nombre.
 
   import { app } from '$lib/stores/app.svelte';
+  import { fileToStorableDataUrl } from '$lib/image';
   import type { Store, IconRef, LoyaltyFormat } from '$lib/types';
   import BarcodeScanner from '../loyalty/BarcodeScanner.svelte';
   import LoyaltyCode from '../loyalty/LoyaltyCode.svelte';
@@ -79,18 +80,19 @@
   }
 
   async function handleImage(e: Event) {
-    const file = (e.target as HTMLInputElement).files?.[0];
+    error = '';
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
     if (!file) return;
-    if (file.size > 200_000) {
-      error = t('store.errImageBig');
-      return;
+    try {
+      // Se redimensiona por debajo del límite del estado: una foto de móvil son
+      // varios MB y con la comprobación de tamaño anterior se rechazaba siempre.
+      iconImage = await fileToStorableDataUrl(file);
+      iconKind = 'image';
+    } catch {
+      error = t('product.imgError');
     }
-    iconImage = await new Promise<string>((res) => {
-      const r = new FileReader();
-      r.onload = () => res(r.result as string);
-      r.readAsDataURL(file);
-    });
-    iconKind = 'image';
   }
 
   function buildIcon(): IconRef {
@@ -196,8 +198,17 @@
             class="w-full rounded-lg border px-3 py-2 text-center text-2xl bg-transparent"
             style="border-color: var(--border);" />
         {:else}
-          <input type="file" accept="image/*" onchange={handleImage}
-            class="block w-full text-xs" />
+          <div class="flex flex-wrap gap-x-3 gap-y-1">
+            <label class="text-xs cursor-pointer" style="color: var(--accent);">
+              📷 {t('product.takePhoto')}
+              <input type="file" accept="image/*" capture="environment"
+                class="hidden" onchange={handleImage} />
+            </label>
+            <label class="text-xs cursor-pointer" style="color: var(--accent);">
+              🖼️ {t('product.useImage')}
+              <input type="file" accept="image/*" class="hidden" onchange={handleImage} />
+            </label>
+          </div>
           {#if iconImage}
             <p class="text-[10px] text-muted">{t('store.logoLoaded', { kb: Math.round(iconImage.length / 1024) })}</p>
           {/if}

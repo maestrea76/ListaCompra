@@ -10,6 +10,7 @@
   //    productIcons, aparte del producto.
 
   import { app } from '$lib/stores/app.svelte';
+  import { fileToStorableDataUrl } from '$lib/image';
   import type { Category, Product, Unit } from '$lib/types';
   import ProductIcon from '../ui/ProductIcon.svelte';
 
@@ -41,17 +42,17 @@
    *  se guarda como dataURL dentro del estado, que se sincroniza con HA. */
   async function handleImage(e: Event) {
     imgError = '';
-    const file = (e.target as HTMLInputElement).files?.[0];
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';   // permite volver a elegir el mismo fichero
     if (!file) return;
-    if (file.size > 200_000) {
-      imgError = t('store.errImageBig');
-      return;
+    try {
+      // No se comprueba el tamaño de entrada: una foto de móvil son varios MB y
+      // se redimensiona igualmente por debajo del límite del estado.
+      photo = await fileToStorableDataUrl(file);
+    } catch {
+      imgError = t('product.imgError');
     }
-    photo = await new Promise<string>((res) => {
-      const r = new FileReader();
-      r.onload = () => res(r.result as string);
-      r.readAsDataURL(file);
-    });
   }
 
   /** Devuelve el producto a su icono original (emoji del seed o foto de OFF). */
@@ -120,9 +121,17 @@
         {/if}
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
           <!-- Cualquier producto puede llevar imagen propia, también los del
-               seed y los escaneados (que ya traen la foto de Open Food Facts). -->
+               seed y los escaneados (que ya traen la foto de Open Food Facts).
+               Dos entradas: hacer una foto (capture abre la cámara en el móvil)
+               o elegir un archivo. En escritorio 'capture' se ignora y la foto
+               abre igual el selector, así que no estorba. -->
           <label class="text-xs cursor-pointer" style="color: var(--accent);">
-            📷 {photo ? t('product.changeImage') : t('product.useImage')}
+            📷 {t('product.takePhoto')}
+            <input type="file" accept="image/*" capture="environment"
+              class="hidden" onchange={handleImage} />
+          </label>
+          <label class="text-xs cursor-pointer" style="color: var(--accent);">
+            🖼️ {photo ? t('product.changeImage') : t('product.useImage')}
             <input type="file" accept="image/*" class="hidden" onchange={handleImage} />
           </label>
           {#if photo}

@@ -153,3 +153,6 @@ custom_components/tucompra/catalog.json
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# Tipos generados por `astro check` / `astro sync`
+.astro/

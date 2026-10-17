@@ -203,6 +203,32 @@ def test_alternativas_cuando_empatan_de_verdad():
     assert res["alternatives"] == ["Leche desnatada"]
 
 
+def test_tienda_nombrada_manda_sobre_la_por_defecto():
+    cat = {
+        "categories": [{"id": "sup-lacteos", "typeId": "supermercado"}],
+        "products": [{"id": "leche", "name": "Leche", "categoryId": "sup-lacteos"}],
+        "stores": [
+            {"id": "eroski", "name": "Eroski", "typeId": "supermercado"},
+            {"id": "amazon", "name": "Amazon", "typeId": "supermercado"},
+        ],
+    }
+    snap = {"defaultStores": {"supermercado": "eroski"}, "customStores": [], "customProducts": []}
+    res = routing.resolve("leche", snap, cat, store_name="Amazon")
+    assert res["store_id"] == "amazon"
+    assert res["store_alternatives"] == []
+
+
+def test_tienda_desconocida_no_elige_otra():
+    cat = {
+        "categories": [{"id": "sup-lacteos", "typeId": "supermercado"}],
+        "products": [{"id": "leche", "name": "Leche", "categoryId": "sup-lacteos"}],
+        "stores": [{"id": "eroski", "name": "Eroski", "typeId": "supermercado"}],
+    }
+    res = routing.resolve("leche", {}, cat, store_name="Amazon")
+    assert res["store_id"] is None
+    assert res["store_alternatives"] == []
+
+
 def test_las_alternativas_no_repiten_nombre():
     """El mismo nombre puede estar en dos secciones (súper y panadería). Assist
     diciendo "también encontré Bread rolls, Bread rolls" queda a medio hacer."""

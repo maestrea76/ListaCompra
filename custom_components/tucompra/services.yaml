@@ -38,11 +38,89 @@ add_item:
             - paquete
             - docena
             - caja
+    store:
+      name: Tienda
+      description: >-
+        Nombre de la tienda, por ejemplo "Amazon". Si se omite, se usa la
+        tienda por defecto de ese tipo.
+      example: Amazon
+      selector:
+        text:
+    note:
+      name: Nota
+      description: Nota de esta compra. No se copia al volver a añadir el producto.
+      example: semidesnatada
+      selector:
+        text:
     share_id:
       name: Lista (share)
       description: >-
         Lista destino. Si se omite, usa la compartida (hogar) o, en su defecto,
         la personal.
       example: "shared:abc123def456"
+      selector:
+        text:
+
+list_pending:
+  name: Ver pendientes
+  description: >-
+    Devuelve lo que falta por comprar. Se puede limitar a una tienda por su nombre.
+  fields:
+    store:
+      name: Tienda
+      description: Si se indica, solo las líneas de esa tienda.
+      example: Amazon
+      selector:
+        text:
+    share_id:
+      name: Lista (share)
+      selector:
+        text:
+
+mark_done:
+  name: Marcar comprado
+  description: >-
+    Marca como comprado el pendiente que casa con el nombre. Si hay varios,
+    no marca ninguno y devuelve las alternativas.
+  fields:
+    name:
+      name: Producto
+      required: true
+      example: leche
+      selector:
+        text:
+    store:
+      name: Tienda
+      example: Amazon
+      selector:
+        text:
+    share_id:
+      name: Lista (share)
+      selector:
+        text:
+
+set_note:
+  name: Anotar producto
+  description: >-
+    Pone una nota en el pendiente que casa con el nombre. Una nota vacía la borra.
+  fields:
+    name:
+      name: Producto
+      required: true
+      example: leche
+      selector:
+        text:
+    note:
+      name: Nota
+      example: semidesnatada
+      selector:
+        text:
+    store:
+      name: Tienda
+      example: Amazon
+      selector:
+        text:
+    share_id:
+      name: Lista (share)
       selector:
         text:

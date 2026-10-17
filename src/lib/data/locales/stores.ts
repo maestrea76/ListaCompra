@@ -17,9 +17,15 @@ const s = (
   ...(online ? { online: true } : {}),
 });
 
-/** Amazon en cada cultura: tienda online (enlace de producto por artículo). */
-const amazon = (id: string) =>
-  s(id, 'Amazon', 'supermercado', '📦', '#232F3E', '#FF9900', 'a', true);
+/** Amazon en cada cultura: tienda online, con el logo oficial. */
+const amazon = (id: string): Store => ({
+  id,
+  name: 'Amazon',
+  typeId: 'supermercado',
+  icon: { kind: 'image', value: '/logos/amazon.svg' },
+  brand: { bg: '#FFFFFF', fg: '#FF9900', initials: 'a' },
+  online: true,
+});
 
 const ikea = (id: string) =>
   s(id, 'IKEA', 'hogar', '🛋️', '#0058A3', '#FFDA1A', 'IK');

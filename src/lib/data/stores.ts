@@ -36,5 +36,5 @@ export const STORES_SEED: Store[] = [
   { id: 'primark',       name: 'Primark',          typeId: 'ropa',             icon: { kind: 'image', value: '/logos/primark.png' },     brand: { bg: '#0070BA', fg: '#FFFFFF' } },
   { id: 'herboristeria', name: 'Herboristería',    typeId: 'herboristeria',    icon: { kind: 'emoji', value: '🌿' }, brand: { bg: '#3F6E2A', fg: '#FFFFFF' } },
   { id: 'otros',         name: 'Otros',            typeId: 'otros',            icon: { kind: 'emoji', value: '🏷️' }, brand: { bg: '#64748B', fg: '#FFFFFF' } },
-  { id: 'amazon',        name: 'Amazon',           typeId: 'supermercado',     icon: { kind: 'emoji', value: '📦' }, brand: { bg: '#232F3E', fg: '#FF9900', initials: 'a' }, online: true },
+  { id: 'amazon',        name: 'Amazon',           typeId: 'supermercado',     icon: { kind: 'image', value: '/logos/amazon.svg' }, brand: { bg: '#FFFFFF', fg: '#FF9900', initials: 'a' }, online: true },
 ].map((s, i) => ({ ...s, order: i, enabled: true })) as Store[];

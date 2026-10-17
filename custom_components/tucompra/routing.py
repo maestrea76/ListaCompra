@@ -163,8 +163,56 @@ def tied_alternatives(scored: list[tuple[int, dict]], limit: int = 3) -> list[st
     return out
 
 
-def resolve(name: str, snapshot: dict | None, catalog: dict) -> dict[str, Any]:
-    """Devuelve {product, type_id, store_id}. store_id None → va a inbox."""
+def match_store(name: str, stores: dict[str, dict]) -> dict[str, Any]:
+    """{store_id, alternatives}. store_id es None si no hay una sola tienda."""
+    q = _norm(name).strip()
+    enabled = [s for s in stores.values() if s.get("enabled", True) is not False]
+    if not q:
+        return {"store_id": None, "alternatives": []}
+    scored: list[tuple[int, dict]] = []
+    for store in enabled:
+        n = _norm(store.get("name", ""))
+        if n == q:
+            sc = 5
+        elif n.startswith(q):
+            sc = 4
+        elif q in n:
+            sc = 3
+        else:
+            continue
+        scored.append((sc, store))
+    scored.sort(key=lambda x: (-x[0], len(_norm(x[1].get("name", "")))))
+    if not scored:
+        return {"store_id": None, "alternatives": []}
+    best = scored[0][0]
+    tied: list[dict] = []
+    seen: set[str] = set()
+    for sc, store in scored:
+        if sc != best:
+            break
+        label = store.get("name", "")
+        key = _norm(label)
+        if key in seen:
+            continue
+        seen.add(key)
+        tied.append(store)
+    if len(tied) == 1:
+        return {"store_id": tied[0]["id"], "alternatives": []}
+    return {"store_id": None, "alternatives": [s.get("name", "") for s in tied[:5]]}
+
+
+def resolve(
+    name: str,
+    snapshot: dict | None,
+    catalog: dict,
+    store_name: str | None = None,
+) -> dict[str, Any]:
+    """Devuelve {product, type_id, store_id}. store_id None → va a inbox.
+
+    Si store_name viene informado, esa tienda manda sobre el tipo y sobre la
+    tienda por defecto. Varias tiendas con el mismo acierto dejan store_id a
+    None y rellenan store_alternatives.
+    """
     snapshot = snapshot or {}
     products = list(catalog.get("products", [])) + list(snapshot.get("customProducts", []))
     puntuados = match_scored(name, products)
@@ -181,13 +229,23 @@ def resolve(name: str, snapshot: dict | None, catalog: dict) -> dict[str, Any]:
 
     type_id = cat_type.get(product.get("categoryId")) if product else None
 
+    if store_name:
+        hit = match_store(store_name, stores)
+        return {
+            "product": product,
+            "type_id": type_id,
+            "store_id": hit["store_id"],
+            "alternatives": alternativas,
+            "store_alternatives": hit["alternatives"],
+        }
+
     store_id: str | None = None
 
     # Producto exclusivo de una tienda (marca propia): manda sobre el tipo.
     exclusive = product.get("storeId") if product else None
     if exclusive and exclusive in stores and stores[exclusive].get("enabled", True) is not False:
         return {"product": product, "type_id": type_id, "store_id": exclusive,
-                "alternatives": alternativas}
+                "alternatives": alternativas, "store_alternatives": []}
 
     if type_id:
         explicit = default_stores.get(type_id)
@@ -202,4 +260,4 @@ def resolve(name: str, snapshot: dict | None, catalog: dict) -> dict[str, Any]:
                 store_id = of_type[0]["id"]
 
     return {"product": product, "type_id": type_id, "store_id": store_id,
-            "alternatives": alternativas}
+            "alternatives": alternativas, "store_alternatives": []}

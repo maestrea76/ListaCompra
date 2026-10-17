@@ -47,6 +47,32 @@ ADD_ITEM_SCHEMA = vol.Schema(
         vol.Required("name"): cv.string,
         vol.Optional("quantity", default=1): vol.Coerce(float),
         vol.Optional("unit"): cv.string,
+        vol.Optional("store"): cv.string,
+        vol.Optional("note"): cv.string,
+        vol.Optional("share_id"): cv.string,
+    }
+)
+
+LIST_PENDING_SCHEMA = vol.Schema(
+    {
+        vol.Optional("store"): cv.string,
+        vol.Optional("share_id"): cv.string,
+    }
+)
+
+MARK_DONE_SCHEMA = vol.Schema(
+    {
+        vol.Required("name"): cv.string,
+        vol.Optional("store"): cv.string,
+        vol.Optional("share_id"): cv.string,
+    }
+)
+
+SET_NOTE_SCHEMA = vol.Schema(
+    {
+        vol.Required("name"): cv.string,
+        vol.Optional("note", default=""): cv.string,
+        vol.Optional("store"): cv.string,
         vol.Optional("share_id"): cv.string,
     }
 )
@@ -98,17 +124,46 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             quantity=call.data.get("quantity", 1),
             unit=call.data.get("unit"),
             share_id=call.data.get("share_id"),
+            store=call.data.get("store"),
+            note=call.data.get("note"),
         )
         _LOGGER.debug("add_item(%s) → %s", call.data.get("name"), result)
         return result
 
-    hass.services.async_register(
-        DOMAIN,
-        "add_item",
-        _handle_add_item,
-        schema=ADD_ITEM_SCHEMA,
-        supports_response=SupportsResponse.OPTIONAL,
-    )
+    async def _handle_list_pending(call: ServiceCall) -> dict:
+        return await store.async_list_pending(
+            store=call.data.get("store"),
+            share_id=call.data.get("share_id"),
+        )
+
+    async def _handle_mark_done(call: ServiceCall) -> dict:
+        return await store.async_mark_done(
+            name=call.data["name"],
+            store=call.data.get("store"),
+            share_id=call.data.get("share_id"),
+        )
+
+    async def _handle_set_note(call: ServiceCall) -> dict:
+        return await store.async_set_note(
+            name=call.data["name"],
+            note=call.data.get("note", ""),
+            store=call.data.get("store"),
+            share_id=call.data.get("share_id"),
+        )
+
+    for service, handler, schema in (
+        ("add_item", _handle_add_item, ADD_ITEM_SCHEMA),
+        ("list_pending", _handle_list_pending, LIST_PENDING_SCHEMA),
+        ("mark_done", _handle_mark_done, MARK_DONE_SCHEMA),
+        ("set_note", _handle_set_note, SET_NOTE_SCHEMA),
+    ):
+        hass.services.async_register(
+            DOMAIN,
+            service,
+            handler,
+            schema=schema,
+            supports_response=SupportsResponse.OPTIONAL,
+        )
 
     # Panel lateral: HA carga el web component `tucompra-panel`, que a su vez
     # incrusta la SPA en un iframe y le pasa el token de acceso del usuario.

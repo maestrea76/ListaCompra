@@ -299,6 +299,44 @@ paper".
 > "Home Assistant" in the Assist dialog, or enable **"Prefer handling commands
 > locally"** in that assistant's settings.
 
+## Grok bot
+
+A Grok chat can run the same list. It does not keep a copy. It calls Home
+Assistant with your user token.
+
+The integration exposes four actions. All of them answer with data, so call
+them with `return_response`:
+
+| Action | What it does |
+|---|---|
+| `tucompra.add_item` | Adds a product. Optional `store` ("Amazon") and `note`. |
+| `tucompra.list_pending` | What is still to buy. Optional `store`. |
+| `tucompra.mark_done` | Marks the matching pending line as bought. |
+| `tucompra.set_note` | Sets the note on that line. An empty note clears it. |
+
+1. In Home Assistant, open your profile → **Security** → **Long-lived access
+   tokens** → **Create token**. Copy it. The script asks for it when it starts
+   and does not save it.
+2. Create an xAI API key and export it as `XAI_API_KEY`. If it is missing, the
+   script asks for it once, and does not save it either.
+3. From this repository:
+
+   ```bash
+   python3 tools/grok-compra.py
+   ```
+
+4. It asks for the Home Assistant URL (for example `http://homeassistant.local:8123`)
+   and then for the token. After that you write as you would talk:
+
+   - `añade dos leches en Amazon`
+   - `qué falta`
+   - `anota en la leche que sea semidesnatada`
+   - `marca la leche como comprada`
+   - `salir`
+
+Update Tu Compra to **0.3.58** or newer before the first run. Older releases
+only have `add_item`.
+
 ---
 
 ## The catalog
@@ -329,6 +367,7 @@ create" means nothing is ever blocked by a missing product.
 - [x] Local Home Assistant integration (HACS): API + panel + shared lists
 - [x] Culture-aware catalog by HA language (🇪🇸🇬🇧🇺🇸🇫🇷🇩🇪🇧🇷🇹🇷) + SVG flag
 - [x] Voice via Assist: `tucompra.add_item` service with automatic store routing
+- [x] Grok bot: `tools/grok-compra.py` (add, list, note, mark bought)
 - [x] All-items view, a note on each line, and a product link on online stores
 - [x] "To sort" tray with one-tap triage to the right store
 - [x] Integration icon bundled (shown on install)
@@ -525,6 +564,45 @@ Reinicia HA y di: *"añade papel higiénico a la compra"*.
 > ⚠️ Las `custom_sentences` solo las reconoce el agente **"Home Assistant"**. Con
 > un agente LLM (Gemini, ChatGPT…), cámbialo a "Home Assistant" o activa
 > **"Preferir gestionar comandos localmente"**.
+
+## Bot de Grok
+
+Un chat de Grok puede llevar la misma lista. No guarda una copia. Llama a Home
+Assistant con tu token de usuario.
+
+La integración publica cuatro acciones. Todas responden datos, así que hay que
+llamarlas con `return_response`:
+
+| Acción | Qué hace |
+|---|---|
+| `tucompra.add_item` | Añade un producto. `store` ("Amazon") y `note` son opcionales. |
+| `tucompra.list_pending` | Lo que falta por comprar. `store` es opcional. |
+| `tucompra.mark_done` | Marca comprado el pendiente que casa con el nombre. |
+| `tucompra.set_note` | Pone la nota en esa línea. Una nota vacía la borra. |
+
+1. En Home Assistant, perfil → **Seguridad** → **Tokens de acceso de larga
+   duración** → **Crear token**. Cópialo. El script lo pide al arrancar y no lo
+   guarda.
+2. Crea una clave de xAI y expórtala como `XAI_API_KEY`. Si no está, el script
+   la pide una vez y tampoco la guarda.
+3. Desde este repositorio:
+
+   ```bash
+   python3 tools/grok-compra.py
+   ```
+
+4. Pregunta la URL de Home Assistant (por ejemplo
+   `http://homeassistant.local:8123`) y después el token. A partir de ahí se
+   escribe como se habla:
+
+   - `añade dos leches en Amazon`
+   - `qué falta`
+   - `anota en la leche que sea semidesnatada`
+   - `marca la leche como comprada`
+   - `salir`
+
+Actualiza Tu Compra a la **0.3.58** o posterior antes de usarlo. Las versiones
+anteriores solo tienen `add_item`.
 
 ---
 

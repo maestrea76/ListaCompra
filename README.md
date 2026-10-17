@@ -373,10 +373,10 @@ curl -fsSL -o "$HOME/tucompra.py" \
   https://raw.githubusercontent.com/maestrea76/ListaCompra/main/tools/tucompra.py
 ```
 
-Tu Compra must be **0.3.58** or newer, and Home Assistant restarted. Older
-releases can only add an item. Removing a line, changing the quantity,
-unmarking, moving stores, clearing bought items and the product link need the
-integration that registers those services, then a Home Assistant restart.
+Tu Compra must be **0.3.59** or newer, and Home Assistant restarted. This
+version removes a line, changes the quantity, unmarks, moves between stores,
+clears bought items and saves a product link. 0.3.58 can add, list, mark and
+note. Older releases can only add an item.
 
 When the house has a shared list, the command writes there. Otherwise it
 writes the personal list of the Home Assistant user who owns the token.
@@ -718,11 +718,10 @@ curl -fsSL -o "$HOME/tucompra.py" \
   https://raw.githubusercontent.com/maestrea76/ListaCompra/main/tools/tucompra.py
 ```
 
-Tu Compra tiene que ser la **0.3.58** o posterior, y Home Assistant tiene que
-estar reiniciado. En versiones anteriores solo se puede añadir un producto.
-Quitar una línea, cambiar la cantidad, desmarcar, mover de tienda, limpiar
-comprados y el enlace necesitan la integración que registra esos servicios, y
-otro reinicio de Home Assistant.
+Tu Compra tiene que ser la **0.3.59** o posterior, y Home Assistant tiene que
+estar reiniciado. Esta versión quita una línea, cambia la cantidad, desmarca,
+mueve de tienda, limpia comprados y guarda el enlace. La 0.3.58 añade, lista,
+marca y anota. En versiones anteriores solo se puede añadir un producto.
 
 Si la casa tiene lista compartida, el comando escribe en esa. Si no, en la
 lista personal del usuario de Home Assistant dueño del token.

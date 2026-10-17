@@ -29,7 +29,7 @@ curl -fsSL -o "$HOME/tucompra.py" \
   https://raw.githubusercontent.com/maestrea76/ListaCompra/main/tools/tucompra.py
 ```
 
-Tu Compra tiene que ser la 0.3.58 o posterior.
+Tu Compra tiene que ser la 0.3.59 o posterior.
 
 ## Cómo cambias la lista
 

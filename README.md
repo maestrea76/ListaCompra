@@ -301,11 +301,103 @@ paper".
 
 ## Grok bot
 
-A Grok chat can run the same list. It does not keep a copy. It calls Home
-Assistant with your user token.
+Hand this section to the person who will run the list from a computer. They do
+not need the rest of the project. They need one file, Python 3, a Home
+Assistant token, and an xAI API key.
 
-The integration exposes four actions. All of them answer with data, so call
-them with `return_response`:
+This is not the Grok website. It is a terminal program: they type the shop,
+Grok turns the sentence into a call, and Home Assistant changes the list. The
+program does not keep a copy of the list. When the house has a shared list,
+that is the one it writes. Otherwise it writes the personal list of the Home
+Assistant user who created the token.
+
+### Before starting
+
+1. Tu Compra **0.3.58** or newer, installed, and Home Assistant restarted.
+   Older releases can only add an item.
+2. Python 3 on the computer they will type on. Nothing to `pip install`.
+   Check with `python3 --version`.
+3. That computer must reach Home Assistant (same network, or the external URL
+   you already use) and the internet (`api.x.ai`).
+
+### Where to download the program
+
+One file, `grok-compra.py`:
+
+<https://github.com/maestrea76/ListaCompra/blob/main/tools/grok-compra.py>
+
+Use **Raw** or **Download**. Or, from a terminal:
+
+```bash
+curl -fsSL -o grok-compra.py \
+  https://raw.githubusercontent.com/maestrea76/ListaCompra/main/tools/grok-compra.py
+```
+
+If the repository is already cloned, the same file is `tools/grok-compra.py`.
+
+### The Home Assistant token
+
+Signed in as the user who should see the list:
+
+1. Bottom left, the name → **Profile**.
+2. **Security**.
+3. **Long-lived access tokens** → **Create token**. Name it, for example
+   `shopping bot`.
+4. Copy the token on that screen. Home Assistant does not show it again.
+
+The program asks for it on every start and does not write it to disk. If it is
+lost, create another one on the same screen and delete the old one.
+
+### The xAI API key
+
+This is not a grok.com subscription. The API is billed separately, with credits
+in the xAI console. Official steps: <https://docs.x.ai/docs/quickstart>.
+
+1. Sign in at <https://console.x.ai> (create the account there if needed).
+2. Open **Billing → API Credits** and add prepaid credits. With a zero balance
+   the API rejects the call.
+3. Open **API Keys**, <https://console.x.ai/team/default/api-keys>, and choose
+   **Create API Key**. Copy the key when it is created. Afterwards the console
+   only shows it shortened.
+4. When the program asks `Clave de xAI (XAI_API_KEY)`, paste it. It is not
+   saved.
+
+To skip that question for the current terminal:
+
+```bash
+export XAI_API_KEY="the-key"
+```
+
+That lasts until the terminal is closed.
+
+### Start it and talk
+
+In the folder that contains the file:
+
+```bash
+python3 grok-compra.py
+```
+
+It asks, in this order:
+
+1. **Home Assistant URL.** The default is `http://homeassistant.local:8123`.
+   Use the address you actually open.
+2. **Home Assistant token.** Typing is hidden.
+3. **xAI key**, only when `XAI_API_KEY` is not set.
+
+When it prints `Listo. Escribe la compra.`, write as you would say it:
+
+- `añade dos leches en Amazon`
+- `qué falta`
+- `anota en la leche que sea semidesnatada`
+- `marca la leche como comprada`
+- `salir` (also `exit` or `quit`)
+
+If two products or two stores match, Grok asks which one. The line shows up
+in the Tu Compra panel. A wrong token prints HTTP 401; start again with a new
+token.
+
+### What it can call
 
 | Action | What it does |
 |---|---|
@@ -313,29 +405,6 @@ them with `return_response`:
 | `tucompra.list_pending` | What is still to buy. Optional `store`. |
 | `tucompra.mark_done` | Marks the matching pending line as bought. |
 | `tucompra.set_note` | Sets the note on that line. An empty note clears it. |
-
-1. In Home Assistant, open your profile → **Security** → **Long-lived access
-   tokens** → **Create token**. Copy it. The script asks for it when it starts
-   and does not save it.
-2. Create an xAI API key and export it as `XAI_API_KEY`. If it is missing, the
-   script asks for it once, and does not save it either.
-3. From this repository:
-
-   ```bash
-   python3 tools/grok-compra.py
-   ```
-
-4. It asks for the Home Assistant URL (for example `http://homeassistant.local:8123`)
-   and then for the token. After that you write as you would talk:
-
-   - `añade dos leches en Amazon`
-   - `qué falta`
-   - `anota en la leche que sea semidesnatada`
-   - `marca la leche como comprada`
-   - `salir`
-
-Update Tu Compra to **0.3.58** or newer before the first run. Older releases
-only have `add_item`.
 
 ---
 
@@ -567,11 +636,104 @@ Reinicia HA y di: *"añade papel higiénico a la compra"*.
 
 ## Bot de Grok
 
-Un chat de Grok puede llevar la misma lista. No guarda una copia. Llama a Home
-Assistant con tu token de usuario.
+Esta sección se le puede pasar a quien vaya a llevar la lista desde un
+ordenador. No hace falta el resto del proyecto. Hace falta un archivo, Python 3,
+el token de Home Assistant y una clave de la API de xAI.
 
-La integración publica cuatro acciones. Todas responden datos, así que hay que
-llamarlas con `return_response`:
+No es la web de Grok. Es un programa de terminal: se escribe la compra, Grok
+convierte la frase en una llamada y Home Assistant cambia la lista. El programa
+no guarda una copia. Si la casa tiene una lista compartida, escribe en esa. Si
+no, escribe en la lista personal del usuario de Home Assistant que creó el
+token.
+
+### Antes de empezar
+
+1. Tu Compra **0.3.58** o posterior, instalada, y Home Assistant reiniciado.
+   En versiones anteriores solo se puede añadir un producto.
+2. Python 3 en el ordenador donde se va a escribir. No hay que instalar
+   librerías. Se comprueba con `python3 --version`.
+3. Ese ordenador tiene que llegar a Home Assistant (la misma red, o la URL
+   externa que ya uséis) y a internet (`api.x.ai`).
+
+### De dónde se descarga el programa
+
+Un solo archivo, `grok-compra.py`:
+
+<https://github.com/maestrea76/ListaCompra/blob/main/tools/grok-compra.py>
+
+El botón **Raw** o **Download** lo guarda. Desde una terminal:
+
+```bash
+curl -fsSL -o grok-compra.py \
+  https://raw.githubusercontent.com/maestrea76/ListaCompra/main/tools/grok-compra.py
+```
+
+Si el repositorio ya está clonado, el mismo archivo es `tools/grok-compra.py`.
+
+### El token de Home Assistant
+
+Con la sesión del usuario que debe ver la lista:
+
+1. Abajo a la izquierda, el nombre → **Perfil**.
+2. **Seguridad**.
+3. **Tokens de acceso de larga duración** → **Crear token**. Un nombre, por
+   ejemplo `bot compra`.
+4. Copia el token en esa pantalla. Home Assistant no lo vuelve a enseñar.
+
+El programa lo pide cada vez que arranca y no lo escribe en disco. Si se
+pierde, se crea otro en la misma pantalla y se borra el viejo.
+
+### La clave de xAI
+
+No es la suscripción de grok.com. La API se paga aparte, con créditos en la
+consola de xAI. Los pasos oficiales están en
+<https://docs.x.ai/docs/quickstart>.
+
+1. Entra en <https://console.x.ai> (crea la cuenta ahí si no la tienes).
+2. Abre **Billing → API Credits** y carga créditos de prepago. Con saldo a
+   cero la API rechaza la petición.
+3. Abre **API Keys**, <https://console.x.ai/team/default/api-keys>, y pulsa
+   **Create API Key**. Copia la clave al crearla. Después la consola solo
+   muestra una versión recortada.
+4. Cuando el programa pregunte `Clave de xAI (XAI_API_KEY)`, pégala. No se
+   guarda.
+
+Para no pegarla en cada arranque, en esa terminal, antes de lanzarlo:
+
+```bash
+export XAI_API_KEY="la-clave"
+```
+
+Dura hasta que se cierre la terminal.
+
+### Arrancar y hablar
+
+En la carpeta donde está el archivo:
+
+```bash
+python3 grok-compra.py
+```
+
+Pregunta, en este orden:
+
+1. **URL de Home Assistant.** Por defecto `http://homeassistant.local:8123`.
+   Si entráis por otra dirección, esa.
+2. **Token de Home Assistant.** Al teclear no se ve.
+3. **Clave de xAI**, solo si no exportaste `XAI_API_KEY`.
+
+Cuando escriba `Listo. Escribe la compra.`, se habla como se hablaría:
+
+- `añade dos leches en Amazon`
+- `qué falta`
+- `anota en la leche que sea semidesnatada`
+- `marca la leche como comprada`
+- `salir` (también `exit` o `quit`)
+
+Si casan dos productos o dos tiendas, Grok pregunta cuál. La línea aparece en
+el panel de Tu Compra. Un token mal copiado responde HTTP 401: se arranca de
+nuevo con un token nuevo.
+
+### Qué puede hacer
 
 | Acción | Qué hace |
 |---|---|
@@ -579,30 +741,6 @@ llamarlas con `return_response`:
 | `tucompra.list_pending` | Lo que falta por comprar. `store` es opcional. |
 | `tucompra.mark_done` | Marca comprado el pendiente que casa con el nombre. |
 | `tucompra.set_note` | Pone la nota en esa línea. Una nota vacía la borra. |
-
-1. En Home Assistant, perfil → **Seguridad** → **Tokens de acceso de larga
-   duración** → **Crear token**. Cópialo. El script lo pide al arrancar y no lo
-   guarda.
-2. Crea una clave de xAI y expórtala como `XAI_API_KEY`. Si no está, el script
-   la pide una vez y tampoco la guarda.
-3. Desde este repositorio:
-
-   ```bash
-   python3 tools/grok-compra.py
-   ```
-
-4. Pregunta la URL de Home Assistant (por ejemplo
-   `http://homeassistant.local:8123`) y después el token. A partir de ahí se
-   escribe como se habla:
-
-   - `añade dos leches en Amazon`
-   - `qué falta`
-   - `anota en la leche que sea semidesnatada`
-   - `marca la leche como comprada`
-   - `salir`
-
-Actualiza Tu Compra a la **0.3.58** o posterior antes de usarlo. Las versiones
-anteriores solo tienen `add_item`.
 
 ---
 

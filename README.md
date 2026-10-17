@@ -328,13 +328,28 @@ On the Bot, **Setup → Secrets**. Names are exact:
 
 | Secret | Value |
 |---|---|
-| `TUCOMPRA_URL` | The Home Assistant address that opens from the internet (Nabu Casa or your external URL). |
+| `TUCOMPRA_URL` | HTTPS on port 443, with no port in the address. A Nabu Casa URL already fits. |
 | `TUCOMPRA_TOKEN` | A long-lived access token. |
 
-The Bot's computer is in Cursor's cloud. `http://homeassistant.local:8123`
-does not reach it. A Home Assistant that only exists on the house LAN needs a
-private network on that computer:
-<https://docs.x.ai/grok-bot/private-networks>.
+`TUCOMPRA_URL` has to be HTTPS on port 443, with no explicit port. A Nabu Casa
+URL already meets that. `https://the-name:8123` does not reach the Bot, even
+when that port is published.
+
+Home Assistant can keep listening on 8123. On the router, public TCP 443 is
+forwarded to that host on port 8123. The certificate has to be valid for that
+name.
+
+In Home Assistant, leave the external URL as `https://the-name`, without
+`:8123`. When the external URL includes 8123, the interface asks again for a
+port the Bot cannot open.
+
+Port 8123 can stay published for the browser at home. The Bot secret does not
+use it.
+
+The private network in the Grok Bot docs is another path (the desktop app, or
+Enterprise Team Setup) for a service that is not on the internet. It is not
+the setup for this program.
+<https://docs.x.ai/grok-bot/private-networks>
 
 Create the token while signed in as the user who should see the list:
 
@@ -642,13 +657,28 @@ En el Bot, **Setup → Secrets**. Los nombres son exactos:
 
 | Secreto | Valor |
 |---|---|
-| `TUCOMPRA_URL` | La dirección de Home Assistant que se abre desde internet (Nabu Casa o la URL externa). |
+| `TUCOMPRA_URL` | HTTPS en el puerto 443, sin puerto en la dirección. Una URL de Nabu Casa ya cumple. |
 | `TUCOMPRA_TOKEN` | Un token de acceso de larga duración. |
 
-El ordenador del Bot está en la nube de Cursor. `http://homeassistant.local:8123`
-no llega hasta allí. Un Home Assistant que solo existe en la red de casa
-necesita una red privada en ese ordenador:
-<https://docs.x.ai/grok-bot/private-networks>.
+`TUCOMPRA_URL` tiene que ser HTTPS en el puerto 443, sin puerto explícito.
+Una URL de Nabu Casa ya cumple. `https://el-nombre:8123` no llega desde el
+Bot aunque el puerto esté publicado.
+
+Home Assistant puede seguir escuchando en el 8123. En el router, el TCP 443
+público se reenvía a ese host, puerto 8123. El certificado tiene que ser
+válido para ese nombre.
+
+En Home Assistant, la URL externa se deja en `https://el-nombre`, sin
+`:8123`. Si la URL externa lleva el 8123, la interfaz vuelve a pedir un
+puerto que el Bot no puede abrir.
+
+El 8123 puede seguir publicado para el navegador de casa. El secreto del Bot
+no lo usa.
+
+La red privada de la documentación de Grok Bot es otro camino (el escritorio,
+o el Team Setup de Enterprise) para un servicio que no está en internet. No
+es la configuración de este programa.
+<https://docs.x.ai/grok-bot/private-networks>
 
 El token se crea con la sesión del usuario que debe ver la lista:
 

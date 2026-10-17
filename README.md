@@ -94,6 +94,12 @@ across several shops. Tu Compra is built around the way people really shop:
 - 🎟️ **Loyalty cards.** Store each shop's card (QR or barcode) and show it
   full-screen at the till. Scan it with the camera or type the number — the
   format is detected automatically.
+- 📋 **All items.** One screen lists what is still to buy across every store,
+  grouped by section, by shop, or A–Z.
+- 📝 **Notes.** Hold a line to add a note for this shop. The note is not copied
+  the next time you add the same product.
+- 🔗 **Product link.** On an online store (Amazon in every catalog) a line can
+  keep the product page. The link opens in a new tab.
 - 🗣️ **Voice input via Assist.** Say what you need and it lands in the right
   store's list automatically (see [Voice](#voice-input-with-assist)).
 - 👥 **Personal and shared lists.** Keep your own list, or share a household
@@ -323,6 +329,7 @@ create" means nothing is ever blocked by a missing product.
 - [x] Local Home Assistant integration (HACS): API + panel + shared lists
 - [x] Culture-aware catalog by HA language (🇪🇸🇬🇧🇺🇸🇫🇷🇩🇪🇧🇷🇹🇷) + SVG flag
 - [x] Voice via Assist: `tucompra.add_item` service with automatic store routing
+- [x] All-items view, a note on each line, and a product link on online stores
 - [x] "To sort" tray with one-tap triage to the right store
 - [x] Integration icon bundled (shown on install)
 - [x] Button to open the HA sidebar from the panel
@@ -392,6 +399,12 @@ del resto de España (jamón ibérico, fabes, turrón de Jijona…).
 - 🎟️ **Tarjetas de fidelización**: guarda la tarjeta de cada tienda (QR o código
   de barras) y muéstrala a pantalla completa en caja. Escanéala con la cámara o
   escribe el número — el formato se detecta solo.
+- 📋 **Todos los artículos.** Una pantalla junta lo que falta en todas las
+  tiendas, por sección, por tienda o de la A a la Z.
+- 📝 **Notas.** Mantén pulsada una línea para anotar esta compra. La nota no se
+  copia la próxima vez que añades el mismo producto.
+- 🔗 **Enlace de producto.** En una tienda online (Amazon en todos los idiomas)
+  la línea puede guardar la ficha. El enlace se abre en una pestaña nueva.
 - 🗣️ **Voz con Assist**: `tucompra.add_item` reconoce el producto, deduce su tipo
   de tienda y lo coloca en la **tienda por defecto** (botón 🎯). Si duda, va a la
   bandeja **"📥 Por clasificar"** y lo recolocas con el botón ↪.

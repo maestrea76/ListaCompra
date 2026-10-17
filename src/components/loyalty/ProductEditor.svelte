@@ -11,6 +11,7 @@
 
   import { app } from '$lib/stores/app.svelte';
   import { fileToStorableDataUrl } from '$lib/image';
+  import { normalizeProductUrl } from '$lib/product-link';
   import type { Category, Product, Unit } from '$lib/types';
   import ProductIcon from '../ui/ProductIcon.svelte';
   import PhotoCapture from '../ui/PhotoCapture.svelte';
@@ -19,11 +20,13 @@
   let capturing = $state(false);
   let cropping = $state(false);
 
-  let { product, categories, storeId, storeName, onClose }: {
+  let { product, categories, storeId, storeName, itemId, onClose }: {
     product: Product;
     categories: Category[];
     storeId: string;
     storeName: string;
+    /** Línea de la lista desde la que se abre. Sin ella, nota y enlace no aplican. */
+    itemId?: string;
     onClose: () => void;
   } = $props();
 
@@ -40,6 +43,14 @@
   // Imagen actual: la que haya puesto el usuario, o la que trajo Open Food Facts.
   let photo = $state(product.icon.kind === 'image' ? product.icon.value : '');
   let imgError = $state('');
+  const line = itemId
+    ? app.state.lists[storeId]?.items.find((item) => item.id === itemId)
+    : undefined;
+  const isOnline = !!app.state.stores.find((store) => store.id === storeId)?.online;
+  let note = $state(line?.note ?? '');
+  let productUrl = $state(line?.url ?? '');
+  let showLinkField = $state(!!line?.url);
+  let linkError = $state('');
 
   const inLists = $derived(app.countItemsOf(product.id));
 
@@ -69,6 +80,9 @@
   }
 
   function save() {
+    const clean = name.trim();
+    if (isCustom && clean.length < 2) return;
+
     const icon = photo
       ? ({ kind: 'image', value: photo } as const)
       : ({ kind: 'emoji', value: emoji || '🏷️' } as const);
@@ -76,8 +90,6 @@
     // updateProduct PRIMERO: reemplaza el producto conservando su icono original
     // (la foto de Open Food Facts o el emoji del seed) en state.products.
     if (isCustom) {
-      const clean = name.trim();
-      if (clean.length < 2) return;
       app.updateProduct({
         ...product,
         name: clean,
@@ -93,6 +105,15 @@
     // va SIEMPRE al override (también en los custom) para que "volver al
     // original" recupere la foto de OFF en vez de haberla machacado.
     app.setProductIcon(product.id, icon);
+    if (itemId) app.setItemNote(storeId, itemId, note);
+    if (itemId && isOnline) {
+      const normalizedUrl = normalizeProductUrl(productUrl);
+      if (normalizedUrl === null) {
+        linkError = t('list.invalidLink');
+        return;
+      }
+      app.setItemUrl(storeId, itemId, normalizedUrl === '' ? undefined : normalizedUrl);
+    }
     onClose();
   }
 
@@ -197,6 +218,35 @@
         style="border: 1px solid var(--border);">
         {t('product.seedNote', { name: product.name })}
       </p>
+    {/if}
+
+    {#if itemId}
+      <label class="block">
+        <span class="text-sm font-medium">{t('list.productNote')}</span>
+        <textarea bind:value={note} rows="2" maxlength="240"
+          placeholder={t('list.productNotePlaceholder')}
+          class="mt-1 w-full resize-none rounded-xl border px-4 py-2 bg-transparent"
+          style="border-color: var(--border);"></textarea>
+      </label>
+    {/if}
+
+    {#if itemId && isOnline}
+      {#if showLinkField}
+        <label class="block">
+          <span class="text-sm font-medium">{t('list.productLink')}</span>
+          <input type="text" inputmode="url" bind:value={productUrl}
+            placeholder={t('list.productLinkPlaceholder')}
+            class="mt-1 w-full rounded-xl border px-4 py-2 bg-transparent"
+            style="border-color: var(--border);" />
+          {#if linkError}<span class="mt-1 block text-xs text-red-600">{linkError}</span>{/if}
+        </label>
+      {:else}
+        <button type="button" onclick={() => (showLinkField = true)}
+          class="flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium"
+          style="border-color: var(--border); color: var(--accent);">
+          🔗 {t('list.addProductLink')}
+        </button>
+      {/if}
     {/if}
 
     {#if product.barcode}

@@ -160,10 +160,14 @@ function applySnapshot(snap: SyncSnapshot): void {
   const seedProducts = app.state.products.filter((p) => !p.id.startsWith('custom-'));
   app.state.products = [...seedProducts, ...(snap.customProducts ?? [])];
 
+  // Una tienda seed editada llega en customStores. Si también queda la
+  // copia local sin editar, el primer find sigue viendo la del seed.
+  const incoming = snap.customStores ?? [];
+  const incomingIds = new Set(incoming.map((s) => s.id));
   const localUntouched = app.state.stores.filter(
-    (s) => ALL_SEED_STORE_IDS.has(s.id) && !s.edited,
+    (s) => ALL_SEED_STORE_IDS.has(s.id) && !s.edited && !incomingIds.has(s.id),
   );
-  app.state.stores = [...localUntouched, ...(snap.customStores ?? [])];
+  app.state.stores = [...localUntouched, ...incoming];
 
   if (snap.defaultStores) app.state.defaultStores = snap.defaultStores;
 

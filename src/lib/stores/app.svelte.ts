@@ -170,8 +170,10 @@ class AppStore {
    *  donde se está añadiendo, para que aparezca agrupado lógicamente. */
   createFreeProduct(name: string, typeId: string, emoji = '🏷️'): Product {
     // Busca la categoría "Otros" de ese tipo, o crea una si no existe.
+    // El id acaba en "-otros" en todos los idiomas. El nombre traducido
+    // ("Other", "Diğer"…) no coincide con la palabra española.
     let otros = this.state.categories.find(
-      (c) => c.typeId === typeId && c.name.toLowerCase() === 'otros',
+      (c) => c.typeId === typeId && c.id.endsWith('-otros'),
     );
     if (!otros) {
       otros = {
@@ -352,6 +354,34 @@ class AppStore {
     const it = list.items.find((i) => i.id === itemId);
     if (!it) return;
     it.unit = unit;
+    list.updatedAt = Date.now();
+    this.persist();
+  }
+
+  /** Nota de esta compra. Vacía la borra. No se copia al volver a añadir el producto. */
+  setItemNote(storeId: string, itemId: string, note?: string): void {
+    const list = this.state.lists[storeId];
+    if (!list) return;
+    const it = list.items.find((i) => i.id === itemId);
+    if (!it) return;
+    const clean = note?.trim() || undefined;
+    if (it.note === clean) return;
+    if (clean) it.note = clean;
+    else delete it.note;
+    list.updatedAt = Date.now();
+    this.persist();
+  }
+
+  /** Guarda el enlace ya normalizado. Vacío lo borra. */
+  setItemUrl(storeId: string, itemId: string, url?: string): void {
+    const list = this.state.lists[storeId];
+    if (!list) return;
+    const it = list.items.find((i) => i.id === itemId);
+    if (!it) return;
+    const next = url || undefined;
+    if (it.url === next) return;
+    if (next) it.url = next;
+    else delete it.url;
     list.updatedAt = Date.now();
     this.persist();
   }

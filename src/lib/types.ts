@@ -45,6 +45,8 @@ export interface Store {
   edited?: boolean;
   /** Tarjeta de fidelización de esta tienda (opcional). */
   loyalty?: LoyaltyCard;
+  /** Tienda online: cada línea de su lista puede guardar un enlace al producto. */
+  online?: boolean;
 }
 
 /** Categoría dentro de un tipo de tienda */
@@ -82,6 +84,8 @@ export interface ListItem {
   unit: Unit;
   done: boolean;
   note?: string;
+  /** Página del producto, solo en tiendas online. */
+  url?: string;
   addedAt: number;             // timestamp
   doneAt?: number;
 }
@@ -122,7 +126,7 @@ export interface AppState {
   /** Locale del catálogo (tiendas/productos/idioma de nombres). Se deriva del
    *  idioma/país de Home Assistant, o del navegador fuera de él. Si el idioma no
    *  es ninguno de los soportados, DEFAULT_LOCALE ('en'). */
-  locale?: 'es' | 'en' | 'us' | 'fr' | 'de' | 'br';
+  locale?: 'es' | 'en' | 'us' | 'fr' | 'de' | 'br' | 'tr';
   /** Icono elegido por el usuario para un producto, incluidos los del seed.
    *
    *  Vive APARTE de `products` porque refreshSeed() reemplaza el seed entero en

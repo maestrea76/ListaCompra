@@ -56,6 +56,8 @@ def test_resto_de_idiomas():
     assert routing.resolve_locale("de-CH", None) == "de"
     assert routing.resolve_locale("pt", "BR") == "br"
     assert routing.resolve_locale("pt-BR", None) == "br"
+    assert routing.resolve_locale("tr", "TR") == "tr"
+    assert routing.resolve_locale("tr-TR", None) == "tr"
 
 
 def test_idioma_no_soportado_cae_al_ingles():
@@ -225,6 +227,7 @@ def test_el_pan_generico_existe_en_todos_los_idiomas():
         ("es", "ES", "pan", "Pan"), ("en", "GB", "bread", "Bread"),
         ("fr", "FR", "pain", "Pain"), ("de", "DE", "brot", "Brot"),
         ("pt", "BR", "pão", "Pão"),
+        ("tr", "TR", "ekmek", "Ekmek"),
     ]:
         res = routing.resolve(termino, snap, routing.catalog_for(cat, lang, cc))
         assert res["product"] is not None, f"{termino!r} no casa en {lang}"
@@ -250,13 +253,16 @@ def test_el_ejemplo_del_readme_existe_en_todos_los_idiomas():
         assert res["product"] is not None, f"{termino!r} no existe en el catálogo {lang}-{cc}"
 
 
-def test_catalogo_exportado_tiene_los_seis_idiomas():
+def test_catalogo_exportado_tiene_todos_los_idiomas():
     path = ROOT / "custom_components" / "tucompra" / "catalog.json"
     if not path.exists():
         return  # no se ha corrido `npm run export:catalog`; en CI sí
     cat = json.loads(path.read_text(encoding="utf-8"))
     assert "locales" in cat, "catalog.json sigue en formato plano (solo español)"
-    for loc in ("es", "en", "us", "fr", "de", "br"):
+    for loc in ("es", "en", "us", "fr", "de", "br", "tr"):
         assert loc in cat["locales"], f"falta el catálogo de {loc}"
         assert cat["locales"][loc]["products"], f"{loc} sin productos"
         assert cat["locales"][loc]["stores"], f"{loc} sin tiendas"
+        names = {store["name"] for store in cat["locales"][loc]["stores"]}
+        assert "Amazon" in names, f"{loc} sin Amazon"
+        assert "IKEA" in names or "Ikea" in names, f"{loc} sin IKEA"

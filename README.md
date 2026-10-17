@@ -73,6 +73,9 @@ across several shops. Tu Compra is built around the way people really shop:
   - 🇫🇷 **France** — Carrefour, Leclerc, Auchan, Intermarché, Monoprix…
   - 🇩🇪 **Germany** — Aldi, Lidl, Rewe, Edeka, Kaufland, dm…
   - 🇧🇷 **Brazil** — Pão de Açúcar, Assaí, Atacadão, Extra, Renner…
+  - 🇹🇷 **Türkiye** — A101, BİM, ŞOK, Hakmar, the weekly Pazar and the usual specialist shops
+
+  Amazon (online, with a product link on each item) and IKEA are in every catalog.
   
   Each locale ships genuinely local products (Marmite and Hobnobs for the UK,
   ranch and tater tots for the US, Comté and rillettes for France, Quark and
@@ -91,6 +94,12 @@ across several shops. Tu Compra is built around the way people really shop:
 - 🎟️ **Loyalty cards.** Store each shop's card (QR or barcode) and show it
   full-screen at the till. Scan it with the camera or type the number — the
   format is detected automatically.
+- 📋 **All items.** One screen lists what is still to buy across every store,
+  grouped by section, by shop, or A–Z.
+- 📝 **Notes.** Hold a line to add a note for this shop. The note is not copied
+  the next time you add the same product.
+- 🔗 **Product link.** On an online store (Amazon in every catalog) a line can
+  keep the product page. The link opens in a new tab.
 - 🗣️ **Voice input via Assist.** Say what you need and it lands in the right
   store's list automatically (see [Voice](#voice-input-with-assist)).
 - 👥 **Personal and shared lists.** Keep your own list, or share a household
@@ -318,8 +327,9 @@ create" means nothing is ever blocked by a missing product.
 - [x] Visual store editor (create / edit / delete)
 - [x] Custom photo upload for stores
 - [x] Local Home Assistant integration (HACS): API + panel + shared lists
-- [x] Culture-aware catalog by HA language (🇪🇸🇬🇧🇺🇸🇫🇷🇩🇪🇧🇷) + SVG flag
+- [x] Culture-aware catalog by HA language (🇪🇸🇬🇧🇺🇸🇫🇷🇩🇪🇧🇷🇹🇷) + SVG flag
 - [x] Voice via Assist: `tucompra.add_item` service with automatic store routing
+- [x] All-items view, a note on each line, and a product link on online stores
 - [x] "To sort" tray with one-tap triage to the right store
 - [x] Integration icon bundled (shown on install)
 - [x] Button to open the HA sidebar from the panel
@@ -342,7 +352,8 @@ funciona **100% en local dentro de Home Assistant**. Sin nube, sin cuentas y sin
 suscripciones: los datos viven en tu propio HA y tu identidad es simplemente el
 usuario de Home Assistant con el que ya has entrado.
 
-El catálogo se **adapta a la cultura** según el idioma de HA (🇪🇸🇬🇧🇺🇸🇫🇷🇩🇪🇧🇷).
+El catálogo se **adapta a la cultura** según el idioma de HA (🇪🇸🇬🇧🇺🇸🇫🇷🇩🇪🇧🇷🇹🇷).
+Amazon (tienda online, con enlace de producto) e IKEA están en todos los idiomas.
 El seed español es el más completo (~1.300 productos), con fuerte sabor de
 **Euskadi / País Vasco** (txuleta, kokotxas, txakoli, idiazabal, perretxikos…) y
 del resto de España (jamón ibérico, fabes, turrón de Jijona…).
@@ -388,6 +399,12 @@ del resto de España (jamón ibérico, fabes, turrón de Jijona…).
 - 🎟️ **Tarjetas de fidelización**: guarda la tarjeta de cada tienda (QR o código
   de barras) y muéstrala a pantalla completa en caja. Escanéala con la cámara o
   escribe el número — el formato se detecta solo.
+- 📋 **Todos los artículos.** Una pantalla junta lo que falta en todas las
+  tiendas, por sección, por tienda o de la A a la Z.
+- 📝 **Notas.** Mantén pulsada una línea para anotar esta compra. La nota no se
+  copia la próxima vez que añades el mismo producto.
+- 🔗 **Enlace de producto.** En una tienda online (Amazon en todos los idiomas)
+  la línea puede guardar la ficha. El enlace se abre en una pestaña nueva.
 - 🗣️ **Voz con Assist**: `tucompra.add_item` reconoce el producto, deduce su tipo
   de tienda y lo coloca en la **tienda por defecto** (botón 🎯). Si duda, va a la
   bandeja **"📥 Por clasificar"** y lo recolocas con el botón ↪.

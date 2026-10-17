@@ -19,6 +19,8 @@
   import ProductEditor from '../loyalty/ProductEditor.svelte';
   import HoldButton from '../ui/HoldButton.svelte';
   import PhotoZoom from '../ui/PhotoZoom.svelte';
+  import AllItemsButton from './AllItemsButton.svelte';
+  import { normalizeProductUrl } from '$lib/product-link';
 
   let { storeId }: { storeId: string } = $props();
 
@@ -36,6 +38,7 @@
   let zoomProduct = $state<Product | null>(null);
   // Producto que se está editando desde su fila de la lista (✏️).
   let editingProduct = $state<Product | null>(null);
+  let editingItemId = $state<string | null>(null);
 
   // Cuántos productos custom hay disponibles en esta tienda (para el enlace).
   // Todos los de esta tienda: desde ahí se le pone imagen a cualquiera, no solo
@@ -226,6 +229,7 @@
         <div class="flex items-center gap-2 min-w-0">
           <MenuButton />
           <a href="#/" class="text-sm text-muted hover:underline shrink-0">← {t('nav.stores')}</a>
+          <AllItemsButton />
           <span class="font-semibold flex items-center gap-1 min-w-0">
             {#if store.icon.kind === 'image'}
               <img src={store.icon.value.startsWith('data:') ? store.icon.value : base(store.icon.value)}
@@ -397,6 +401,15 @@
                   {/if}
                   <div class="flex-1 min-w-0">
                     <div class="product-name font-medium truncate">{p?.name ?? '?'}</div>
+                    {#if item.note}
+                      <p class="mt-0.5 line-clamp-2 text-xs text-muted">{item.note}</p>
+                    {/if}
+                    {#if item.url && normalizeProductUrl(item.url)}
+                      <a href={normalizeProductUrl(item.url)!} target="_blank" rel="noopener noreferrer"
+                        class="mt-0.5 inline-block text-xs hover:underline" style="color: var(--accent);">
+                        {t('list.openProductLink')}
+                      </a>
+                    {/if}
                     <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                       <button onclick={() => step(item.id, -1)}
                         class="size-7 rounded-full border grid place-items-center hover:bg-[var(--bg)]"
@@ -422,7 +435,7 @@
                        muy juntos y abrir el editor sin querer molesta. -->
                   {#if p}
                     <HoldButton title={t('product.holdToEdit')}
-                      onHold={() => (editingProduct = p)}>✏️</HoldButton>
+                      onHold={() => { editingProduct = p; editingItemId = item.id; }}>✏️</HoldButton>
                   {/if}
                   <button onclick={() => (movingItemId = movingItemId === item.id ? null : item.id)}
                     class="text-muted hover:text-current text-lg shrink-0"
@@ -473,7 +486,8 @@
 
   {#if editingProduct}
     <ProductEditor product={editingProduct} {categories} {storeId} storeName={store.name}
-      onClose={() => (editingProduct = null)} />
+      itemId={editingItemId ?? undefined}
+      onClose={() => { editingProduct = null; editingItemId = null; }} />
   {/if}
 
   {#if showScanProduct}

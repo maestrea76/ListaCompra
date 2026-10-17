@@ -10,7 +10,10 @@ entera: entrar en un share da acceso a todo su contenido.
 """
 from __future__ import annotations
 
+import math
+import re
 import time
+import urllib.parse
 import uuid
 from pathlib import Path
 from typing import Any
@@ -21,6 +24,7 @@ from homeassistant.helpers.storage import Store
 from .const import STORAGE_KEY, STORAGE_VERSION
 from .routing import (
     INBOX_STORE_ID,
+    _norm,
     catalog_for,
     load_catalog,
     match_scored,
@@ -31,14 +35,64 @@ from .routing import (
 
 UNITS = {"unidad", "kg", "g", "l", "ml", "paquete", "docena", "caja"}
 
+# Mismo criterio que normalizeProductUrl en src/lib/product-link.ts.
+_URL_SCHEME = re.compile(r"^[a-z][a-z\d+.-]*://", re.IGNORECASE)
+_URL_SCHEME_NO_HOST = re.compile(r"^[a-z][a-z\d+.-]*:(?!\d)", re.IGNORECASE)
+
 
 def _now_ms() -> int:
     return int(time.time() * 1000)
 
 
+def _round_qty(qty: float) -> float:
+    """Un decimal, como Math.round del panel. Solo cantidades positivas."""
+    return math.floor(float(qty) * 10 + 0.5) / 10
+
+
+def _normalize_product_url(value: str) -> str | None:
+    """Enlace http(s). Vacío → ''. Esquema que no es http(s) → None."""
+    clean = (value or "").strip()
+    if not clean:
+        return ""
+    has_slashes = _URL_SCHEME.match(clean) is not None
+    if not has_slashes and _URL_SCHEME_NO_HOST.match(clean):
+        return None
+    candidate = clean if has_slashes else f"https://{clean}"
+    try:
+        parts = urllib.parse.urlsplit(candidate)
+    except ValueError:
+        return None
+    host = parts.hostname or ""
+    if parts.scheme not in ("http", "https") or not host:
+        return None
+    if host != "localhost" and "." not in host:
+        return None
+    return urllib.parse.urlunsplit(parts)
+
+
 def _titlecase_es(name: str) -> str:
     name = name.strip()
     return name[:1].upper() + name[1:].lower() if name else name
+
+
+def _unique_names(names) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for name in names:
+        key = _norm(name)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(name)
+    return out
+
+
+def _line_label(name: str, item: dict) -> str:
+    qty = item.get("qty", 1)
+    unit = item.get("unit") or "unidad"
+    note = (item.get("note") or "").strip()
+    label = f"{name} ({qty} {unit})"
+    return f"{label}, {note}" if note else label
 
 
 def _ensure_inbox_store(snapshot: dict) -> None:
@@ -257,12 +311,40 @@ class TuCompraStore:
             if not res.get("store_id"):
                 return {"ok": False, "error": f"No encuentro la tienda {store!r}."}
 
-        now = _now_ms()
         product = res["product"]
+        # Sin tienda dicha, una línea pendiente de ese producto manda sobre la
+        # tienda por defecto: repetir "leche" suma, no abre otra fila.
+        hits = self._pending_hits(
+            snap, catalog, product, name, res["store_id"] if store else None
+        )
+        stores = self._stores_index(snap, catalog)
+        if len({hit["store_id"] for hit in hits}) > 1:
+            return {
+                "ok": False,
+                "error": "Ese producto está pendiente en varias tiendas.",
+                "store_alternatives": _unique_names(hit["store"] for hit in hits),
+                "ambiguous": True,
+            }
+        if len(hits) > 1:
+            return {
+                "ok": False,
+                "error": "Hay varias líneas pendientes de ese producto.",
+                "alternatives": [
+                    _line_label(hit["name"], hit["item"]) for hit in hits[:3]
+                ],
+                "ambiguous": True,
+            }
+        if len(hits) == 1:
+            return await self._bump_pending(
+                share, snap, hits[0], quantity or 1, unit, note, res.get("alternatives") or []
+            )
+
+        now = _now_ms()
         store_id = res["store_id"]
         if store_id is None:
             store_id = INBOX_STORE_ID
             _ensure_inbox_store(snap)
+            stores = self._stores_index(snap, catalog)
 
         if product:
             product_id = product["id"]
@@ -299,12 +381,13 @@ class TuCompraStore:
         lst["updatedAt"] = now
         snap["updatedAt"] = now
         share["snapshot"] = snap
+        share["updatedAt"] = now
         await self._async_save()
 
-        stores = self._stores_index(snap, catalog)
         alternatives = res.get("alternatives") or []
         return {
             "ok": True,
+            "bumped": False,
             "share_id": share["id"],
             "store_id": store_id,
             "store": stores.get(store_id, {}).get("name", store_id),
@@ -325,7 +408,9 @@ class TuCompraStore:
             "unit": item_unit,
         }
 
-    def _pending_rows(self, snap: dict, catalog: dict, store_id: str | None) -> list[dict]:
+    def _item_rows(
+        self, snap: dict, catalog: dict, store_id: str | None, *, done: bool
+    ) -> list[dict]:
         products = self._products_index(snap, catalog)
         stores = self._stores_index(snap, catalog)
         rows: list[dict] = []
@@ -334,7 +419,7 @@ class TuCompraStore:
             if store_id and sid != store_id:
                 continue
             for item in lst.get("items") or []:
-                if item.get("done"):
+                if bool(item.get("done")) != done:
                     continue
                 product = products.get(item.get("productId"), {})
                 rows.append({
@@ -346,6 +431,113 @@ class TuCompraStore:
                     "list": lst,
                 })
         return rows
+
+    def _pending_rows(self, snap: dict, catalog: dict, store_id: str | None) -> list[dict]:
+        return self._item_rows(snap, catalog, store_id, done=False)
+
+    def _pending_hits(
+        self,
+        snap: dict,
+        catalog: dict,
+        product: dict | None,
+        spoken: str,
+        store_id: str | None,
+    ) -> list[dict]:
+        """Líneas pendientes del mismo producto. Con store_id, solo esa tienda."""
+        target = product.get("id") if product else None
+        spoken_n = _norm(spoken)
+        hits = []
+        for row in self._pending_rows(snap, catalog, store_id):
+            if target:
+                if row["item"].get("productId") != target:
+                    continue
+            elif _norm(row["name"]) != spoken_n:
+                continue
+            hits.append(row)
+        return hits
+
+    async def _bump_pending(
+        self,
+        share: dict,
+        snap: dict,
+        hit: dict,
+        quantity: float,
+        unit: str | None,
+        note: str | None,
+        alternatives: list,
+    ) -> dict[str, Any]:
+        item = hit["item"]
+        previous = float(item.get("qty") or 1)
+        item["qty"] = _round_qty(previous + (quantity or 1))
+        if unit:
+            item["unit"] = unit
+        clean_note = (note or "").strip()
+        if clean_note:
+            item["note"] = clean_note
+        else:
+            clean_note = item.get("note") or ""
+        now = _now_ms()
+        hit["list"]["updatedAt"] = now
+        snap["updatedAt"] = now
+        share["snapshot"] = snap
+        share["updatedAt"] = now
+        await self._async_save()
+        return {
+            "ok": True,
+            "bumped": True,
+            "share_id": share["id"],
+            "store_id": hit["store_id"],
+            "store": hit["store"],
+            "product_id": item.get("productId"),
+            "matched": True,
+            "classified": hit["store_id"] != INBOX_STORE_ID,
+            "product_name": hit["name"],
+            "alternatives": alternatives,
+            "ambiguous": bool(alternatives),
+            "note": clean_note,
+            "qty": item["qty"],
+            "previous_qty": previous,
+            "unit": item.get("unit") or "unidad",
+        }
+
+    def _pick_line(
+        self,
+        name: str,
+        snap: dict,
+        catalog: dict,
+        store: str | None,
+        *,
+        done: bool,
+    ) -> dict[str, Any]:
+        gate = self._require_store(store, self._stores_index(snap, catalog))
+        if gate and not gate.get("store_id"):
+            return gate
+        rows = self._item_rows(
+            snap, catalog, gate["store_id"] if gate else None, done=done
+        )
+        scored = match_scored(name, rows)
+        if not scored:
+            kind = "comprado" if done else "pendiente"
+            return {"ok": False, "error": f"No hay {kind} que case con {name!r}."}
+        names = tied_alternatives(scored)
+        if names:
+            winner = scored[0][1]["name"]
+            kind = "comprados" if done else "pendientes"
+            return {
+                "ok": False,
+                "error": f"Hay varios productos {kind} que casan.",
+                "product_name": winner,
+                "alternatives": names,
+                "ambiguous": True,
+            }
+        return {"ok": True, "row": scored[0][1]}
+
+    async def _save_share(self, share: dict, snap: dict) -> None:
+        now = _now_ms()
+        snap["updatedAt"] = now
+        share["snapshot"] = snap
+        share["updatedAt"] = now
+        await self._async_save()
 
     def _require_store(self, store: str | None, stores: dict[str, dict]) -> dict[str, Any] | None:
         if not store:
@@ -383,6 +575,7 @@ class TuCompraStore:
                 "qty": row["item"].get("qty", 1),
                 "unit": row["item"].get("unit", "unidad"),
                 "note": row["item"].get("note") or "",
+                "url": row["item"].get("url") or "",
             }
             for row in rows
         ]
@@ -395,24 +588,7 @@ class TuCompraStore:
         catalog: dict,
         store: str | None,
     ) -> dict[str, Any]:
-        gate = self._require_store(store, self._stores_index(snap, catalog))
-        if gate and not gate.get("store_id"):
-            return gate
-        rows = self._pending_rows(snap, catalog, gate["store_id"] if gate else None)
-        scored = match_scored(name, rows)
-        if not scored:
-            return {"ok": False, "error": f"No hay pendiente que case con {name!r}."}
-        names = tied_alternatives(scored)
-        if names:
-            winner = scored[0][1]["name"]
-            return {
-                "ok": False,
-                "error": "Hay varios productos pendientes que casan.",
-                "product_name": winner,
-                "alternatives": names,
-                "ambiguous": True,
-            }
-        return {"ok": True, "row": scored[0][1]}
+        return self._pick_line(name, snap, catalog, store, done=False)
 
     async def async_mark_done(
         self,
@@ -434,6 +610,7 @@ class TuCompraStore:
         row["list"]["updatedAt"] = now
         snap["updatedAt"] = now
         share["snapshot"] = snap
+        share["updatedAt"] = now
         await self._async_save()
         return {
             "ok": True,
@@ -476,6 +653,7 @@ class TuCompraStore:
         row["list"]["updatedAt"] = now
         snap["updatedAt"] = now
         share["snapshot"] = snap
+        share["updatedAt"] = now
         await self._async_save()
         return {
             "ok": True,
@@ -483,4 +661,261 @@ class TuCompraStore:
             "product": row["name"],
             "store": row["store"],
             "note": clean,
+        }
+
+    async def async_remove_item(
+        self,
+        name: str,
+        store: str | None = None,
+        share_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Borra una sola línea. Primero la pendiente; si no hay, la comprada."""
+        share = self._pick_target_share(share_id)
+        if not share:
+            return {"ok": False, "error": "No hay ninguna lista disponible todavía."}
+        snap = share.get("snapshot") or self._empty_snap()
+        catalog = self._flat_catalog()
+        picked = self._pick_line(name, snap, catalog, store, done=False)
+        if not picked.get("ok") and not picked.get("ambiguous") and not picked.get("store_alternatives"):
+            picked = self._pick_line(name, snap, catalog, store, done=True)
+        if not picked.get("ok"):
+            return picked
+        row = picked["row"]
+        row["list"]["items"] = [
+            item for item in row["list"].get("items") or [] if item.get("id") != row["item"].get("id")
+        ]
+        row["list"]["updatedAt"] = _now_ms()
+        await self._save_share(share, snap)
+        return {
+            "ok": True,
+            "share_id": share["id"],
+            "product": row["name"],
+            "store": row["store"],
+            "removed": True,
+        }
+
+    async def async_set_qty(
+        self,
+        name: str,
+        quantity: float | None = None,
+        delta: float | None = None,
+        unit: str | None = None,
+        store: str | None = None,
+        share_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Fija la cantidad de un pendiente, o suma un incremento. No baja de 0.1."""
+        if quantity is not None and delta is not None:
+            return {"ok": False, "error": "Indica la cantidad o el incremento, no los dos."}
+        if quantity is None and delta is None and not unit:
+            return {"ok": False, "error": "Indica cantidad, incremento o unidad."}
+        if unit and unit not in UNITS:
+            return {"ok": False, "error": f"Unidad no válida: {unit}.", "units": sorted(UNITS)}
+        share = self._pick_target_share(share_id)
+        if not share:
+            return {"ok": False, "error": "No hay ninguna lista disponible todavía."}
+        snap = share.get("snapshot") or self._empty_snap()
+        picked = self._pick_line(name, snap, self._flat_catalog(), store, done=False)
+        if not picked.get("ok"):
+            return picked
+        row = picked["row"]
+        item = row["item"]
+        previous = float(item.get("qty") or 1)
+        if quantity is not None or delta is not None:
+            new_qty = float(quantity) if quantity is not None else previous + float(delta)
+            if new_qty <= 0:
+                return {
+                    "ok": False,
+                    "error": "La cantidad quedaría en cero. Para quitarla de la lista, bórrala.",
+                    "product": row["name"],
+                    "store": row["store"],
+                    "qty": previous,
+                }
+            item["qty"] = _round_qty(new_qty)
+        if unit:
+            item["unit"] = unit
+        row["list"]["updatedAt"] = _now_ms()
+        await self._save_share(share, snap)
+        return {
+            "ok": True,
+            "share_id": share["id"],
+            "product": row["name"],
+            "store": row["store"],
+            "qty": item.get("qty", previous),
+            "previous_qty": previous,
+            "unit": item.get("unit") or "unidad",
+        }
+
+    async def async_mark_pending(
+        self,
+        name: str,
+        store: str | None = None,
+        share_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Devuelve a pendiente un producto marcado como comprado."""
+        share = self._pick_target_share(share_id)
+        if not share:
+            return {"ok": False, "error": "No hay ninguna lista disponible todavía."}
+        snap = share.get("snapshot") or self._empty_snap()
+        picked = self._pick_line(name, snap, self._flat_catalog(), store, done=True)
+        if not picked.get("ok"):
+            return picked
+        row = picked["row"]
+        row["item"]["done"] = False
+        row["item"].pop("doneAt", None)
+        row["list"]["updatedAt"] = _now_ms()
+        await self._save_share(share, snap)
+        return {
+            "ok": True,
+            "share_id": share["id"],
+            "product": row["name"],
+            "store": row["store"],
+            "done": False,
+        }
+
+    async def async_move_item(
+        self,
+        name: str,
+        to_store: str,
+        store: str | None = None,
+        share_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Mueve un pendiente a otra tienda. Conserva cantidad, unidad y nota."""
+        share = self._pick_target_share(share_id)
+        if not share:
+            return {"ok": False, "error": "No hay ninguna lista disponible todavía."}
+        snap = share.get("snapshot") or self._empty_snap()
+        catalog = self._flat_catalog()
+        stores = self._stores_index(snap, catalog)
+        dest = match_store(to_store, stores)
+        if dest["alternatives"]:
+            return {
+                "ok": False,
+                "error": "Hay varias tiendas con ese nombre.",
+                "store_alternatives": dest["alternatives"],
+            }
+        if not dest["store_id"]:
+            return {"ok": False, "error": f"No encuentro la tienda {to_store!r}."}
+        picked = self._pick_line(name, snap, catalog, store, done=False)
+        if not picked.get("ok"):
+            return picked
+        row = picked["row"]
+        dest_id = dest["store_id"]
+        if row["store_id"] == dest_id:
+            return {
+                "ok": True,
+                "unchanged": True,
+                "share_id": share["id"],
+                "product": row["name"],
+                "store": row["store"],
+                "from_store": row["store"],
+            }
+        row["list"]["items"] = [
+            item for item in row["list"].get("items") or [] if item.get("id") != row["item"].get("id")
+        ]
+        now = _now_ms()
+        row["list"]["updatedAt"] = now
+        lists = snap.setdefault("lists", {})
+        target = lists.setdefault(dest_id, {"storeId": dest_id, "items": [], "updatedAt": 0})
+        target.setdefault("items", []).append(row["item"])
+        target["updatedAt"] = now
+        await self._save_share(share, snap)
+        dest_name = stores.get(dest_id, {}).get("name", dest_id)
+        return {
+            "ok": True,
+            "share_id": share["id"],
+            "product": row["name"],
+            "store": dest_name,
+            "from_store": row["store"],
+        }
+
+    async def async_clear_done(
+        self,
+        store: str | None = None,
+        share_id: str | None = None,
+        confirm: bool = False,
+    ) -> dict[str, Any]:
+        """Quita las líneas compradas. Sin confirm solo dice cuáles borraría."""
+        share = self._pick_target_share(share_id)
+        if not share:
+            return {"ok": False, "error": "No hay ninguna lista disponible todavía."}
+        snap = share.get("snapshot") or self._empty_snap()
+        catalog = self._flat_catalog()
+        gate = self._require_store(store, self._stores_index(snap, catalog))
+        if gate and not gate.get("store_id"):
+            return gate
+        rows = self._item_rows(snap, catalog, gate["store_id"] if gate else None, done=True)
+        items = [
+            {
+                "product": row["name"],
+                "store": row["store"],
+                "qty": row["item"].get("qty", 1),
+                "unit": row["item"].get("unit", "unidad"),
+            }
+            for row in rows
+        ]
+        if not confirm:
+            return {
+                "ok": True,
+                "dry_run": True,
+                "share_id": share["id"],
+                "count": len(items),
+                "items": items,
+            }
+        drop = {row["item"].get("id") for row in rows}
+        now = _now_ms()
+        for lst in (snap.get("lists") or {}).values():
+            before = lst.get("items") or []
+            kept = [item for item in before if item.get("id") not in drop]
+            if len(kept) != len(before):
+                lst["items"] = kept
+                lst["updatedAt"] = now
+        await self._save_share(share, snap)
+        return {
+            "ok": True,
+            "dry_run": False,
+            "share_id": share["id"],
+            "removed": len(items),
+            "items": items,
+        }
+
+    async def async_set_url(
+        self,
+        name: str,
+        url: str = "",
+        store: str | None = None,
+        share_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Pone o borra el enlace de un pendiente. Solo en tienda online."""
+        share = self._pick_target_share(share_id)
+        if not share:
+            return {"ok": False, "error": "No hay ninguna lista disponible todavía."}
+        normalized = _normalize_product_url(url)
+        if normalized is None:
+            return {"ok": False, "error": "El enlace tiene que ser http o https."}
+        snap = share.get("snapshot") or self._empty_snap()
+        catalog = self._flat_catalog()
+        picked = self._pick_line(name, snap, catalog, store, done=False)
+        if not picked.get("ok"):
+            return picked
+        row = picked["row"]
+        meta = self._stores_index(snap, catalog).get(row["store_id"], {})
+        if normalized and not meta.get("online"):
+            return {
+                "ok": False,
+                "error": f"{row['store']} no es una tienda online. El enlace solo se guarda ahí.",
+                "product": row["name"],
+                "store": row["store"],
+            }
+        if normalized:
+            row["item"]["url"] = normalized
+        else:
+            row["item"].pop("url", None)
+        row["list"]["updatedAt"] = _now_ms()
+        await self._save_share(share, snap)
+        return {
+            "ok": True,
+            "share_id": share["id"],
+            "product": row["name"],
+            "store": row["store"],
+            "url": normalized,
         }

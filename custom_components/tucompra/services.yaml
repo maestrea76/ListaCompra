@@ -124,3 +124,179 @@ set_note:
       name: Lista (share)
       selector:
         text:
+
+remove_item:
+  name: Quitar producto
+  description: >-
+    Borra una sola línea. Si está pendiente, borra esa. Si solo queda la
+    comprada, borra esa. No vacía la lista. Si hay varios, no borra ninguno.
+  fields:
+    name:
+      name: Producto
+      required: true
+      example: leche
+      selector:
+        text:
+    store:
+      name: Tienda
+      example: Eroski
+      selector:
+        text:
+    share_id:
+      name: Lista (share)
+      selector:
+        text:
+
+set_qty:
+  name: Cambiar cantidad
+  description: >-
+    Cambia la cantidad o la unidad de un pendiente. quantity la fija.
+    delta la suma (negativo resta). No baja de cero: para quitar la línea
+    usa remove_item.
+  fields:
+    name:
+      name: Producto
+      required: true
+      example: leche
+      selector:
+        text:
+    quantity:
+      name: Cantidad
+      description: Cantidad nueva. No la combines con el incremento.
+      example: 2
+      selector:
+        number:
+          min: 0.1
+          max: 999
+          step: 0.1
+          mode: box
+    delta:
+      name: Incremento
+      description: Se suma a la cantidad actual. Uno menos es -1.
+      example: 1
+      selector:
+        number:
+          min: -999
+          max: 999
+          step: 0.1
+          mode: box
+    unit:
+      name: Unidad
+      example: l
+      selector:
+        select:
+          options:
+            - unidad
+            - kg
+            - g
+            - l
+            - ml
+            - paquete
+            - docena
+            - caja
+    store:
+      name: Tienda
+      example: Eroski
+      selector:
+        text:
+    share_id:
+      name: Lista (share)
+      selector:
+        text:
+
+mark_pending:
+  name: Desmarcar comprado
+  description: Devuelve a pendiente el producto marcado como comprado que casa con el nombre.
+  fields:
+    name:
+      name: Producto
+      required: true
+      example: leche
+      selector:
+        text:
+    store:
+      name: Tienda
+      example: Eroski
+      selector:
+        text:
+    share_id:
+      name: Lista (share)
+      selector:
+        text:
+
+move_item:
+  name: Mover de tienda
+  description: Mueve un pendiente a otra tienda. Conserva cantidad, unidad, nota y enlace.
+  fields:
+    name:
+      name: Producto
+      required: true
+      example: leche
+      selector:
+        text:
+    to_store:
+      name: Tienda destino
+      required: true
+      example: Eroski
+      selector:
+        text:
+    store:
+      name: Tienda origen
+      description: Si se omite, busca el pendiente en todas las tiendas.
+      example: Amazon
+      selector:
+        text:
+    share_id:
+      name: Lista (share)
+      selector:
+        text:
+
+clear_done:
+  name: Limpiar comprados
+  description: >-
+    Quita las líneas ya marcadas como compradas. Los pendientes se quedan.
+    Sin confirm solo devuelve cuáles borraría. Con confirm true las borra.
+  fields:
+    store:
+      name: Tienda
+      description: Si se indica, solo los comprados de esa tienda.
+      example: Eroski
+      selector:
+        text:
+    confirm:
+      name: Confirmar
+      description: Tiene que ser true para borrar. En false solo lista.
+      default: false
+      selector:
+        boolean:
+    share_id:
+      name: Lista (share)
+      selector:
+        text:
+
+set_url:
+  name: Enlace del producto
+  description: >-
+    Pone el enlace de un pendiente en una tienda online. Una URL vacía lo borra.
+  fields:
+    name:
+      name: Producto
+      required: true
+      example: aceite
+      selector:
+        text:
+    url:
+      name: Enlace
+      description: http(s). Vacío borra el enlace.
+      example: https://www.amazon.es/dp/B00
+      selector:
+        text:
+    store:
+      name: Tienda
+      example: Amazon
+      selector:
+        text:
+    share_id:
+      name: Lista (share)
+      selector:
+        text:

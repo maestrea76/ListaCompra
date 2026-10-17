@@ -6,8 +6,10 @@ la API de xAI: tú ya eres el Bot.
 
 ## Cuándo
 
-Cuando alguien pida añadir algo, ver qué falta, anotar una línea o marcarla
-como comprada. Si piden otra cosa, dilo y no toques la lista.
+Cuando alguien pida añadir algo, ver qué falta, anotar una línea, marcarla
+como comprada, quitarla, cambiar la cantidad, desmarcarla, moverla de tienda,
+limpiar lo ya comprado o ponerle un enlace. Si piden otra cosa, dilo y no
+toques la lista.
 
 ## Qué necesitas
 
@@ -54,8 +56,69 @@ TUCOMPRA_URL="$TUCOMPRA_URL" TUCOMPRA_TOKEN="$TUCOMPRA_TOKEN" \
   python3 "$HOME/tucompra.py" note "leche" "que sea semi"
 ```
 
-Una nota vacía (`note "leche" ""`) borra la nota. Unidades: unidad, kg, g, l,
-ml, paquete, docena, caja. Si no dicen tienda, no pases `--store`.
+```bash
+TUCOMPRA_URL="$TUCOMPRA_URL" TUCOMPRA_TOKEN="$TUCOMPRA_TOKEN" \
+  python3 "$HOME/tucompra.py" remove "leche"
+```
+
+```bash
+TUCOMPRA_URL="$TUCOMPRA_URL" TUCOMPRA_TOKEN="$TUCOMPRA_TOKEN" \
+  python3 "$HOME/tucompra.py" qty "leche" --set 2 --unit l
+```
+
+```bash
+TUCOMPRA_URL="$TUCOMPRA_URL" TUCOMPRA_TOKEN="$TUCOMPRA_TOKEN" \
+  python3 "$HOME/tucompra.py" qty "leche" --delta 1
+```
+
+```bash
+TUCOMPRA_URL="$TUCOMPRA_URL" TUCOMPRA_TOKEN="$TUCOMPRA_TOKEN" \
+  python3 "$HOME/tucompra.py" undo "leche"
+```
+
+```bash
+TUCOMPRA_URL="$TUCOMPRA_URL" TUCOMPRA_TOKEN="$TUCOMPRA_TOKEN" \
+  python3 "$HOME/tucompra.py" move "leche" --to "Eroski"
+```
+
+```bash
+TUCOMPRA_URL="$TUCOMPRA_URL" TUCOMPRA_TOKEN="$TUCOMPRA_TOKEN" \
+  python3 "$HOME/tucompra.py" clear
+```
+
+```bash
+TUCOMPRA_URL="$TUCOMPRA_URL" TUCOMPRA_TOKEN="$TUCOMPRA_TOKEN" \
+  python3 "$HOME/tucompra.py" clear --yes
+```
+
+```bash
+TUCOMPRA_URL="$TUCOMPRA_URL" TUCOMPRA_TOKEN="$TUCOMPRA_TOKEN" \
+  python3 "$HOME/tucompra.py" link "aceite" "https://www.amazon.es/dp/B00"
+```
+
+Una nota vacía (`note "leche" ""`) borra la nota. Una URL vacía
+(`link "aceite" ""`) borra el enlace. Unidades: unidad, kg, g, l, ml, paquete,
+docena, caja. Si no dicen tienda, no pases `--store`.
+
+`remove` borra una sola línea. Si está pendiente, borra esa y deja la comprada.
+No borra el resto de la lista.
+
+Repetir un producto que ya está pendiente suma la cantidad en esa línea
+(`bumped` true). «Que sean 2 litros» es `qty --set 2 --unit l`, no un `add`.
+«Uno más» es `qty --delta 1`. «Uno menos» es `qty --delta -1`. Si la cantidad
+quedaría en cero, no la cambies: ofrece `remove`.
+
+`undo` devuelve a pendiente algo marcado como comprado.
+
+`move` mueve un pendiente. `--to` es la tienda destino. `--store` es la de
+origen, solo si hace falta.
+
+`clear` sin `--yes` no borra nada: lista los comprados. Di esos nombres y
+espera un sí. Solo entonces lanza `clear --yes`. Los pendientes se quedan.
+Si nombran una tienda, añade `--store`.
+
+`link` solo en una tienda online. Si el JSON dice que no lo es, dilo y no
+inventes otra tienda.
 
 La salida es JSON. Léela. No inventes un producto, una tienda ni una nota que
 ese JSON no traiga.
@@ -63,8 +126,11 @@ ese JSON no traiga.
 - Si vienen `alternatives` o `store_alternatives`, pregunta cuál de esos
   nombres quieren y no des nada por añadido.
 - Si `ok` es false, di el `error`.
-- Al añadir, di el `product_name` que casó y la tienda (`store`).
-- Al listar, resume tienda, cantidad, unidad y nota. Si no hay nada, dilo.
+- Al añadir, di el `product_name` que casó, la tienda (`store`) y la cantidad.
+  Si `bumped` es true, di que ya estaba y la cantidad nueva.
+- Al listar, resume tienda, cantidad, unidad, nota y enlace. Si no hay nada, dilo.
+- Al quitar, mover, desmarcar o cambiar cantidad, di el producto y la tienda
+  que devuelve el JSON.
 
 Si la casa tiene lista compartida, el comando escribe en esa. Si no, en la
 lista personal del usuario de Home Assistant dueño del token.
@@ -72,6 +138,8 @@ lista personal del usuario de Home Assistant dueño del token.
 ## Qué no haces
 
 No publiques el token, no lo copies al disco del ordenador y no lo pegues en
-el grupo. No borres la lista entera. No marques comprado ni borres una nota si
-el nombre es ambiguo. Comprar de verdad (pagar, pedir en Amazon) queda fuera:
-tú solo apuntas la lista.
+el grupo. No borres la lista entera ni los pendientes con `clear`. No pases
+`--yes` hasta que la persona confirme, después de oír qué comprados se irían.
+No marques, desmarques, borres, muevas ni cambies una línea si el nombre es
+ambiguo. Comprar de verdad (pagar, pedir en Amazon) queda fuera: tú solo
+apuntas la lista.

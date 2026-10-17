@@ -374,7 +374,9 @@ curl -fsSL -o "$HOME/tucompra.py" \
 ```
 
 Tu Compra must be **0.3.58** or newer, and Home Assistant restarted. Older
-releases can only add an item.
+releases can only add an item. Removing a line, changing the quantity,
+unmarking, moving stores, clearing bought items and the product link need the
+integration that registers those services, then a Home Assistant restart.
 
 When the house has a shared list, the command writes there. Otherwise it
 writes the personal list of the Home Assistant user who owns the token.
@@ -388,17 +390,30 @@ staff:
 - `qué falta`
 - `anota en la leche que sea semidesnatada`
 - `marca la leche como comprada`
+- `quita la leche`
+- `que sean 2 litros`
+- `la leche no la he comprado`
+- `pásala a Eroski`
+- `borra lo que ya está marcado`
+- `el aceite es este enlace`
 
-If two products or two stores match, the Bot asks which one. The line shows
-up in the Tu Compra panel. Paying or placing the Amazon order is out of scope:
-the Bot only updates the list.
+If two products or two stores match, the Bot asks which one. Saying a product
+that is already pending increases that line. Clearing bought items asks first
+and leaves everything still to buy. The line shows up in the Tu Compra panel.
+Paying or placing the Amazon order is out of scope: the Bot only updates the list.
 
 | Action | What it does |
 |---|---|
-| `tucompra.add_item` | Adds a product. Optional `store` ("Amazon") and `note`. |
+| `tucompra.add_item` | Adds a product. If that product is already pending, adds to its quantity. Optional `store` ("Amazon") and `note`. |
 | `tucompra.list_pending` | What is still to buy. Optional `store`. |
 | `tucompra.mark_done` | Marks the matching pending line as bought. |
 | `tucompra.set_note` | Sets the note on that line. An empty note clears it. |
+| `tucompra.remove_item` | Deletes one line. Does not empty the list. |
+| `tucompra.set_qty` | Sets the quantity (`quantity`) or adds to it (`delta`). Optional `unit`. |
+| `tucompra.mark_pending` | Puts a bought line back on the list. |
+| `tucompra.move_item` | Moves a pending line. `to_store` is the destination. |
+| `tucompra.clear_done` | Without `confirm`, lists bought lines. With `confirm: true`, removes only those. |
+| `tucompra.set_url` | Sets the product link on an online store. An empty URL clears it. |
 
 ---
 
@@ -705,6 +720,9 @@ curl -fsSL -o "$HOME/tucompra.py" \
 
 Tu Compra tiene que ser la **0.3.58** o posterior, y Home Assistant tiene que
 estar reiniciado. En versiones anteriores solo se puede añadir un producto.
+Quitar una línea, cambiar la cantidad, desmarcar, mover de tienda, limpiar
+comprados y el enlace necesitan la integración que registra esos servicios, y
+otro reinicio de Home Assistant.
 
 Si la casa tiene lista compartida, el comando escribe en esa. Si no, en la
 lista personal del usuario de Home Assistant dueño del token.
@@ -718,17 +736,30 @@ de gabinete:
 - `qué falta`
 - `anota en la leche que sea semidesnatada`
 - `marca la leche como comprada`
+- `quita la leche`
+- `que sean 2 litros`
+- `la leche no la he comprado`
+- `pásala a Eroski`
+- `borra lo que ya está marcado`
+- `el aceite es este enlace`
 
-Si casan dos productos o dos tiendas, el Bot pregunta cuál. La línea aparece
-en el panel de Tu Compra. Pagar o hacer el pedido en Amazon queda fuera: el
-Bot solo actualiza la lista.
+Si casan dos productos o dos tiendas, el Bot pregunta cuál. Repetir un
+producto que ya está pendiente suma en esa línea. Limpiar comprados pregunta
+antes y deja lo que falta. La línea aparece en el panel de Tu Compra. Pagar o
+hacer el pedido en Amazon queda fuera: el Bot solo actualiza la lista.
 
 | Acción | Qué hace |
 |---|---|
-| `tucompra.add_item` | Añade un producto. `store` ("Amazon") y `note` son opcionales. |
+| `tucompra.add_item` | Añade un producto. Si ya está pendiente, suma la cantidad. `store` ("Amazon") y `note` son opcionales. |
 | `tucompra.list_pending` | Lo que falta por comprar. `store` es opcional. |
 | `tucompra.mark_done` | Marca comprado el pendiente que casa con el nombre. |
 | `tucompra.set_note` | Pone la nota en esa línea. Una nota vacía la borra. |
+| `tucompra.remove_item` | Borra una sola línea. No vacía la lista. |
+| `tucompra.set_qty` | Fija la cantidad (`quantity`) o la incrementa (`delta`). `unit` es opcional. |
+| `tucompra.mark_pending` | Devuelve un comprado a pendiente. |
+| `tucompra.move_item` | Mueve un pendiente. `to_store` es la tienda destino. |
+| `tucompra.clear_done` | Sin `confirm` lista los comprados. Con `confirm: true` borra solo esos. |
+| `tucompra.set_url` | Pone el enlace en una tienda online. Una URL vacía lo borra. |
 
 ---
 

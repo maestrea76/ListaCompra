@@ -77,6 +77,53 @@ SET_NOTE_SCHEMA = vol.Schema(
     }
 )
 
+REMOVE_ITEM_SCHEMA = vol.Schema(
+    {
+        vol.Required("name"): cv.string,
+        vol.Optional("store"): cv.string,
+        vol.Optional("share_id"): cv.string,
+    }
+)
+
+SET_QTY_SCHEMA = vol.Schema(
+    {
+        vol.Required("name"): cv.string,
+        vol.Optional("quantity"): vol.Coerce(float),
+        vol.Optional("delta"): vol.Coerce(float),
+        vol.Optional("unit"): cv.string,
+        vol.Optional("store"): cv.string,
+        vol.Optional("share_id"): cv.string,
+    }
+)
+
+MARK_PENDING_SCHEMA = MARK_DONE_SCHEMA
+
+MOVE_ITEM_SCHEMA = vol.Schema(
+    {
+        vol.Required("name"): cv.string,
+        vol.Required("to_store"): cv.string,
+        vol.Optional("store"): cv.string,
+        vol.Optional("share_id"): cv.string,
+    }
+)
+
+CLEAR_DONE_SCHEMA = vol.Schema(
+    {
+        vol.Optional("store"): cv.string,
+        vol.Optional("share_id"): cv.string,
+        vol.Optional("confirm", default=False): cv.boolean,
+    }
+)
+
+SET_URL_SCHEMA = vol.Schema(
+    {
+        vol.Required("name"): cv.string,
+        vol.Optional("url", default=""): cv.string,
+        vol.Optional("store"): cv.string,
+        vol.Optional("share_id"): cv.string,
+    }
+)
+
 # Config opcional. `tucompra:` a secas sigue valiendo y deja la app 100% local.
 # `product_lookup: true` es lo ÚNICO que permite una petición saliente (a Open
 # Food Facts, para traducir un código de barras a producto).
@@ -151,11 +198,64 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             share_id=call.data.get("share_id"),
         )
 
+    async def _handle_remove_item(call: ServiceCall) -> dict:
+        return await store.async_remove_item(
+            name=call.data["name"],
+            store=call.data.get("store"),
+            share_id=call.data.get("share_id"),
+        )
+
+    async def _handle_set_qty(call: ServiceCall) -> dict:
+        return await store.async_set_qty(
+            name=call.data["name"],
+            quantity=call.data.get("quantity"),
+            delta=call.data.get("delta"),
+            unit=call.data.get("unit"),
+            store=call.data.get("store"),
+            share_id=call.data.get("share_id"),
+        )
+
+    async def _handle_mark_pending(call: ServiceCall) -> dict:
+        return await store.async_mark_pending(
+            name=call.data["name"],
+            store=call.data.get("store"),
+            share_id=call.data.get("share_id"),
+        )
+
+    async def _handle_move_item(call: ServiceCall) -> dict:
+        return await store.async_move_item(
+            name=call.data["name"],
+            to_store=call.data["to_store"],
+            store=call.data.get("store"),
+            share_id=call.data.get("share_id"),
+        )
+
+    async def _handle_clear_done(call: ServiceCall) -> dict:
+        return await store.async_clear_done(
+            store=call.data.get("store"),
+            share_id=call.data.get("share_id"),
+            confirm=bool(call.data.get("confirm", False)),
+        )
+
+    async def _handle_set_url(call: ServiceCall) -> dict:
+        return await store.async_set_url(
+            name=call.data["name"],
+            url=call.data.get("url", ""),
+            store=call.data.get("store"),
+            share_id=call.data.get("share_id"),
+        )
+
     for service, handler, schema in (
         ("add_item", _handle_add_item, ADD_ITEM_SCHEMA),
         ("list_pending", _handle_list_pending, LIST_PENDING_SCHEMA),
         ("mark_done", _handle_mark_done, MARK_DONE_SCHEMA),
         ("set_note", _handle_set_note, SET_NOTE_SCHEMA),
+        ("remove_item", _handle_remove_item, REMOVE_ITEM_SCHEMA),
+        ("set_qty", _handle_set_qty, SET_QTY_SCHEMA),
+        ("mark_pending", _handle_mark_pending, MARK_PENDING_SCHEMA),
+        ("move_item", _handle_move_item, MOVE_ITEM_SCHEMA),
+        ("clear_done", _handle_clear_done, CLEAR_DONE_SCHEMA),
+        ("set_url", _handle_set_url, SET_URL_SCHEMA),
     ):
         hass.services.async_register(
             DOMAIN,

@@ -44,6 +44,8 @@ def resolve_locale(language: str | None, country: str | None) -> str:
         return "fr"
     if lang == "pt":
         return "br"
+    if lang == "tr":
+        return "tr"
     if lang == "en":
         return "us" if cc == "US" else "en"
     # Cooficiales de España: el catálogo español es el que les sirve.
@@ -77,7 +79,8 @@ def catalog_for(
 
 def _norm(s: str) -> str:
     """minúsculas + sin acentos/diacríticos."""
-    s = unicodedata.normalize("NFD", (s or "").lower())
+    s = (s or "").lower().replace("ı", "i")
+    s = unicodedata.normalize("NFD", s)
     return "".join(c for c in s if unicodedata.category(c) != "Mn")
 
 

@@ -9,11 +9,20 @@ import { STORES_SEED } from '../stores';
 const s = (
   id: string, name: string, typeId: string,
   emoji: string, bg: string, fg: string, initials?: string,
+  online = false,
 ): Store => ({
   id, name, typeId,
   icon: { kind: 'emoji', value: emoji },
   brand: { bg, fg, initials },
+  ...(online ? { online: true } : {}),
 });
+
+/** Amazon en cada cultura: tienda online (enlace de producto por artículo). */
+const amazon = (id: string) =>
+  s(id, 'Amazon', 'supermercado', '📦', '#232F3E', '#FF9900', 'a', true);
+
+const ikea = (id: string) =>
+  s(id, 'IKEA', 'hogar', '🛋️', '#0058A3', '#FFDA1A', 'IK');
 
 // 🇬🇧 Reino Unido
 const UK: Store[] = [
@@ -26,6 +35,7 @@ const UK: Store[] = [
   s('uk-lidl',        'Lidl',           'supermercado', '🛒', '#0050AA', '#FFE600', 'L'),
   s('uk-coop',        'Co-op',          'supermercado', '🛒', '#00B1E7', '#FFFFFF', 'C'),
   s('uk-mands',       'M&S Food',       'supermercado', '🛍️', '#000000', '#FFFFFF', 'M&S'),
+  amazon('uk-amazon'),
   s('uk-butcher',     'Butcher',        'carniceria',   '🥩', '#8B1E1E', '#FFFFFF'),
   s('uk-fishmonger',  'Fishmonger',     'pescaderia',   '🐟', '#0E6BA8', '#FFFFFF'),
   s('uk-bakery',      'Bakery',         'panaderia',    '🥖', '#B5651D', '#FFFFFF'),
@@ -47,6 +57,7 @@ const US: Store[] = [
   s('us-traderjoes',  "Trader Joe's",   'supermercado', '🛒', '#B4121B', '#FFFFFF', 'TJ'),
   s('us-publix',      'Publix',         'supermercado', '🛒', '#007A33', '#FFFFFF', 'P'),
   s('us-aldi',        'Aldi',           'supermercado', '🛒', '#001E60', '#FF7300', 'AL'),
+  amazon('us-amazon'),
   s('us-butcher',     'Butcher shop',   'carniceria',   '🥩', '#8B1E1E', '#FFFFFF'),
   s('us-seafood',     'Seafood market', 'pescaderia',   '🦞', '#0E6BA8', '#FFFFFF'),
   s('us-bakery',      'Bakery',         'panaderia',    '🥖', '#B5651D', '#FFFFFF'),
@@ -68,6 +79,7 @@ const FR: Store[] = [
   s('fr-casino',      'Casino',         'supermercado', '🛒', '#E2001A', '#FFFFFF', 'CA'),
   s('fr-lidl',        'Lidl',           'supermercado', '🛒', '#0050AA', '#FFE600', 'L'),
   s('fr-aldi',        'Aldi',           'supermercado', '🛒', '#001E60', '#FF7300', 'AL'),
+  amazon('fr-amazon'),
   s('fr-boucherie',   'Boucherie',      'carniceria',   '🥩', '#8B1E1E', '#FFFFFF'),
   s('fr-poissonnerie','Poissonnerie',   'pescaderia',   '🐟', '#0E6BA8', '#FFFFFF'),
   s('fr-boulangerie', 'Boulangerie',    'panaderia',    '🥖', '#B5651D', '#FFFFFF'),
@@ -88,6 +100,7 @@ const DE: Store[] = [
   s('de-netto',       'Netto',          'supermercado', '🛒', '#FFcc00', '#E2001A', 'N'),
   s('de-penny',       'Penny',          'supermercado', '🛒', '#CE1417', '#FFE600', 'P'),
   s('de-dm',          'dm Drogerie',    'supermercado', '🧴', '#002878', '#FFFFFF', 'dm'),
+  amazon('de-amazon'),
   s('de-metzgerei',   'Metzgerei',      'carniceria',   '🥩', '#8B1E1E', '#FFFFFF'),
   s('de-fischladen',  'Fischladen',     'pescaderia',   '🐟', '#0E6BA8', '#FFFFFF'),
   s('de-baeckerei',   'Bäckerei',       'panaderia',    '🥖', '#B5651D', '#FFFFFF'),
@@ -107,14 +120,34 @@ const BR: Store[] = [
   s('br-assai',       'Assaí',          'supermercado', '🛒', '#002D74', '#FFFFFF', 'A'),
   s('br-atacadao',    'Atacadão',       'supermercado', '🛒', '#E30613', '#FFDD00', 'AT'),
   s('br-dia',         'Dia',            'supermercado', '🛒', '#E20613', '#FFE600', 'D'),
+  amazon('br-amazon'),
   s('br-acougue',     'Açougue',        'carniceria',   '🥩', '#8B1E1E', '#FFFFFF'),
   s('br-peixaria',    'Peixaria',       'pescaderia',   '🐟', '#0E6BA8', '#FFFFFF'),
   s('br-padaria',     'Padaria',        'panaderia',    '🥖', '#B5651D', '#FFFFFF'),
   s('br-drogaria',    'Drogaria',       'farmacia',     '💊', '#00A651', '#FFFFFF'),
   s('br-renner',      'Renner',         'ropa',         '👕', '#E4002B', '#FFFFFF', 'R'),
   s('br-casas-bahia', 'Casas Bahia',    'hogar',        '🛋️', '#003DA5', '#FFFFFF', 'CB'),
+  ikea('br-ikea'),
   s('br-leroy',       'Leroy Merlin',   'ferreteria',   '🔧', '#78BE20', '#FFFFFF', 'LM'),
   s('br-mercadinho',  'Mercadinho',     'otros',        '🏪', '#555555', '#FFFFFF'),
+];
+
+// 🇹🇷 Türkiye. Sin cadenas que venden alcohol (Migros, CarrefourSA, Macrocenter,
+// Metro, büfe). Amazon sustituye a la tienda online del catálogo.
+const TR: Store[] = [
+  s('tr-a101',     'A101',     'supermercado', '🛒', '#FFFFFF', '#41A9C7', 'A101'),
+  s('tr-bim',      'BİM',      'supermercado', '🛒', '#FFFFFF', '#0054A6', 'BİM'),
+  s('tr-sok',      'ŞOK',      'supermercado', '🛒', '#FFD500', '#E30613', 'ŞOK'),
+  s('tr-hakmar',   'Hakmar',   'supermercado', '🛒', '#FFFFFF', '#4DBA45', 'H'),
+  amazon('tr-amazon'),
+  s('tr-pazar',    'Pazar',    'supermercado', '🧺', '#2F855A', '#FFFFFF'),
+  s('tr-kasap',    'Kasap',    'carniceria',   '🥩', '#8B1E1E', '#FFFFFF'),
+  s('tr-balikci',  'Balıkçı',  'pescaderia',   '🐟', '#0E6BA8', '#FFFFFF'),
+  s('tr-firin',    'Fırın',    'panaderia',    '🥖', '#B5651D', '#FFFFFF'),
+  s('tr-eczane',   'Eczane',   'farmacia',     '💊', '#E30613', '#FFFFFF'),
+  s('tr-gratis',   'Gratis',   'perfumeria',   '🧴', '#FFFFFF', '#7A1E88', 'G'),
+  s('tr-koctas',   'Koçtaş',   'ferreteria',   '🔧', '#FFFFFF', '#F36C21', 'K'),
+  ikea('tr-ikea'),
 ];
 
 export const LOCALIZED_STORES: Record<Locale, Store[]> = {
@@ -124,4 +157,5 @@ export const LOCALIZED_STORES: Record<Locale, Store[]> = {
   fr: FR,
   de: DE,
   br: BR,
+  tr: TR,
 };

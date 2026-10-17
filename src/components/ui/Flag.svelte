@@ -42,6 +42,11 @@
       <rect width="60" height="42" fill="#009C3B" />
       <polygon points="30,4 55,21 30,38 5,21" fill="#FFDF00" />
       <circle cx="30" cy="21" r="8.5" fill="#002776" />
+    {:else if locale === 'tr'}
+      <rect width="60" height="42" fill="#E30A17" />
+      <circle cx="22" cy="21" r="9" fill="#FFFFFF" />
+      <circle cx="25" cy="21" r="7.2" fill="#E30A17" />
+      <polygon points="36,21 37.6,16.2 39.2,21 44,21 40.1,23.8 41.7,28.6 36,25.6 30.3,28.6 31.9,23.8 28,21" fill="#FFFFFF" />
     {/if}
   </g>
 </svg>

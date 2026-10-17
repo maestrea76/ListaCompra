@@ -10,7 +10,11 @@ import type { Product } from './types';
 
 /** minúsculas + sin acentos/diacríticos. */
 export const norm = (s: string): string =>
-  (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  (s ?? '')
+    .toLowerCase()
+    .replace(/ı/g, 'i')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
 
 /** ¿Aparecen los caracteres de `needle` en orden dentro de `hay`? */
 const isSubsequence = (needle: string, hay: string): boolean => {

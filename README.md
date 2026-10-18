@@ -373,10 +373,17 @@ curl -fsSL -o "$HOME/tucompra.py" \
   https://raw.githubusercontent.com/maestrea76/ListaCompra/main/tools/tucompra.py
 ```
 
-Tu Compra must be **0.3.59** or newer, and Home Assistant restarted. This
-version removes a line, changes the quantity, unmarks, moves between stores,
-clears bought items and saves a product link. 0.3.58 can add, list, mark and
-note. Older releases can only add an item.
+Tu Compra must be **0.3.60** or newer, and Home Assistant restarted. This
+version reuses an existing product when the spoken name starts with it, and
+adds `find`. 0.3.59 removes a line, changes the quantity, unmarks, moves
+between stores, clears bought items and saves a product link. 0.3.58 can add,
+list, mark and note. Older releases can only add an item.
+
+Before `add`, the Bot runs `find` with the words the person said. When
+`reuse` is a name, `add` uses that existing product, so the line keeps its
+emoji or photo. "tomate fresco" reuses "Tomate" when that product is already
+there. When `reuse` is empty and `products` lists several names, the Bot asks
+which one and does not invent another.
 
 When the house has a shared list, the command writes there. Otherwise it
 writes the personal list of the Home Assistant user who owns the token.
@@ -718,10 +725,18 @@ curl -fsSL -o "$HOME/tucompra.py" \
   https://raw.githubusercontent.com/maestrea76/ListaCompra/main/tools/tucompra.py
 ```
 
-Tu Compra tiene que ser la **0.3.59** o posterior, y Home Assistant tiene que
-estar reiniciado. Esta versión quita una línea, cambia la cantidad, desmarca,
-mueve de tienda, limpia comprados y guarda el enlace. La 0.3.58 añade, lista,
-marca y anota. En versiones anteriores solo se puede añadir un producto.
+Tu Compra tiene que ser la **0.3.60** o posterior, y Home Assistant tiene que
+estar reiniciado. Esta versión reutiliza un producto que ya existe cuando lo
+dicho empieza por su nombre, y añade `find`. La 0.3.59 quita una línea, cambia
+la cantidad, desmarca, mueve de tienda, limpia comprados y guarda el enlace.
+La 0.3.58 añade, lista, marca y anota. En versiones anteriores solo se puede
+añadir un producto.
+
+Antes del `add`, el Bot ejecuta `find` con las palabras que han dicho. Si
+`reuse` trae un nombre, el `add` usa ese producto, y la línea se queda con
+su emoji o su foto. "tomate fresco" reutiliza "Tomate" cuando ese producto
+ya existe. Si `reuse` viene vacío y `products` lista varios nombres, el Bot
+pregunta cuál y no inventa otro.
 
 Si la casa tiene lista compartida, el comando escribe en esa. Si no, en la
 lista personal del usuario de Home Assistant dueño del token.

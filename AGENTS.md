@@ -1,7 +1,7 @@
 # Tu Compra (Lista de la Compra)
 
-Integración HACS de listas de la compra multi-tienda, 100% local en Home Assistant.
-Carpeta local: `C:\Users\maest\TuCompra`. Repo: `maestrea76/ListaCompra`.
+Integración HACS de listas de la compra multi-tienda, 100% local en Home Assistant. No es `todo.shopping_list`.
+Carpeta local: `/home/maestrea/TuCompra`. Repo: `maestrea76/ListaCompra`.
 Demo estática: https://maestrea76.github.io/ListaCompra/
 
 `CLAUDE.md` está desfasado (PIN Boardinggate / LocalStorage como fuente de verdad).
@@ -35,7 +35,7 @@ No commitear `node_modules/`, `.claude/`, `custom_components/tucompra/panel/app/
 
 ## HACS / HA
 
-- Dominio: `tucompra`. Instalado en HA como **Tu Compra** (HACS, custom repo).
+- Dominio: `tucompra`. Instalado en HA como **Tu Compra** (HACS, custom repo). Último tag: `v0.3.60`.
 - `hacs.json`: `zip_release`, `filename: tucompra.zip`.
 - PR a lista por defecto: https://github.com/hacs/default/pull/9197 (en cola; no abrir otro).
 - Config YAML: `tucompra:` (opcional `product_lookup: true` → Open Food Facts, única petición saliente).

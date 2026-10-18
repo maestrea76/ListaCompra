@@ -144,6 +144,26 @@ def _pending(snap: dict, store_id: str, product_id: str) -> list[dict]:
     ]
 
 
+def test_tomate_fresco_reutiliza_el_que_ya_tiene_icono():
+    snap = _snap({})
+    snap["customProducts"] = [{
+        "id": "tomate-casa",
+        "name": "Tomate",
+        "categoryId": "lac",
+        "icon": {"kind": "emoji", "value": "🍅"},
+        "defaultUnit": "unidad",
+    }]
+    encontrado = _run(_store(snap).async_find_products("tomate fresco"))
+    assert encontrado["reuse"] == "Tomate"
+    assert encontrado["products"] == [{"id": "tomate-casa", "name": "Tomate"}]
+    result = _run(_store(snap).async_add_named_item("tomate fresco", quantity=1))
+    assert result["ok"] is True
+    assert result["product_id"] == "tomate-casa"
+    assert result["product_name"] == "Tomate"
+    assert [p["id"] for p in snap["customProducts"]] == ["tomate-casa"]
+    assert snap["lists"]["aldi"]["items"][0]["productId"] == "tomate-casa"
+
+
 def test_repetir_producto_suma_la_linea_que_ya_esta():
     snap = _snap({"eroski": [_item("a", "leche", qty=1)]})
     result = _run(_store(snap).async_add_named_item("leche", quantity=1))

@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import unicodedata
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 INBOX_STORE_ID = "inbox"
 
@@ -89,38 +89,68 @@ def _is_subsequence(needle: str, hay: str) -> bool:
     return all(ch in it for ch in needle)
 
 
-def _score(name_n: str, q: str) -> int:
-    """Igual que scoreMatch del frontend: 5 exacto · 4 empieza · 3 contiene ·
-    2 todas las palabras · 1 subsecuencia · -1 no casa.
+class MatchScore(NamedTuple):
+    """Banda mayor gana. En la banda 1, más palabras de prefijo ganan.
 
-    El 5 (exacto) existe porque sin él "pan" empataba a 4 con "panceta" —ambos
-    empiezan por "pan"— y ganaba el primero del catálogo. Pedir "pan" por voz
-    acababa en panceta.
+    La especificidad solo es distinta de 0 en el prefijo por palabras.
+    """
+
+    band: int
+    specificity: int = 0
+
+
+def _word_prefix_len(name_n: str, q: str) -> int:
+    """Palabras iniciales del nombre guardado que coinciden con lo dicho.
+
+    "tomate" es prefijo de "tomate fresco". "pan" no lo es de "panceta":
+    haría falta un espacio, no basta con que los caracteres empiecen igual.
+    "tomate" tampoco lo es de "zumo de tomate".
+    """
+    stored = name_n.split()
+    spoken = q.split()
+    if not stored or len(stored) >= len(spoken):
+        return 0
+    if spoken[: len(stored)] != stored:
+        return 0
+    return len(stored)
+
+
+def _score(name_n: str, q: str) -> MatchScore:
+    """5 exacto · 4 empieza · 3 contiene · 2 todas las palabras ·
+    1 prefijo por palabras · 0 subsecuencia · -1 no casa.
+
+    El 5 existe porque sin él "pan" empataba a 4 con "panceta". El 1 existe
+    para reutilizar "Tomate" cuando dicen "tomate fresco", y queda por debajo
+    del 2 para no ganarle a un nombre que ya contiene todas las palabras.
+    La subsecuencia pasa a 0 para no empatar con ese prefijo.
     """
     if name_n == q:
-        return 5
+        return MatchScore(5, 0)
     if name_n.startswith(q):
-        return 4
+        return MatchScore(4, 0)
     if q in name_n:
-        return 3
+        return MatchScore(3, 0)
     words = [w for w in q.split() if w]
     if len(words) > 1 and all(w in name_n for w in words):
-        return 2
+        return MatchScore(2, 0)
+    prefix = _word_prefix_len(name_n, q)
+    if prefix:
+        return MatchScore(1, prefix)
     if _is_subsequence(q.replace(" ", ""), name_n):
-        return 1
-    return -1
+        return MatchScore(0, 0)
+    return MatchScore(-1, 0)
 
 
 def match_product(name: str, products: list[dict]) -> dict | None:
     return (match_candidates(name, products) or [None])[0]
 
 
-def match_scored(name: str, products: list[dict]) -> list[tuple[int, dict]]:
+def match_scored(name: str, products: list[dict]) -> list[tuple[MatchScore, dict]]:
     """(puntuación, producto) de los que casan, del mejor al peor.
 
-    A igual puntuación gana el nombre MÁS CORTO: es el más parecido a lo pedido.
-    Sin ese desempate, "leche" con dos productos que empiezan por "leche" se
-    decidía por el orden del catálogo, que es arbitrario.
+    A igual banda y especificidad gana el nombre MÁS CORTO. Dentro del prefijo
+    por palabras gana el que cubre más palabras, así "Tomate rosa" le gana a
+    "Tomate" cuando dicen "tomate rosa maduro".
     """
     q = _norm(name).strip()
     if not q:
@@ -128,9 +158,15 @@ def match_scored(name: str, products: list[dict]) -> list[tuple[int, dict]]:
     puntuados = [
         (sc, p)
         for p in products
-        if (sc := _score(_norm(p.get("name", "")), q)) > 0
+        if (sc := _score(_norm(p.get("name", "")), q)).band >= 0
     ]
-    puntuados.sort(key=lambda x: (-x[0], len(_norm(x[1].get("name", "")))))
+    puntuados.sort(
+        key=lambda x: (
+            -x[0].band,
+            -x[0].specificity,
+            len(_norm(x[1].get("name", ""))),
+        )
+    )
     return puntuados
 
 
@@ -138,7 +174,17 @@ def match_candidates(name: str, products: list[dict], limit: int = 5) -> list[di
     return [p for _, p in match_scored(name, products)[:limit]]
 
 
-def tied_alternatives(scored: list[tuple[int, dict]], limit: int = 3) -> list[str]:
+def reuse_name(scored: list[tuple[MatchScore, dict]]) -> str | None:
+    """Nombre que hay que reutilizar, o None si no hay uno solo.
+
+    Un empate no elige: el bot pregunta. Sin aciertos, tampoco hay nombre.
+    """
+    if not scored or tied_alternatives(scored):
+        return None
+    return scored[0][1].get("name") or None
+
+
+def tied_alternatives(scored: list[tuple[MatchScore, dict]], limit: int = 3) -> list[str]:
     """Nombres que EMPATAN con el ganador, sin él y sin repetidos.
 
     Solo el empate es ambigüedad de verdad. Si se devolviera cualquier otra

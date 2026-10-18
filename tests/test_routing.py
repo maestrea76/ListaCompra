@@ -150,8 +150,8 @@ def test_exacto_gana_a_empieza_por():
     Ambos empiezan por "pan" (score 4) y ganaba el primero del catálogo. El
     tramo exacto (5) es lo que lo arregla. Si alguien lo quita, esto salta.
     """
-    assert routing._score("pan", "pan") == 5
-    assert routing._score("panceta", "pan") == 4
+    assert routing._score("pan", "pan") == routing.MatchScore(5, 0)
+    assert routing._score("panceta", "pan") == routing.MatchScore(4, 0)
     productos = [
         {"id": "panceta", "name": "Panceta", "categoryId": "car-cerdo"},
         {"id": "pan", "name": "Pan", "categoryId": "pan-pan"},
@@ -173,6 +173,59 @@ def test_a_igual_puntuacion_gana_el_nombre_mas_corto():
 def _cat(productos):
     return {"categories": [{"id": "pan-pan", "typeId": "panaderia"}],
             "locales": {"en": {"products": productos, "stores": []}}}
+
+
+def test_tomate_fresco_reutiliza_tomate():
+    """Lo dicho puede ser más largo que el producto que ya existe.
+
+    "tomate fresco" no cabe dentro de "Tomate", pero "Tomate" es el principio
+    de lo dicho. La línea tiene que quedarse con ese id, que es el que ya
+    tiene el emoji o la foto.
+    """
+    productos = [
+        {"id": "rosa", "name": "Tomate rosa", "categoryId": "pan-pan"},
+        {"id": "tomate-casa", "name": "Tomate", "categoryId": "pan-pan"},
+        {"id": "cherry", "name": "Tomate cherry", "categoryId": "pan-pan"},
+        {"id": "zumo", "name": "Zumo de tomate", "categoryId": "pan-pan"},
+    ]
+    snap = {"customProducts": [{"id": "tomate-casa", "name": "Tomate"}]}
+    catalogo = _cat(productos)
+    fresco = routing.resolve("tomate fresco", snap, routing.catalog_for(catalogo, "en", "GB"))
+    assert fresco["product"]["id"] == "tomate-casa"
+    assert fresco["alternatives"] == []
+    cherry = routing.resolve("Tomate cherry", snap, routing.catalog_for(catalogo, "en", "GB"))
+    assert cherry["product"]["id"] == "cherry"
+    zumo = routing.resolve("zumo de tomate", snap, routing.catalog_for(catalogo, "en", "GB"))
+    assert zumo["product"]["id"] == "zumo"
+    solo_tomate = routing.resolve(
+        "zumo de tomate",
+        {"customProducts": [{"id": "tomate-casa", "name": "Tomate"}]},
+        routing.catalog_for(_cat([]), "en", "GB"),
+    )
+    assert solo_tomate["product"] is None
+    # Sin un "Tomate" suelto, no se cuelga del rosa.
+    solo_semilla = routing.resolve(
+        "tomate fresco", {}, routing.catalog_for(_cat(productos[0:1] + productos[2:]), "en", "GB")
+    )
+    assert solo_semilla["product"] is None
+    # El nombre exacto le gana a los que solo empiezan por "tomate".
+    corto = routing.match_product("tomate", productos)
+    assert corto["id"] == "tomate-casa"
+    empatados = routing.match_scored("tomate", productos[0:1] + productos[2:3])
+    assert routing.reuse_name(empatados) is None
+    uno = routing.match_scored("tomate fresco", [{"id": "t", "name": "Tomate"}])
+    assert routing.reuse_name(uno) == "Tomate"
+
+
+def test_prefijo_mas_largo_gana_al_corto():
+    productos = [
+        {"id": "corto", "name": "Tomate", "categoryId": "pan-pan"},
+        {"id": "rosa", "name": "Tomate rosa", "categoryId": "pan-pan"},
+    ]
+    assert routing.match_product("tomate rosa maduro", productos)["id"] == "rosa"
+    assert routing._score("tomate", "tomate fresco") == routing.MatchScore(1, 1)
+    assert routing._score("tomate rosa", "tomate fresco") == routing.MatchScore(-1, 0)
+    assert routing._score("pan", "panceta") == routing.MatchScore(-1, 0)
 
 
 def test_solo_es_ambiguo_si_hay_empate():

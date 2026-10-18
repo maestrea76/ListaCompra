@@ -30,6 +30,7 @@ from .routing import (
     match_scored,
     match_store,
     resolve,
+    reuse_name,
     tied_alternatives,
 )
 
@@ -275,6 +276,40 @@ class TuCompraStore:
         return {
             "lists": {}, "customProducts": [], "customStores": [],
             "defaultStores": {}, "updatedAt": 0,
+        }
+
+    async def async_find_products(
+        self, name: str, share_id: str | None = None
+    ) -> dict[str, Any]:
+        """Productos que ya existen y casan con el nombre, sin escribir.
+
+        `reuse` es el nombre que hay que pasar a add cuando hay un solo
+        ganador. Si hay empate, queda vacío y `products` son las opciones.
+        """
+        share = self._pick_target_share(share_id)
+        if not share:
+            return {"ok": False, "error": "No hay ninguna lista disponible todavía."}
+        snap = share.get("snapshot") or self._empty_snap()
+        catalog = self._flat_catalog()
+        products = list(catalog.get("products", [])) + list(snap.get("customProducts", []))
+        scored = match_scored(name, products)
+        winner = scored[0][1] if scored else None
+        names = tied_alternatives(scored) if scored else []
+        rows = []
+        if winner:
+            rows.append({"id": winner.get("id"), "name": winner.get("name", "")})
+        by_name = {_norm(p.get("name", "")): p for p in products}
+        for label in names:
+            row = by_name.get(_norm(label))
+            rows.append({
+                "id": row.get("id") if row else None,
+                "name": label,
+            })
+        return {
+            "ok": True,
+            "query": name,
+            "reuse": reuse_name(scored),
+            "products": rows,
         }
 
     async def async_add_named_item(

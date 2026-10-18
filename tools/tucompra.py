@@ -8,6 +8,7 @@ Home Assistant. La URL y el token llegan por el entorno, nunca por argumentos:
   TUCOMPRA_TOKEN  token de larga duración del usuario de HA
 
   python3 tucompra.py pending
+  python3 tucompra.py find "tomate fresco"
   python3 tucompra.py add leche --qty 2 --unit l --store Amazon --note semi
   python3 tucompra.py done leche --store Amazon
   python3 tucompra.py note leche "que sea semi"
@@ -33,6 +34,7 @@ import urllib.request
 
 SERVICES = {
     "add": "add_item",
+    "find": "find_products",
     "pending": "list_pending",
     "done": "mark_done",
     "note": "set_note",
@@ -83,6 +85,9 @@ def ha_call(base: str, token: str, service: str, data: dict) -> dict:
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Lista de Tu Compra en Home Assistant.")
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    find = sub.add_parser("find", help="Busca un producto que ya exista.")
+    find.add_argument("name")
 
     add = sub.add_parser("add", help="Añade un producto.")
     add.add_argument("name")

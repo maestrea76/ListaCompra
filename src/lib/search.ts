@@ -1,10 +1,10 @@
 // Búsqueda difusa del catálogo, compartida por toda la app.
 //
-// IMPORTANTE: `scoreMatch` es un calco de _score() en
-// custom_components/tucompra/routing.py y tiene que seguir siéndolo. Si divergen,
-// buscar "pan" en la app y pedir "pan" por voz dan productos distintos, que es
-// justo lo que confunde al usuario. Las pruebas de tests/test_routing.py fijan
-// los tramos del lado Python.
+// Los tramos 5, 4, 3 y 2, y la subsecuencia, coinciden con `_score` en
+// custom_components/tucompra/routing.py. La voz tiene además el prefijo por
+// palabras (dicen "tomate fresco" y reutiliza "Tomate"). Esta caja de búsqueda
+// no lo usa: al escribir se enseña el nombre más largo que contiene lo tecleado.
+// No borres ese tramo de la voz para que los dos números vuelvan a ser iguales.
 
 import type { Product } from './types';
 

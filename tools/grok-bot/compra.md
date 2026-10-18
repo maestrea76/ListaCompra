@@ -33,6 +33,26 @@ Tu Compra tiene que ser la 0.3.59 o posterior.
 
 ## Cómo cambias la lista
 
+Antes de cada `add`, busca lo que ya existe. El argumento son las palabras
+del producto.
+
+```bash
+TUCOMPRA_URL="$TUCOMPRA_URL" TUCOMPRA_TOKEN="$TUCOMPRA_TOKEN" \
+  python3 "$HOME/tucompra.py" find "tomate fresco"
+```
+
+Lee el JSON.
+
+- Si `reuse` trae un nombre, el `add` usa ese nombre. No inventes otro. Si
+  piden "tomate fresco" y `reuse` es "Tomate", añades "Tomate". Esa línea
+  se queda con el emoji o la foto que el producto ya tiene.
+- Si `reuse` es null y `products` tiene nombres, pregunta cuál de esos
+  nombres quieren y no llames a `add`.
+- Si `products` está vacío, añade las palabras que dijeron. Eso crea un
+  producto nuevo.
+- Si `find` responde un error HTTP, la casa aún no tiene este comando.
+  Añade las palabras dichas.
+
 Cada cambio es un comando. Referencia los secretos por nombre para que el
 entorno los reciba. No pongas el token en el comando ni en el chat.
 

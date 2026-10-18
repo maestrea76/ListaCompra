@@ -53,6 +53,13 @@ ADD_ITEM_SCHEMA = vol.Schema(
     }
 )
 
+FIND_PRODUCTS_SCHEMA = vol.Schema(
+    {
+        vol.Required("name"): cv.string,
+        vol.Optional("share_id"): cv.string,
+    }
+)
+
 LIST_PENDING_SCHEMA = vol.Schema(
     {
         vol.Optional("store"): cv.string,
@@ -177,6 +184,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         _LOGGER.debug("add_item(%s) → %s", call.data.get("name"), result)
         return result
 
+    async def _handle_find_products(call: ServiceCall) -> dict:
+        return await store.async_find_products(
+            name=call.data["name"],
+            share_id=call.data.get("share_id"),
+        )
+
     async def _handle_list_pending(call: ServiceCall) -> dict:
         return await store.async_list_pending(
             store=call.data.get("store"),
@@ -247,6 +260,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     for service, handler, schema in (
         ("add_item", _handle_add_item, ADD_ITEM_SCHEMA),
+        ("find_products", _handle_find_products, FIND_PRODUCTS_SCHEMA),
         ("list_pending", _handle_list_pending, LIST_PENDING_SCHEMA),
         ("mark_done", _handle_mark_done, MARK_DONE_SCHEMA),
         ("set_note", _handle_set_note, SET_NOTE_SCHEMA),

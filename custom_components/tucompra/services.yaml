@@ -61,6 +61,24 @@ add_item:
       selector:
         text:
 
+find_products:
+  name: Buscar producto existente
+  description: >-
+    Lista los productos que ya existen y casan con el nombre. Si reuse trae
+    un nombre, hay que añadir ese y no inventar otro. No escribe en la lista.
+  fields:
+    name:
+      name: Producto
+      description: Lo que ha pedido la persona, por ejemplo "tomate fresco".
+      required: true
+      example: tomate fresco
+      selector:
+        text:
+    share_id:
+      name: Lista (share)
+      selector:
+        text:
+
 list_pending:
   name: Ver pendientes
   description: >-

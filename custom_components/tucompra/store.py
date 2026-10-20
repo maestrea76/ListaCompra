@@ -118,10 +118,14 @@ class TuCompraStore:
         self._hass = hass
         self._store: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
         self._data: dict[str, Any] = {"shares": {}}
-        # Catálogo de los 6 idiomas; se aplana al de HA en cada resolución.
-        self.catalog = load_catalog(Path(__file__).parent / "catalog.json")
+        # Vacío hasta async_load. open() de catalog.json no puede ir en el bucle.
+        self.catalog: dict[str, Any] = {"categories": [], "locales": {}}
 
     async def async_load(self) -> dict[str, Any]:
+        # json.load bloquea. En el executor no para el resto de integraciones.
+        self.catalog = await self._hass.async_add_executor_job(
+            load_catalog, Path(__file__).parent / "catalog.json"
+        )
         data = await self._store.async_load()
         if isinstance(data, dict):
             self._data = data

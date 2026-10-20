@@ -35,7 +35,7 @@ No commitear `node_modules/`, `.claude/`, `custom_components/tucompra/panel/app/
 
 ## HACS / HA
 
-- Dominio: `tucompra`. Instalado en HA como **Tu Compra** (HACS, custom repo). Último tag: `v0.3.60`.
+- Dominio: `tucompra`. Instalado en HA como **Tu Compra** (HACS, custom repo). Último tag: `v0.3.61`.
 - `hacs.json`: `zip_release`, `filename: tucompra.zip`.
 - PR a lista por defecto: https://github.com/hacs/default/pull/9197 (en cola; no abrir otro).
 - Config YAML: `tucompra:` (opcional `product_lookup: true` → Open Food Facts, única petición saliente).

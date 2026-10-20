@@ -83,6 +83,13 @@ class _Cfg:
 class _Hass:
     config = _Cfg()
 
+    def __init__(self) -> None:
+        self.executor_jobs: list = []
+
+    async def async_add_executor_job(self, target, *args):
+        self.executor_jobs.append(target)
+        return target(*args)
+
 
 def _item(item_id: str, product_id: str, *, qty=1, unit="l", done=False, note="", url=""):
     item = {
@@ -335,6 +342,37 @@ def test_cli_clear_no_confirma_solo():
     assert cli.payload(listed) == {"store": "Eroski", "confirm": False}
     wiped = cli.parser().parse_args(["clear", "--yes"])
     assert cli.payload(wiped)["confirm"] is True
+
+
+def test_el_catalogo_se_lee_en_el_executor():
+    """__init__ corre en async_setup. La lectura del JSON no puede ir ahí."""
+    vistos: list = []
+
+    def falso(path):
+        vistos.append(path)
+        return {"categories": [{"id": "lac"}], "locales": {}}
+
+    class _Disco:
+        async def async_load(self):
+            return {"shares": {"casa": {}}}
+
+    original = store_mod.load_catalog
+    store_mod.load_catalog = falso
+    try:
+        hass = _Hass()
+        store = store_mod.TuCompraStore(hass)
+        assert vistos == []
+        assert store.catalog == {"categories": [], "locales": {}}
+        store._store = _Disco()
+        data = _run(store.async_load())
+    finally:
+        store_mod.load_catalog = original
+
+    assert hass.executor_jobs == [falso]
+    assert len(vistos) == 1
+    assert vistos[0].name == "catalog.json"
+    assert store.catalog["categories"] == [{"id": "lac"}]
+    assert data["shares"] == {"casa": {}}
 
 
 def test_cli_qty_move_y_link():

@@ -33,6 +33,8 @@ export const HIGIENE: Product[] = [
   p('alcohol',           'Alcohol',                 '🧴','sup-higiene'),
   p('agua-oxigenada',    'Agua oxigenada',          '🧴','sup-higiene'),
   p('protector-solar',   'Protector solar',         '☀️','sup-higiene'),
+  p('desmaquillante-micelar','Desmaquillante micelar & oil','🧴','sup-higiene'),
+  p('gel-lactovit',      'Gel Lactovit nutritivo', '🧴','sup-higiene'),
 ];
 
 export const BEBE: Product[] = [

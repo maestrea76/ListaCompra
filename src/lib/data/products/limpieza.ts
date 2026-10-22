@@ -50,4 +50,5 @@ export const LIMPIEZA: Product[] = [
   p('antipolillas',     'Antipolillas',            '🦋', 'paquete'),
   p('blanqueador',      'Blanqueador ropa',        '🧴'),
   p('recambio-deshumidificador','Recambio deshumidificador','💧'),
+  p('colgador-wc-pino', 'Colgador WC pino',        '🚽'),
 ];

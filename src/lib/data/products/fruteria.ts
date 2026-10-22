@@ -49,4 +49,9 @@ export const FRUTERIA: Product[] = [
   p('champinon',       'Champiñón',       '🍄'),
   p('seta-perretxiko', 'Perretxikos',     '🍄'),
   p('vainas',          'Vainas (judías verdes)','🌱'),
+  p('brotes-tiernos',  'Brotes tiernos',  '🌱', 'paquete'),
+  p('repollo-liso',    'Repollo liso',    '🥬', 'unidad'),
+  p('lima',            'Lima',            '🍋'),
+  p('tomate-ensalada', 'Tomate ensalada', '🍅'),
+  p('naranja-mesa',    'Naranja de mesa', '🍊'),
 ];

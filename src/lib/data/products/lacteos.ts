@@ -48,4 +48,5 @@ export const LACTEOS: Product[] = [
   p('mantequilla-sin-sal','Mantequilla sin sal',  '🧈'),
   p('crema-agria',      'Crema agria',            '🥣'),
   p('mascarpone',       'Mascarpone',             '🧀'),
+  p('leche-condensada', 'Leche condensada entera','🥛'),
 ];

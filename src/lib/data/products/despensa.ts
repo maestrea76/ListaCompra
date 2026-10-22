@@ -72,6 +72,9 @@ export const DESPENSA: Product[] = [
   p('tomate-triturado',  'Tomate triturado',        '🥫','sup-despensa'),
   p('aceitunas-manzanilla','Aceitunas manzanilla', '🫒','sup-despensa'),
   p('aceitunas-rellenas','Aceitunas rellenas',      '🫒','sup-despensa'),
+  p('aceitunas-caseras', 'Aceitunas estilo casero', '🫒','sup-despensa'),
+  p('aceitunas-hueso-picantes','Aceitunas con hueso picantes','🫒','sup-despensa'),
+  p('gotas-chocolate',   'Gotas de chocolate para fundir','🍫','sup-despensa'),
   p('alcaparras',        'Alcaparras',              '🫒','sup-despensa'),
   p('caldo-pollo',       'Caldo de pollo',          '🍲','sup-despensa'),
   p('caldo-verduras',    'Caldo de verduras',       '🍲','sup-despensa'),
@@ -127,6 +130,11 @@ export const SNACKS: Product[] = [
   p('peladillas',        'Peladillas',              '🍬','sup-snacks','paquete'),
   p('mazapan',           'Mazapán de toledo',       '🍡','sup-snacks','paquete'),
   p('roscos-vino',       'Roscos de vino',          '🍪','sup-snacks','paquete'),
+  p('garfitos-queso',    'Garfitos sabor queso',    '🧀','sup-snacks','paquete'),
+  p('galletas-cuquis',   'Galletas Cuquis',         '🍪','sup-snacks','paquete'),
+  p('golosinas-mini-mix','Golosinas mini mix',      '🍬','sup-snacks','paquete'),
+  p('llaves-super-acidas','Llaves súper ácidas',    '🍬','sup-snacks','paquete'),
+  p('chocolate-negro-85','Chocolate negro 85 % cacao','🍫','sup-snacks','unidad'),
 ];
 
 export const DESAYUNO: Product[] = [
